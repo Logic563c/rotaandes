@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pino: #23483c;
+  --color-oliva: #526451;
+  --color-arcilla: #985535;
+  --color-crema: #f7f5ed;
+  --color-arena: #e9e4d6;
+  --font-sans: "Segoe UI", system-ui, sans-serif;
+  --font-campo: Georgia, "Times New Roman", serif;
+}
+
+@layer base {
+  body { margin: 0; min-width: 320px; }
+  button { font: inherit; }
+  ::selection { background: #d9e3ce; color: #23483c; }
+}

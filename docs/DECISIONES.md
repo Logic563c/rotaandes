@@ -1,0 +1,13 @@
+# Decisiones técnicas de la base inicial
+
+- **Entorno:** Node 24.20.0 y npm 11. Se usan workspaces de npm con un único archivo de bloqueo para reproducir la instalación y comandos en la raíz o en cada paquete.
+- **Scripts de instalación:** npm 11.19 registra en `package.json` la autorización del script de instalación de `esbuild@0.28.2`, necesario para sus binarios de desarrollo. La autorización se limita a esa versión y no habilita scripts de todos los paquetes.
+- **Herramientas:** Vite 8, React 19, TailwindCSS 4 con `@tailwindcss/vite`, Express 5 y TypeScript 5.9 en modo estricto. Vitest ejecuta las pruebas; Supertest verifica HTTP del backend y Testing Library con jsdom verifica la interfaz. Los rangos se resuelven en `package-lock.json`; se consultaron los requisitos de Node de Vite y Vitest antes de instalar.
+- **Alcance:** solo `GET /api/health` con `{ "ok": true }` y una página inicial que lo consulta mediante `frontend/src/lib/api.ts` y TanStack Query. El estado se valida en ejecución y la solicitud tiene un límite de ocho segundos. No se crean rutas, tipos ni mocks de módulos futuros.
+- **Desarrollo local:** backend en 3000, ligado a `127.0.0.1`; frontend en `localhost:5173` con puerto estricto. CORS admite únicamente el origen local configurado. Los cambios para hosting se definirán en otra tarea.
+- **Entorno mínimo:** los `.env.example` incluyen solo `PORT`, `CORS_ORIGIN` y `VITE_API_URL`. `DATABASE_URL` y `JWT_SECRET` se añadirán cuando se autoricen base de datos y autenticación.
+- **Contrato y datos:** no se modifica el modelo de datos ni el contrato descritos en `PROYECTO.md`. No se prepara Prisma, migraciones, semillas ni integraciones externas en esta etapa.
+- **Navegador real:** Playwright comprueba los artefactos compilados en escritorio y celular, contra el backend real. Usa Edge instalado en Windows o Chromium en otros sistemas, sin descargar un navegador durante la instalación de paquetes.
+- **Lint:** ESLint 10 y typescript-eslint 8. Se aplican overrides limitados a `minimatch` de ESLint, `@eslint/config-array` y `@typescript-eslint/typescript-estree` para usar la versión corregida 11, debido al [aviso GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249). Se verifica la compatibilidad con lint, tipos y pruebas; revisar estos overrides cuando las herramientas incorporen la corrección directamente.
+
+Referencias oficiales consultadas: [Vite](https://vite.dev/guide/), [TailwindCSS con Vite](https://tailwindcss.com/docs/installation/using-vite), [Express](https://expressjs.com/en/starter/installing/) y [Vitest](https://vitest.dev/guide/).
