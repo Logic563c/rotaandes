@@ -2,7 +2,9 @@
 
 Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas y calendario mensual de siembra explicable. Tendencias, rotaciones, simulador visual, capas satelitales y reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual y comparador explicable de rotaciones. Tendencias, simulador visual, capas satelitales, panel técnico avanzado y reportes siguen pendientes.
+
+La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
@@ -176,7 +178,27 @@ npm.cmd run test:e2e
 
 En Windows utilizan Microsoft Edge instalado. En otros sistemas, instalar primero Chromium con `npx playwright install chromium`. Dejar libres los puertos 3000 y 5173: las pruebas arrancan y detienen sus propios servidores. El backend E2E usa `NODE_ENV=test`, únicamente `TEST_DATABASE_URL` y un secreto JWT efímero. Las cuentas aleatorias se eliminan en `finally`, por correo exacto; las trazas están deshabilitadas para no almacenar credenciales ni Bearer. Las capturas quedan en `test-results/`, ignorado. `npm.cmd run check` incluye las pruebas SQL, las de navegador y el build. El frontend compilado debe usar el valor local predeterminado de `VITE_API_URL` para esta comprobación.
 
-`test:e2e` ejecuta primero los 16 casos anteriores y después el recorrido integral de escritorio/celular con `playwright.integral.config.ts`. Este segundo proceso inicia servidores nuevos para conservar los límites reales de registro/login sin consumir los de la suite anterior; no se aumentan ni desactivan los límites. Sus capturas quedan en `test-results/integral/`. `npm.cmd run test:integral` permite repetir únicamente ese recorrido. Clima/pronóstico se controlan en la base aislada por defecto; la cuenta, perfil, terreno y siembras sí se persisten. El modo externo separado y sus evidencias están descritos en [la guía de demostración](docs/DEMO_PRIMERA_ENTREGA.md). No ejecutar suites que escriban simultáneamente en la misma base de pruebas.
+`test:e2e` ejecuta primero los 16 casos anteriores y después los recorridos integrales de primera entrega y rotaciones en escritorio/celular con `playwright.integral.config.ts` (cuatro casos). Este segundo proceso inicia servidores nuevos para conservar los límites reales de registro/login sin consumir los de la suite anterior; no se aumentan ni desactivan los límites. Sus capturas quedan en `test-results/integral/`. `npm.cmd run test:integral` repite esos cuatro casos. Clima/pronóstico se controlan en la base aislada por defecto; cuenta, perfil e historial se persisten. El modo externo separado de primera entrega está descrito en [la guía de demostración](docs/DEMO_PRIMERA_ENTREGA.md); la suite de rotaciones sigue usando datos controlados incluso con esa variable. No ejecutar suites que escriban simultáneamente en la misma base de pruebas.
+
+## Comparar rotaciones agrícolas
+
+En el detalle del terreno, pulsar **Comparar rotaciones**. Muestra el patrón actual del historial y las dos plantillas originales mejor puntuadas que puedan evaluarse y programarse según el calendario. Cada tarjeta incluye secuencia, ciclos y esperas, indicadores, explicación, evidencia, riesgos y vacíos. Las prioridades guardadas del propietario ponderan la comparación; el técnico autorizado consulta con esas mismas prioridades.
+
+`GET /api/terrenos/:id/rotaciones?lluvia_pct=0&temp_delta=0` conserva el contrato original y sus campos `estrategias`, `puntajes`, `por_que`, `evidencia`, `beneficios`, `vacios_informacion`, `riesgos` y `aviso`. Requiere JWT y propiedad o lectura técnica. Usa coordenadas/historial/catálogo de PostgreSQL y comparte el servicio/caché NASA del calendario. No escribe siembras. Los escenarios admiten lluvia -30…30 % y temperatura -2…2 °C; no hay simulador visual.
+
+Las fórmulas cuantitativas no estaban definidas en el documento original; se diseñaron con autorización explícita del usuario y se documentan como **heurística referencial sin validación agronómica**. Los índices 0–100 no representan litros, dinero, rendimientos o probabilidades. Total: promedio ponderado de agua, suelo, valor de mercado y compatibilidad climática; esta última tiene peso fijo 3, declarado, porque el perfil solo define las otras tres prioridades. Ver fórmulas, normalización y penalización de familias en [el informe](docs/INFORME_ROTACIONES.md).
+
+La estrategia actual usa las tres últimas siembras en orden cronológico; si hay menos, repite el último cultivo con aviso. Sin historial no se inventa un cultivo actual. El horizonte hipotético común comienza el mes completo posterior a hoy en Ecuador o a la última fecha registrada de siembra/cosecha conocida, si es posterior. Cada ciclo usa `ciclo_meses` y espera una ventana permitida por el calendario, conservando sus precauciones. No se supone que una cosecha no registrada ya ocurrió, ni se confirma disponibilidad de la parcela. Las duraciones totales pueden diferir; los puntajes no están anualizados.
+
+Si falta información esencial, los puntajes permanecen nulos. Si hay menos de dos plantillas evaluables, las posiciones restantes indican **No determinada**, con `id: null` y sin una secuencia inventada. Por ejemplo, a 2775 m puede quedar solo una plantilla apta entre las ocho originales. Un fallo NASA sin dato fiable permite ver limitaciones y atributos conocidos, con `clima: null` y sin ranking climático fabricado.
+
+En esta computadora ya se cargaron las ocho plantillas. Para reproducirlas en otro entorno preparado, después del catálogo de cultivos:
+
+```powershell
+npm.cmd run db:seed:rotaciones --workspace backend
+```
+
+La semilla es transaccional e idempotente y rechaza sustituir una definición existente diferente. Conserva IDs, secuencias y `vicia_avena`, no crea cuentas ni siembras y no modifica migraciones. Consultar el endpoint no ejecuta semillas. Al editar una siembra se invalida la comparación; hay actualización manual, caché por usuario y guardas contra respuestas de una sesión anterior.
 
 ## Consultar climatología histórica
 

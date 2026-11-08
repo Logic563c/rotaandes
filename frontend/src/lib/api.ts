@@ -5,6 +5,7 @@ import type { Terreno, DatosTerreno, Siembra, DatosSiembra, Cultivo } from '../t
 import type { RespuestaClima } from '../types/api';
 import type { RespuestaPronostico } from '../types/api';
 import type { EscenarioCalendario, RespuestaCalendario } from '../types/api';
+import type { RespuestaRotaciones } from '../types/api';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -165,4 +166,30 @@ export async function obtenerCalendario(token: string, terrenoId: string, escena
   if (!esquemaEscenarioCalendario.safeParse(escenario).success) throw new ErrorApi('Parámetros de escenario inválidos.');
   const consulta = new URLSearchParams({ lluvia_pct: String(escenario.lluvia_pct), temp_delta: String(escenario.temp_delta) });
   return comprobarRespuesta(esquemaCalendario, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/calendario?${consulta}`, 'GET', token, undefined, signal));
+}
+
+const estadoRotacion = z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']);
+const puntajeRotacion = numero.min(0).max(100).nullable();
+const esquemaRotaciones = z.object({
+  estrategias: z.array(z.object({ id: z.string().min(1).nullable(), nombre: z.string().min(1), es_actual: z.boolean(), secuencia: z.array(z.string().min(1)).max(3), estado: estadoRotacion,
+    planificacion: z.array(z.object({ cultivo_id: z.string().min(1), nombre: z.string().min(1), inicio_estimado: z.iso.date().nullable(), fin_estimado: z.iso.date().nullable(), ciclo_meses: numero.int().min(1).max(36).nullable(), espera_meses: numero.int().min(0).max(11).nullable(), estado: estadoRotacion, motivo: z.string().min(1) })).max(3),
+    puntajes: z.object({ agua: puntajeRotacion, suelo: puntajeRotacion, riesgo: puntajeRotacion, ingresos: puntajeRotacion, total: puntajeRotacion }),
+    por_que: z.string().min(1), evidencia: z.array(z.string()), beneficios: z.array(z.string()), vacios_informacion: z.array(z.string()), riesgos: z.array(z.string()), aviso: z.string().min(1),
+  })).length(3),
+  candidatas: z.array(z.object({ id: z.string().nullable(), estado: estadoRotacion, total: puntajeRotacion })).max(8),
+  inicio_comun: z.iso.date(), escenario: esquemaEscenarioCalendario,
+  metodologia: z.object({ version: z.literal('heuristica_rotaciones_v1'), peso_riesgo: z.literal(3), prioridades: z.object({ agua: numero.int().min(1).max(5).nullable(), suelo: numero.int().min(1).max(5).nullable(), ingresos: numero.int().min(1).max(5).nullable() }), aviso: z.string() }),
+  clima: esquemaCalendario.shape.clima.nullable(), advertencias: z.array(z.string()), aviso: z.string().min(1),
+}).refine((datos) => {
+  const ids = datos.estrategias.flatMap((valor) => valor.id === null ? [] : [valor.id]);
+  return datos.estrategias[0]?.es_actual && datos.estrategias.slice(1).every((valor) => !valor.es_actual) && new Set(ids).size === ids.length
+    && datos.estrategias.every((valor) => valor.secuencia.length === valor.planificacion.length && (valor.secuencia.length === 0 || valor.secuencia.length === 3)
+      && valor.planificacion.every((paso, indice) => paso.cultivo_id === valor.secuencia[indice] && (paso.fin_estimado === null || (paso.inicio_estimado !== null && paso.fin_estimado > paso.inicio_estimado)))
+      && (valor.id !== null || (valor.estado === 'no_determinado' && valor.secuencia.length === 0 && Object.values(valor.puntajes).every((puntaje) => puntaje === null)))
+      && (valor.puntajes.total === null || Object.values(valor.puntajes).every((puntaje) => puntaje !== null)));
+});
+export async function obtenerRotaciones(token: string, terrenoId: string, escenario: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 }, signal?: AbortSignal): Promise<RespuestaRotaciones> {
+  if (!esquemaEscenarioCalendario.safeParse(escenario).success) throw new ErrorApi('Parámetros de escenario inválidos.');
+  const consulta = new URLSearchParams({ lluvia_pct: String(escenario.lluvia_pct), temp_delta: String(escenario.temp_delta) });
+  return comprobarRespuesta(esquemaRotaciones, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/rotaciones?${consulta}`, 'GET', token, undefined, signal));
 }

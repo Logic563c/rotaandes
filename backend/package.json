@@ -18,6 +18,7 @@
     "prisma:validate": "prisma validate",
     "auth:preparar": "tsx scripts/prepararAutenticacion.ts",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:rotaciones": "tsx prisma/seedRotaciones.ts",
     "clima:verificar": "tsx scripts/verificarNasa.ts",
     "pronostico:verificar": "tsx scripts/verificarPronostico.ts",
     "calendario:verificar": "tsx scripts/verificarCalendario.ts",

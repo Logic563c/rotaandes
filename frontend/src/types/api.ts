@@ -65,3 +65,15 @@ export interface RespuestaCalendario {
   clima: Pick<RespuestaClima, 'fuente' | 'resolucion' | 'periodo' | 'actualizado_en' | 'estado_datos' | 'desactualizado' | 'advertencias'>;
   aviso: string;
 }
+
+export interface PasoRotacion { cultivo_id: string; nombre: string; inicio_estimado: string | null; fin_estimado: string | null; ciclo_meses: number | null; espera_meses: number | null; estado: EstadoCalendario; motivo: string }
+export interface EstrategiaRotacion {
+  id: string | null; nombre: string; es_actual: boolean; secuencia: string[]; planificacion: PasoRotacion[]; estado: EstadoCalendario;
+  puntajes: { agua: number | null; suelo: number | null; riesgo: number | null; ingresos: number | null; total: number | null };
+  por_que: string; evidencia: string[]; beneficios: string[]; vacios_informacion: string[]; riesgos: string[]; aviso: string;
+}
+export interface RespuestaRotaciones {
+  estrategias: EstrategiaRotacion[]; candidatas: { id: string | null; estado: EstadoCalendario; total: number | null }[];
+  inicio_comun: string; escenario: EscenarioCalendario; metodologia: { version: 'heuristica_rotaciones_v1'; peso_riesgo: number; prioridades: { agua: number | null; suelo: number | null; ingresos: number | null }; aviso: string };
+  clima: RespuestaCalendario['clima'] | null; advertencias: string[]; aviso: string;
+}

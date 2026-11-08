@@ -22,6 +22,7 @@ import { crearRutasPronostico } from './routes/pronostico.js';
 import { crearServicioPronostico } from './services/pronostico.js';
 import type { ObtenerCachePronostico, ServicioPronostico } from './services/pronostico.js';
 import { crearRutasCalendario } from './routes/calendario.js';
+import { crearRutasRotaciones } from './routes/rotaciones.js';
 
 export function crearAplicacion(configuracion: ConfiguracionServidor, dependencias: {
   obtenerUsuarios?: ObtenerUsuarios; obtenerSecreto?: () => string;
@@ -56,6 +57,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   aplicacion.use('/api', crearRutasPronostico(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarPronostico ?? crearServicioPronostico(dependencias.obtenerCachePronostico ?? (() => obtenerClientePrisma().climaCache))));
   const consultarClima = dependencias.consultarClima ?? crearServicioClima(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache));
   aplicacion.use('/api', crearRutasCalendario(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarClima));
+  aplicacion.use('/api', crearRutasRotaciones(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarClima));
   aplicacion.use('/api', crearRutasClima(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarClima));
   aplicacion.use('/api', crearRutasSiembras(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto)));
   aplicacion.use('/api/terrenos', autenticar(obtenerUsuarios, obtenerSecreto), crearRutasTerrenos(obtenerBase, dependencias.obtenerAltitud ?? crearServicioElevacion()));

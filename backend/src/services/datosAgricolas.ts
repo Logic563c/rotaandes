@@ -1,7 +1,7 @@
 import type { Cultivo, Terreno, Siembra, PrismaClient } from '../generated/prisma/client.js';
 import type { UsuarioPublico } from './autenticacion.js';
 
-export type BaseAgricola = Pick<PrismaClient, 'terreno' | 'siembra' | 'cultivo'>;
+export type BaseAgricola = Pick<PrismaClient, 'terreno' | 'siembra' | 'cultivo' | 'plantillaRotacion'>;
 export type ObtenerBaseAgricola = () => BaseAgricola;
 
 export function filtroTerrenos(usuario: UsuarioPublico) {
