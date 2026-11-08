@@ -6,6 +6,7 @@ import type { RespuestaClima } from '../types/api';
 import type { RespuestaPronostico } from '../types/api';
 import type { EscenarioCalendario, RespuestaCalendario } from '../types/api';
 import type { RespuestaRotaciones } from '../types/api';
+import type { TipoCapa, ConsultaCapaVisual, RespuestaCapaVisual } from '../types/api';
 import { validarUrlPublicacion } from './configuracionPublicacion';
 
 export class ErrorApi extends Error {
@@ -203,4 +204,37 @@ export async function obtenerResultadosEscenario(token: string, terrenoId: strin
     throw new ErrorApi('La respuesta no corresponde al escenario solicitado. Reintenta la consulta.');
   }
   return { calendario, rotaciones };
+}
+
+const urlOficialCapa = z.url().refine((valor) => { const url = new URL(valor); return url.protocol === 'https:' && !url.username && !url.password && ['doi.org', 'gibs.earthdata.nasa.gov'].includes(url.hostname); });
+const esquemaMetadatosCapa = z.object({
+  tipo: z.enum(['ndvi', 'humedad_suelo']), nombre: z.string().min(1), producto: z.enum(['MOD13Q1', 'SPL3SMP_E']), version_catalogo: z.string(), resolucion_m: numero.int().positive(),
+  unidad: z.string().min(1), frecuencia: z.string(), fuente: urlOficialCapa, leyenda_url: urlOficialCapa,
+  colores: z.array(z.string().regex(/^#[a-f0-9]{6}$/i)).length(6), valores_leyenda: z.array(numero).length(6),
+  limites_interpretacion: z.string().min(1), calidad_original: z.string().min(1), procesamiento: z.string().min(1), aviso: z.string().min(1),
+  formato: z.literal('WMS_PNG'), fuente_visual: z.literal('NASA GIBS'), proyeccion_imagen: z.literal('EPSG:3857'),
+  anio: numero.int().min(2023).max(2024), mes: numero.int().min(1).max(12), fecha: z.iso.date(), fin_composicion: z.iso.date(),
+  fechas_disponibles: z.array(z.iso.date()).min(1).max(31), limites: z.tuple([z.literal(-79.45), z.literal(-1.3), z.literal(-78.3), z.literal(-0.3)]),
+  tamano_imagen: z.object({ ancho: z.literal(920), alto: z.literal(800) }), url_fuente: urlOficialCapa,
+  estado_imagen: z.enum(['visible', 'sin_pixeles_visibles']), sha256: z.string().regex(/^[a-f0-9]{64}$/), consultado_en: z.iso.datetime(), origen: z.enum(['gibs', 'cache']),
+}).refine((datos) => datos.fechas_disponibles.includes(datos.fecha) && new Set(datos.fechas_disponibles).size === datos.fechas_disponibles.length
+  && datos.fechas_disponibles.every((fecha) => fecha.startsWith(`${datos.anio}-${String(datos.mes).padStart(2, '0')}-`)) && datos.fin_composicion >= datos.fecha
+  && (datos.tipo === 'ndvi' ? datos.producto === 'MOD13Q1' && datos.resolucion_m === 250 : datos.producto === 'SPL3SMP_E' && datos.resolucion_m === 9000));
+
+export async function obtenerCapaVisual(token: string, tipo: TipoCapa, parametros: ConsultaCapaVisual, signal?: AbortSignal): Promise<RespuestaCapaVisual> {
+  if (!z.enum(['ndvi', 'humedad_suelo']).safeParse(tipo).success || !z.strictObject({ anio: numero.int().min(2023).max(2024), mes: numero.int().min(1).max(12), fecha: z.iso.date().optional() }).safeParse(parametros).success) throw new ErrorApi('Selección de capa inválida.');
+  const consulta = new URLSearchParams({ anio: String(parametros.anio), mes: String(parametros.mes), ...(parametros.fecha ? { fecha: parametros.fecha } : {}) });
+  const metadatos = comprobarRespuesta(esquemaMetadatosCapa, await solicitar(`/capas-visuales/${tipo}?${consulta}`, 'GET', token, undefined, signal));
+  if (metadatos.tipo !== tipo || metadatos.anio !== parametros.anio || metadatos.mes !== parametros.mes || (parametros.fecha && metadatos.fecha !== parametros.fecha)) throw new ErrorApi('La imagen no corresponde a la selección solicitada.');
+  if (metadatos.estado_imagen === 'sin_pixeles_visibles') return { metadatos, imagen: null };
+  consulta.set('fecha', metadatos.fecha);
+  try {
+    const respuesta = await fetch(obtenerUrl(`/capas-visuales/${tipo}/imagen?${consulta}`), { method: 'GET', credentials: 'omit', cache: 'no-store', headers: { Accept: 'image/png', Authorization: `Bearer ${token}` }, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000) });
+    if (!respuesta.ok) throw new ErrorApi('No se pudo cargar la imagen de NASA. Reintenta la consulta.', respuesta.status);
+    if (respuesta.headers.get('content-type')?.split(';')[0] !== 'image/png' || Number(respuesta.headers.get('content-length') ?? 0) > 2097152) throw new ErrorApi('La respuesta no contiene una imagen PNG válida.');
+    const imagen = await respuesta.blob(); if (!imagen.size || imagen.size > 2097152) throw new ErrorApi('Tamaño de imagen inválido.');
+    const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await imagen.arrayBuffer()))).map((valor) => valor.toString(16).padStart(2, '0')).join('');
+    if (hash !== metadatos.sha256) throw new ErrorApi('La imagen cambió durante la consulta. Reintenta para comprobar su procedencia.');
+    return { metadatos, imagen };
+  } catch (error: unknown) { if (error instanceof ErrorApi) throw error; throw new ErrorApi('No se pudo descargar la imagen de NASA. Comprueba la conexión y reintenta.'); }
 }

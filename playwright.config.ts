@@ -5,7 +5,7 @@ config({ path: 'backend/.env', quiet: true });
 
 export default defineConfig({
   testDir: './tests/navegador',
-  testIgnore: ['**/primeraEntrega.spec.ts', '**/rotaciones.spec.ts', '**/escenarios.spec.ts'],
+  testIgnore: ['**/primeraEntrega.spec.ts', '**/rotaciones.spec.ts', '**/escenarios.spec.ts', '**/capas.spec.ts'],
   fullyParallel: false,
   workers: 1,
   reporter: 'list',

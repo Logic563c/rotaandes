@@ -23,12 +23,16 @@ import { crearServicioPronostico } from './services/pronostico.js';
 import type { ObtenerCachePronostico, ServicioPronostico } from './services/pronostico.js';
 import { crearRutasCalendario } from './routes/calendario.js';
 import { crearRutasRotaciones } from './routes/rotaciones.js';
+import { crearRutasCapas } from './routes/capas.js';
+import { crearServicioCapas } from './services/capasSatelitales.js';
+import type { ServicioCapas } from './services/capasSatelitales.js';
 
 export function crearAplicacion(configuracion: ConfiguracionServidor, dependencias: {
   obtenerUsuarios?: ObtenerUsuarios; obtenerSecreto?: () => string;
   obtenerBase?: ObtenerBaseAgricola; obtenerAltitud?: ObtenerAltitud;
   obtenerCacheClima?: ObtenerCacheClima; consultarClima?: ServicioClima;
   obtenerCachePronostico?: ObtenerCachePronostico; consultarPronostico?: ServicioPronostico;
+  consultarCapas?: ServicioCapas;
 } = {}) {
   const aplicacion = express();
   aplicacion.disable('x-powered-by');
@@ -59,6 +63,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   aplicacion.use(express.json({ limit: '16kb', strict: true }));
   const obtenerUsuarios = dependencias.obtenerUsuarios ?? (() => obtenerClientePrisma().usuario);
   const obtenerSecreto = dependencias.obtenerSecreto ?? (() => obtenerSecretoJwt());
+  aplicacion.use('/api', crearRutasCapas(autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarCapas ?? crearServicioCapas()));
   aplicacion.use('/api/auth', crearRutasAuth(obtenerUsuarios, obtenerSecreto));
   aplicacion.use('/api/perfil', crearRutasPerfil(obtenerUsuarios, obtenerSecreto));
   const obtenerBase = dependencias.obtenerBase ?? obtenerClientePrisma;

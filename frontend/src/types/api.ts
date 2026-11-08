@@ -77,3 +77,15 @@ export interface RespuestaRotaciones {
   inicio_comun: string; escenario: EscenarioCalendario; metodologia: { version: 'heuristica_rotaciones_v1'; peso_riesgo: number; prioridades: { agua: number | null; suelo: number | null; ingresos: number | null }; aviso: string };
   clima: RespuestaCalendario['clima'] | null; advertencias: string[]; aviso: string;
 }
+
+export type TipoCapa = 'ndvi' | 'humedad_suelo';
+export interface ConsultaCapaVisual { anio: number; mes: number; fecha?: string }
+export interface MetadatosCapaVisual {
+  tipo: TipoCapa; nombre: string; producto: 'MOD13Q1' | 'SPL3SMP_E'; version_catalogo: string; resolucion_m: number;
+  unidad: string; frecuencia: string; fuente: string; leyenda_url: string; colores: string[]; valores_leyenda: number[];
+  limites_interpretacion: string; calidad_original: string; procesamiento: string; aviso: string;
+  formato: 'WMS_PNG'; fuente_visual: 'NASA GIBS'; proyeccion_imagen: 'EPSG:3857'; anio: number; mes: number; fecha: string; fin_composicion: string;
+  fechas_disponibles: string[]; limites: [number, number, number, number]; tamano_imagen: { ancho: number; alto: number }; url_fuente: string;
+  estado_imagen: 'visible' | 'sin_pixeles_visibles'; sha256: string; consultado_en: string; origen: 'gibs' | 'cache';
+}
+export interface RespuestaCapaVisual { metadatos: MetadatosCapaVisual; imagen: Blob | null }

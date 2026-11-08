@@ -2,7 +2,7 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones y simulador visual de escenarios. Tendencias, capas satelitales, panel técnico avanzado y reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. El GeoJSON satelital analítico, las tendencias, el panel técnico avanzado y los reportes siguen pendientes.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
@@ -229,6 +229,29 @@ Es una **simulación hipotética**, sin validez predictiva ni validación agron�
 `npm.cmd run test:escenarios` compila y ejecuta el recorrido del simulador en escritorio/celular con PostgreSQL aislado y climatología controlada. `test:e2e` y `check` lo incluyen como tercer proceso, después de las suites anteriores, conservando las cuotas de autenticación. Las evidencias están en `test-results/escenarios/`, ignorado por Git. No ejecutar simultáneamente suites que escriban en la misma base aislada.
 
 El cierre del simulador ejecutó `check` con código 0: **262 backend, 103 frontend, 127 PostgreSQL y 22 E2E; 514 pruebas aprobadas**. Los dos recorridos nuevos verificaron el cálculo real con datos controlados, la ausencia de escrituras de simulación y el aislamiento de cuentas. Esta validación local no publica la actualización.
+
+## Visualizar MODIS y SMAP
+
+En el mapa de **Mis terrenos** o del detalle, abrir **Explorar capas NASA**. Elegir NDVI o humedad superficial SMAP; año 2023/2024, mes y fecha de composición/adquisición. Se muestra una capa a la vez, con opción de volver al mapa base o retirar la cartografía debajo. Los marcadores conservan los terrenos autorizados del usuario.
+
+La alternativa GIBS fue autorizada al comprobar que AppEEARS requiere Earthdata sin acceso local configurado. Se verificaron imágenes NASA reales y sus leyendas: MODIS MOD13Q1 (catálogo 061, 250 m, composición de 16 días) y SMAP SPL3SMP_E (catálogo 006, malla 9 km, capa diurna diaria). La versión es la del catálogo de referencia; el proveedor sirve el alias `best`. El recorte es rectangular sobre Cotopaxi y alrededores, no un límite provincial. Las imágenes pueden tener cobertura parcial, especialmente SMAP en la zona andina.
+
+**No son GeoJSON analíticos ni promedios mensuales.** El mes selecciona fechas originales del catálogo. No se obtienen valores de los colores ni se infieren rendimientos, sequías, plagas o humedad exacta de una parcela. SMAP no es RH2M ni los índices modelados de NASA POWER.
+
+- `GET /api/capas/:tipo?mes=1`: valida tipo/mes y responde **503** porque no hay GeoJSON procesado; no lo sustituye por PNG.
+- `GET /api/capas-visuales/:tipo?anio=2023&mes=1&fecha=...`: metadatos, procedencia y visibilidad de la imagen WMS.
+- `GET /api/capas-visuales/:tipo/imagen?...`: PNG validado. Las tres rutas exigen JWT; no reciben URL, ruta, coordenadas o propietario arbitrarios.
+
+La descarga se realiza desde backend. El navegador comprueba SHA-256, crea una URL temporal local y la libera al cambiar capa o sesión. Caché de imágenes en memoria durante 24 horas, máximo 32 imágenes/16 MiB, distinta de `clima_cache`; límites de tamaño, tiempo y solicitudes. Un PNG transparente se identifica como **sin píxeles visibles**, sin asignar cero ni otra fecha. El detalle técnico y las limitaciones pendientes están en [INFORME_CAPAS_SATELITALES.md](docs/INFORME_CAPAS_SATELITALES.md).
+
+```powershell
+npm.cmd run capas:verificar --workspace backend
+npm.cmd run test:capas
+```
+
+El primer comando comprueba NASA GIBS en vivo sin SQL y conserva imágenes/metadatos en `.tmp/evidencias-capas/`. El segundo compila y prueba escritorio/celular con respuestas controladas e imágenes NASA archivadas con procedencia. `check` incluye ese recorrido como cuarto proceso Playwright, conservando las cuotas de autenticación. El modo separado `ROTAANDES_E2E_GIBS_REAL=1` de `playwright.capas.config.ts` verifica imágenes reales desde el backend sin interceptarlas; los casos finales de error/ausencia son simulaciones explícitas. Ninguno publica cambios.
+
+Validación local del visor: `check` terminó con código 0, **293 backend + 114 frontend + 130 PostgreSQL + 24 E2E = 561 pruebas aprobadas**. Además pasaron dos E2E con NASA GIBS real y la comprobación independiente de ambas imágenes. La rama `feat/capas-satelitales` mantiene esta actualización local; la versión pública anterior no se modifica.
 
 Las fórmulas cuantitativas no estaban definidas en el documento original; se diseñaron con autorización explícita del usuario y se documentan como **heurística referencial sin validación agronómica**. Los índices 0–100 no representan litros, dinero, rendimientos o probabilidades. Total: promedio ponderado de agua, suelo, valor de mercado y compatibilidad climática; esta última tiene peso fijo 3, declarado, porque el perfil solo define las otras tres prioridades. Ver fórmulas, normalización y penalización de familias en [el informe](docs/INFORME_ROTACIONES.md).
 

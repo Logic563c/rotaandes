@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { Marco } from '../components/Marco';
-import { MapaDiferido } from '../components/MapaDiferido';
+import { VisorCapas } from '../components/VisorCapas';
 import { ConfirmarEliminacion } from '../components/ConfirmarEliminacion';
 import { EstadoConsulta } from '../components/EstadoConsulta';
 import { listarTerrenos, eliminarTerreno } from '../lib/api';
@@ -29,7 +29,7 @@ export function Terrenos() {
     {mensaje && <p role="status" className="mt-6 rounded-xl border border-pino/20 bg-white p-4">{mensaje}</p>}
     <div className="mt-8"><EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} /></div>
     {consulta.isSuccess && <div className="mt-7 grid items-start gap-7 lg:grid-cols-[1.1fr_1fr]">
-      <MapaDiferido terrenos={consulta.data} />
+      <VisorCapas key={sesion.usuario?.id} terrenos={consulta.data} />
       <section aria-label="Listado de terrenos" className="space-y-4">
         {consulta.data.length === 0 && <div className="tarjeta p-7"><h2 className="font-campo text-2xl">{esAgricultor ? 'Tu primera parcela empieza aquí' : 'Aún no hay terrenos registrados'}</h2><p className="mt-3 leading-relaxed text-oliva">{esAgricultor ? 'Añade un punto en el mapa, su nombre y el área que declaras. Después podrás registrar tus siembras.' : 'Los terrenos aparecerán cuando los agricultores los registren.'}</p></div>}
         {consulta.data.map((terreno, indice) => <article className="tarjeta p-6" key={terreno.id}>
