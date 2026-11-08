@@ -5,7 +5,7 @@
 \if :{?clave_app}
 \else
   \echo 'Falta la variable privada del rol de aplicación. Operación detenida.'
-  \quit 1
+  DO $$ BEGIN RAISE EXCEPTION 'Falta la variable privada del rol de aplicación.'; END $$;
 \endif
 
 SELECT current_setting('server_version_num')::int >= 180000
@@ -13,7 +13,7 @@ SELECT current_setting('server_version_num')::int >= 180000
 \if :version_compatible
 \else
   \echo 'Se requiere PostgreSQL 18. No se cambia la instancia existente.'
-  \quit 1
+  DO $$ BEGIN RAISE EXCEPTION 'Se requiere PostgreSQL 18.'; END $$;
 \endif
 
 SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rotaandes_app') AS rol_existe \gset
@@ -24,7 +24,7 @@ SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rotaandes_app') AS rol_ex
   \if :rol_seguro
   \else
     \echo 'El rol existente tiene permisos incompatibles. No se modifica.'
-    \quit 1
+    DO $$ BEGIN RAISE EXCEPTION 'El rol existente tiene permisos incompatibles.'; END $$;
   \endif
 \else
   -- Solo esta sesión administrativa: no registrar sentencias con la clave.
@@ -45,7 +45,7 @@ SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'rotaandes_prod') AS ba
   \if :base_compatible
   \else
     \echo 'La base existente tiene otro propietario o codificación. No se modifica.'
-    \quit 1
+    DO $$ BEGIN RAISE EXCEPTION 'La base existente tiene otro propietario o codificación.'; END $$;
   \endif
 \else
   CREATE DATABASE rotaandes_prod OWNER rotaandes_app ENCODING 'UTF8' TEMPLATE template0;

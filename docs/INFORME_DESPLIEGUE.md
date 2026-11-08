@@ -1,158 +1,167 @@
-# Preparación de publicación de RotaAndes
+# Publicación de RotaAndes
 
-Fecha de comprobación local: 8 de noviembre de 2026.
+Comprobaciones realizadas el 8 de noviembre de 2026. **Aplicación publicada y recorrido real aprobado.**
 
-**Estado: repositorio privado creado y verificado; aplicación todavía no publicada.** No existe una URL pública verificada del frontend ni del backend. El usuario aprobó crear [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes) y enviar `b81cda83b7f9d31b799f70cc1d4114f62cc0ed7a` y la etiqueta original: se verificaron sus 172 archivos, diez commits de historia, privacidad y rama predeterminada `release/publicacion`. GitHub Pages está desactivado. No se han creado servicios, migrado producción ni activado despliegues. La adaptación posterior a Railway IaC requiere un nuevo envío aprobado.
+- Frontend: [https://rotaandes.vercel.app](https://rotaandes.vercel.app).
+- Backend: [https://backend-production-954a9.up.railway.app](https://backend-production-954a9.up.railway.app); [salud HTTPS](https://backend-production-954a9.up.railway.app/api/health).
+- Código privado: [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes), rama release/publicacion.
+- Revisión de aplicación desplegada en ambos proveedores: **ec413cacf8c9e99ad60dbafe7365244e8f2dfd94**.
 
-## Origen y protección
+El frontend permite registro, login, perfil, terrenos, siembras, mapa, climatología, pronóstico, calendario y comparación de rotaciones. Se comprobó con cuentas temporales y datos persistidos en PostgreSQL de producción, sin interceptar HTTP ni precargar respuestas climáticas simuladas. Las cuentas y sus registros se eliminaron al finalizar. Los commits de cierre sincronizan infraestructura, guardas del bootstrap y documentación; no añaden funcionalidades ni cambian el código de negocio desplegado.
 
-- Base: `54645c960915f273a9e8cb4f7e0432e768c6928e`, comparador ya implementado.
-- Rama de preparación: `release/publicacion`, sin modificar `feat/rotaciones`.
-- `main` permanece en `ee4f8c8542744ddecf64a5f2ab58d6993e6e3431`.
-- Etiqueta local anotada `v0.1.0-primera-entrega`: objeto `9d5f716dcf9c4cd357066404879bf5e767409dd3`, commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`.
-- `PROYECTO.md`, `AGENTS.md`, esquema y migración original no se modifican. No se implementan nuevos módulos agrícolas.
+## Servicios y arquitectura real
 
-El commit inicial de preparación es `b81cda8`, `Preparar publicacion segura en Railway y Vercel`, ya enviado con autorización. **No hay un commit de producción desplegado.** La adaptación posterior se identifica con `Actualizar infraestructura Railway y estado de publicacion`; este informe no incluye su propio hash para evitar una referencia circular.
-
-## Plataformas y permisos
-
-| Plataforma | Comprobación realizada | Situación pendiente |
+| Componente | Recurso verificado | Configuración |
 | --- | --- | --- |
-| GitHub | Creación y push aprobados y ejecutados; origen `https://github.com/Logic563c/rotaandes.git`, privado, rama `release/publicacion`, `b81cda8` y etiqueta original comprobados por API. | Autorizar cualquier nuevo envío; no se publicó `main` ni otras ramas. |
-| Vercel | Sesión completada; contexto `logic563`, rol OWNER, plan Hobby; sin proyecto RotaAndes. | Aprobar proyecto/publicación para la demostración no comercial, asignar URL y variables reales. |
-| Railway | Sesión completada; único espacio personal `414c64a6-756d-4ba8-8a67-c43ffe979595`, cero proyectos. API: HOBBY en prueba, 30 días restantes y 5 USD de crédito; consumo y factura actuales cero. | Aprobar recursos dentro del crédito, migración y activación. No se contrata una suscripción ni se aceptan cargos adicionales automáticamente. |
+| GitHub | Logic563c/rotaandes, privado | Rama predeterminada release/publicacion; Pages desactivado |
+| Railway | Proyecto rotaandes, 948127e6-92fc-487f-a974-7315f6a3c1cd | Entorno production; único espacio personal autorizado |
+| PostgreSQL | Servicio postgres, 4dee926d-e026-4a17-a4cc-b16074f1f6c7 | PostgreSQL 18.6, volumen persistente de 500 MB, sin TCP público |
+| Backend | Servicio backend, def38930-c4b9-4d4f-afb3-13c6e6e9a430 | Node 24.20.0, Prisma 7.10.1, una réplica en sfo, 512 MiB/1 CPU |
+| Vercel | Proyecto rotaandes, prj_nfVORQuty8Uj0Psw0B9YUQJj26Hv, contexto logic563 | Plan Hobby; Node de compilación configurado a 24.x; frontend estático |
 
-No se han contratado recursos. La prueba y su crédito no garantizan disponibilidad permanente: vigilar consumo, vencimiento y persistencia del volumen. Cualquier PostgreSQL persistente, volumen, backend o recurso adicional requiere aprobación previa. No se seleccionan proyectos ajenos ni se duplican servicios existentes. No se guardan contraseñas o tokens en la documentación.
+El navegador recibe React/Vite desde Vercel y llama por HTTPS al backend Railway con Bearer. Express consulta PostgreSQL mediante red privada y el rol rotaandes_app. NASA POWER y Open-Meteo se consultan desde backend; OpenStreetMap proporciona las teselas visuales con atribución. No se copiaron bases ni credenciales locales.
 
-## Arquitectura preparada
+El backend se verificó en el despliegue b791e7dd-15db-4e17-ba46-92bb12b68b55. Vercel publicó dpl_B6CtJ2XpbRpoVb5pY5MkEuSWrahW: primero se compiló sin asignar el dominio principal y después se promovió al comprobar la salud del backend. La URL técnica es rotaandes-aego8elxe-logic563.vercel.app; la dirección para compartir es rotaandes.vercel.app.
 
-```text
-Navegador --HTTPS--> Vercel: React/Vite
-         --HTTPS + Bearer--> Railway: Express/Node
-                              |-- red privada --> PostgreSQL de producción
-                              |-- HTTPS --> NASA POWER / Open-Meteo
-```
+## Autorizaciones y protección de Git
 
-Es una arquitectura propuesta, todavía sin infraestructura creada. El navegador consume la API mediante `frontend/src/lib/api.ts`; las teselas públicas OpenStreetMap mantienen su atribución y carga visual habitual. Las APIs científicas se consultan desde backend. No se copian las bases locales ni se altera su configuración.
+El usuario eligió Logic563c y después aprobó expresamente crear el repositorio privado y enviar b81cda8 junto con la etiqueta original. Posteriormente autorizó enviar ec413ca y crear/publicar Railway y Vercel, inicializar la base, migrar y probar dentro del crédito Trial, sin contratar planes ni aceptar cargos adicionales. Las operaciones se limitaron a esos espacios y recursos.
 
-### Compilación y arranque
+- Base anterior: 54645c960915f273a9e8cb4f7e0432e768c6928e, conservada en feat/rotaciones.
+- main permanece en ee4f8c8542744ddecf64a5f2ab58d6993e6e3431; no se publicó esa rama ni se hizo merge.
+- Etiqueta anotada v0.1.0-primera-entrega: objeto 9d5f716dcf9c4cd357066404879bf5e767409dd3, commit 92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9, conservada localmente y en GitHub.
+- PROYECTO.md, AGENTS.md, esquema y migración original permanecen intactos en Git.
+- Sin force push, cuentas demo permanentes ni módulos de las fases posteriores.
 
-Los dos servicios utilizan **la raíz del monorepo**: `package-lock.json` y workspaces de raíz. Seleccionar solamente `backend/` o `frontend/` como raíz de instalación perdería ese contexto.
+Antes de los envíos se revisaron contenido e historial: once commits y 298 blobs hasta ec413ca, sin coincidencias de secretos reales. Los dos primeros commits incorporaron 29 y 12 archivos respectivamente. La entrega final comunica por separado el hash de cierre y el estado del último envío aprobado.
 
-| Destino | Configuración preparada |
+## Instalación, compilación y arranque
+
+Ambos proveedores utilizan **la raíz del monorepo**, el lockfile único y los workspaces. Seleccionar solamente backend o frontend como raíz de instalación perdería ese contexto.
+
+| Fase | Comando o ajuste efectivo |
 | --- | --- |
-| Railway | `.railway/railway.ts`, builder Railpack, Node 24.20.0, npm 11.19.0 |
-| Instalación/backend | `npm ci --include=dev` y `npm run build --workspace backend`; generación Prisma 7.10.1 y TypeScript |
-| Predeploy | `npm run produccion:preparar --workspace backend`, exclusivamente tras autorización |
-| Arranque | `npm run start --workspace backend`, servidor compilado, `0.0.0.0`, PORT de Railway |
-| Healthcheck | `/api/health`, 60 segundos; una réplica, reinicios limitados ON_FAILURE |
-| Vercel | `vercel.json`, instalación desde raíz, `npm run build:publicacion --workspace frontend`, salida `frontend/dist` |
-| SPA | Rewrite a `/index.html`, pendiente comprobar recargas de `/registro`, `/login` y detalle en URL real |
-| Publicación Git | Automática desactivada en Vercel; backend IaC sin source GitHub para no activar autodeploy, carga por CLI solo de revisiones limpias/aprobadas de `release/publicacion` |
+| Instalación Railpack | npm ci --include=dev, ejecutado una sola vez en su fase de instalación |
+| Compilación backend | npm run build --workspace backend, incluyendo Prisma Generate y TypeScript |
+| Predeploy | npm run produccion:preparar --workspace backend |
+| Arranque | npm run start --workspace backend; 0.0.0.0 y puerto del servicio |
+| Healthcheck | /api/health, 60 segundos |
+| Fallos de proceso | ON_FAILURE, máximo tres reintentos |
+| Instalación Vercel | npm ci --include=dev |
+| Compilación frontend | npm run build:publicacion --workspace frontend |
+| Salida frontend | frontend/dist; rutas SPA mediante vercel.json |
 
-Railpack conserva devDependencies porque el predeploy utiliza Prisma CLI/tsx; no se cargan dependencias locales ni binarios Windows. No se ha ejecutado todavía una compilación Linux/Railpack o Vercel real. Las verificaciones aquí reportadas son de Windows local.
+Se fijan Node 24.20.0 y npm 11.19.0 para Railpack y se conservan las herramientas de desarrollo necesarias para Prisma CLI/tsx en el predeploy. El modo publicacion rechaza localhost y exige el origen HTTPS de Railway. El build local habitual sigue destinado a desarrollo y Playwright, y no se utiliza como artefacto público.
 
-La consulta del CLI 5.71.0 y la documentación actual detectó que `railway.json` solo se conserva para servicios antiguos y deja de leerse el 1 de diciembre de 2026. Se retiró el archivo inicial antes de crear servicios. La configuración TypeScript utiliza el SDK oficial `railway@3.16.0` como herramienta de desarrollo, fija proyecto `rotaandes`/entorno `production` y rechaza otros contextos. Declara únicamente PostgreSQL privado y backend (una réplica, límite de 512 MiB/1 CPU). Primero se revisa el plan: ninguna eliminación está autorizada. No se aplica IaC sin aprobación.
+Railway ya no permite railway.json en servicios nuevos. Se sustituyó antes del aprovisionamiento por .railway/railway.ts, utilizando el SDK oficial railway 3.16.0 únicamente como herramienta de desarrollo. La declaración rechaza otros proyectos/entornos; describe PostgreSQL privado y backend sin source GitHub. El archivo IaC es la única excepción versionable dentro de .railway; sus metadatos privados siguen ignorados.
 
-### Variables privadas y públicas
+No hay autodeploy Git: Vercel tiene deploymentEnabled=false y no se conectó un source GitHub en ninguno de los servicios web. Cada carga utiliza una revisión limpia y aprobada de release/publicacion. Se exportó ec413ca desde Git y se comprobó el manifiesto Vercel, evitando resultados y archivos locales ajenos al commit; el backend también se cargó desde esa exportación limpia.
 
-| Variable | Uso |
+## Variables, sin valores secretos
+
+| Variable | Destino y finalidad |
 | --- | --- |
-| `NODE_ENV=production` | Perfil de producción, sin cargar `.env` local |
-| `PORT` | Inyectado por Railway |
-| `TRUST_PROXY_HOPS=1` | Un salto de proxy; comprobar IP efectiva/límites en la infraestructura real |
-| `CORS_ORIGIN` | Un origen HTTPS exacto del frontend Vercel, sin comodines |
-| `DATABASE_URL` | Referencia privada al PostgreSQL autorizado; nunca URL local/pública ni valor VITE |
-| `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_USER` | Pines del destino autorizado; deben coincidir con la URL privada |
-| `JWT_SECRET` | Aleatorio y robusto, generado para producción; no reutilizar el local |
-| `UMBRAL_HELADA_C` | Configuración opcional existente; predeterminado 2 °C |
-| `RAILPACK_NODE_VERSION=24.20.0` | Versión de Node |
-| `RAILPACK_NODE_NPM_INSTALL=npm ci --include=dev` | Instalación reproducible con herramientas del predeploy |
-| `RAILPACK_NO_SPA=true` | Backend sin servidor SPA automático |
-| `RAILPACK_PRUNE_DEPS=false` | Mantener herramientas requeridas en el predeploy |
-| `VITE_API_URL` | Origen HTTPS real del backend Railway; es información pública compilada |
-| `ROTAANDES_APP_PASSWORD` | Variable compartida privada, referencia únicamente desde PostgreSQL para inicializar el rol y componer su URL |
-| `ROTAANDES_JWT_SECRET` | Variable compartida privada referenciada por el JWT_SECRET del backend |
-| `ROTAANDES_CORS_ORIGIN` | Variable compartida con el origen público exacto del frontend |
+| NODE_ENV=production | Backend, sin cargar .env local |
+| PORT | Servicio Railway; dominio backend dirigido al puerto 8080 |
+| TRUST_PROXY_HOPS=1 | Un salto de proxy, sin confiar indiscriminadamente |
+| CORS_ORIGIN | Exactamente https://rotaandes.vercel.app |
+| DATABASE_URL | Referencia privada a ROTAANDES_DATABASE_URL del servicio PostgreSQL |
+| DATABASE_HOST / DATABASE_NAME / DATABASE_USER | Pines del destino: host privado, rotaandes_prod y rotaandes_app |
+| JWT_SECRET | Referencia a ROTAANDES_JWT_SECRET compartido y sellado |
+| ROTAANDES_APP_PASSWORD | Secreto compartido sellado; solo PostgreSQL lo utiliza para el rol y su URL |
+| ROTAANDES_CORS_ORIGIN | Origen público compartido del frontend |
+| UMBRAL_HELADA_C | 2 °C, configuración existente |
+| RAILPACK_NODE_VERSION | 24.20.0 |
+| RAILPACK_NODE_NPM_INSTALL | npm ci --include=dev |
+| RAILPACK_NO_SPA / RAILPACK_PRUNE_DEPS | true / false, backend sin SPA automático y herramientas de predeploy conservadas |
+| VITE_API_URL | Única configuración pública del frontend: origen HTTPS real del backend |
 
-Las plantillas `backend/.env.production.example` y `frontend/.env.production.example` contienen campos vacíos/configuración pública, sin secretos. Las referencias entre servicios deben configurarse dentro de Railway. Generar las dos claves con `node:crypto`, guardarlas selladas en la plataforma y no pasarlas como argumentos ni registrarlas. No usar el generador determinista del contexto SDK para secretos. Los privilegios y el aislamiento reales todavía deben comprobarse en la base seleccionada. Verificar red privada, ausencia de TCP público y persistencia/volumen antes de migrar.
+Las claves nuevas se generaron con node:crypto, se enviaron mediante entrada de proceso y se guardaron selladas en Railway; no se pasaron como argumentos ni se versionaron. No se utilizó el generador determinista del contexto SDK para secretos. El backend no recibe las credenciales administrativas del proveedor. Las plantillas .env.production.example contienen campos vacíos y configuración pública.
 
-## Persistencia y migraciones
+## PostgreSQL y migraciones
 
-Se conserva Prisma CLI/Client/adapter **7.10.1**, la migración **20261107000100_esquema_inicial** y las seis tablas `usuarios`, `terrenos`, `cultivos`, `siembras`, `plantillas_rotacion`, `clima_cache`.
+Se creó exclusivamente rotaandes_prod, propietario rotaandes_app, en el PostgreSQL nuevo autorizado. El rol tiene LOGIN y no tiene SUPERUSER, CREATEDB, CREATEROLE, REPLICATION ni BYPASSRLS. Es propietario de su propia base y sus tablas; no es administrador de la instancia. El bootstrap SQL reutiliza recursos compatibles, no cambia contraseñas/propietarios existentes y se comprobó su idempotencia.
 
-`backend/prisma.produccion.config.ts` acepta únicamente producción y el destino privado fijado. `prepararProduccion.ts` consulta las tablas existentes y se detiene si encuentra otras en public; ejecuta `prisma migrate deploy`, comprueba las siete tablas contando `_prisma_migrations`, los cuatro CHECK de usuarios y las tres claves foráneas. Después ejecuta las funciones originales de semilla en transacción: diez cultivos y ocho plantillas. No crea usuarios ni siembras; no utiliza reset, migrate dev o db push ni cambia credenciales. El migrador captura su salida y devuelve mensajes controlados para evitar revelar conexiones.
+El predeploy ejecutó **prisma migrate deploy**, verificó el esquema y cargó las semillas originales en transacción. No se ejecutaron migrate dev, reset, db push ni operaciones destructivas. Prisma 7.10.1 informó que el esquema está actualizado desde el contenedor de producción.
 
-Antes del predeploy, `backend/scripts/configurarRolProduccion.sql` se ejecutará por SSH únicamente dentro del PostgreSQL nuevo autorizado. Requiere versión 18, obtiene la clave privada desde el entorno, suprime registro de sentencias sensibles en esa sesión y crea `rotaandes_app` sin SUPERUSER/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS y `rotaandes_prod` UTF8 si faltan. Reutiliza recursos compatibles y se detiene ante diferencias; no cambia contraseñas ni propietarios existentes. El backend referencia la URL del rol de aplicación y no recibe credenciales administrativas. Esta preparación no es una migración del modelo y todavía no se ha ejecutado.
-
-**Ejecución de producción pendiente de autorización y base seleccionada.** No se afirma que la nueva utilidad haya aplicado migraciones en Railway. El healthcheck conserva `{ "ok": true }`; el arranque de producción comprueba PostgreSQL mediante una consulta real antes de escuchar.
-
-Verificación local posterior a las pruebas:
-
-| Base | Usuarios | Terrenos | Cultivos | Siembras | Plantillas | Caché |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `rotaandes_dev` | 0 | 0 | 10 | 0 | 8 | 0 |
-| `rotaandes_pruebas_36cbc85c` | 0 | 0 | 0 | 0 | 0 | 0 |
-
-Ambas mantienen la migración original aplicada. No se borraron/recrearon bases ni se dejaron cuentas/registros de las pruebas. No se usaron datos locales de personas para una publicación.
-
-## Seguridad y defectos corregidos
-
-1. El servidor y validación de base admitían exclusivamente loopback/local: se creó un perfil explícito de producción con host/puerto, CORS exacto, red privada y pines de destino, conservando las restricciones locales.
-2. Una comprobación real del proceso mostró que `$connect()` podía inicializar el pool sin validar PostgreSQL y permitir escuchar con base inaccesible. Se añadió `SELECT 1`; la regresión falla antes de corregirlo y pasa después. El proceso compilado ahora termina con código 1 sin escuchar ni revelar el destino.
-3. La compilación local del frontend permitía conservar localhost: se añadió modo `publicacion` con validación del origen HTTPS. Se reprodujo además que la comprobación inicial de sufijos aceptaba dominios con comodín; los dos validadores ahora exigen nombres concretos y las regresiones correspondientes pasan. Los builds habituales siguen siendo locales para las pruebas, y no deben usarse para publicar.
-4. Se añadieron encabezados de seguridad y configuración SPA. La CSP permite estilos inline requeridos por Leaflet y teselas OpenStreetMap; scripts permanecen propios. CORS no admite comodines. Validar los encabezados efectivos en la URL real sigue pendiente.
-5. `.gitignore`, `.vercelignore` y `.railwayignore` excluyen metadatos de proveedores, entornos, claves y artefactos. ESLint excluye artefactos de `.tmp` y resultados generados que aparecieron durante una comprobación del bundle, sin desactivar análisis del código.
-
-Se conserva el almacenamiento de sesión, JWT, autorización por propietario, lectura técnica, contraseñas hash y límites de rutas existentes. Las pruebas anteriores continúan pasando. Falta verificar IP/proxy/límites, HTTPS, acceso entre usuarios y errores en producción; no equivalen a una auditoría de un servicio ya desplegado.
-
-## Comprobaciones ejecutadas
-
-| Comprobación | Resultado real local |
+| Verificación final | Resultado |
 | --- | --- |
-| `npm.cmd run check` | Código 0; incluye lint, typecheck, pruebas, PostgreSQL, build y Playwright |
-| Backend | 262 pruebas aprobadas, 17 archivos |
-| Frontend | 85 pruebas aprobadas, 9 archivos |
-| PostgreSQL aislado | 120 pruebas aprobadas, 8 archivos |
-| Playwright | 20 E2E: 16 casos y 4 recorridos integrales, escritorio/celular |
-| Total | **487 pruebas aprobadas** |
-| `npm.cmd audit --omit=dev` | Código 0, cero vulnerabilidades conocidas en esa consulta |
-| Proceso compilado de producción, destino inaccesible de prueba | Código 1 controlado; no abre puerto; no vuelca conexión |
-| Fábrica HTTP configurada para producción | Escucha localmente en `0.0.0.0`/puerto asignado, health 200 y CORS exacto |
-| Build de publicación con localhost | Rechazo esperado |
-| Build de publicación con origen HTTPS controlado | Código 0; sin fallback local ni valores privados reales en el bundle |
-| IaC, sin aplicar | Cuatro pruebas: rechazo de contextos ajenos, PostgreSQL sin TCP público, referencias privadas y backend sin autodeploy; TypeScript y ESLint del archivo verificados |
-| Git | Diff revisado; archivos privados ignorados; historia enviada de diez commits/287 blobs sin coincidencias de secretos reales |
+| Tablas originales | usuarios, terrenos, cultivos, siembras, plantillas_rotacion y clima_cache |
+| Migración | 20261107000100_esquema_inicial, terminada y sin pendientes |
+| Integridad | Cuatro CHECK de usuarios y tres claves foráneas; tabla _prisma_migrations adicional de Prisma |
+| Semillas permanentes | Diez cultivos y ocho plantillas originales; ningún usuario demo |
+| Registros temporales | Cuentas, terrenos y siembras de los recorridos eliminados por UUID y correo exactos |
+| Caché | Dos entradas genuinas de NASA/pronóstico, generadas por consultas reales; no fixtures agrícolas |
+| Aislamiento | Producción usa la red privada; desarrollo y pruebas continúan en sus bases locales originales |
 
-El dominio HTTPS usado para compilar en la prueba es ficticio, no se consulta y no se presenta como dirección de RotaAndes. Las URLs con credenciales detectadas en dos pruebas nuevas corresponden a fixtures explícitas sin credenciales reales, revisadas manualmente. La URL IaC contiene referencias privadas de Railway, nunca una clave literal. No se instalaron dependencias de aplicación; el lockfile añade únicamente el SDK de infraestructura y sus dos dependencias, con origen/integridad revisados.
+El checksum coincide exactamente con el archivo del artefacto desplegado. La exportación Git desde Windows conserva CRLF: se comprobó además igualdad con el SQL canónico de Git al normalizar únicamente los finales de línea. No se modificó el contenido de la migración ni su registro en PostgreSQL.
 
-Los E2E preservan autenticación, terrenos/siembras, NASA, pronóstico, calendario y rotaciones con respuestas climáticas **controladas**, SQL real aislado y limpieza. No acreditan un recorrido de producción con NASA/Open-Meteo reales. Las capturas locales permanecen en `test-results/` y `test-results/integral/`, ignoradas por Git; incluyen escritorio/celular del recorrido y comparador. **No existen capturas ni pruebas de un despliegue público en esta fase.** Los informes previos conservan las comprobaciones externas históricas; no se presentan como realizadas nuevamente en producción.
+## Recorrido real y evidencias
 
-## Archivos de esta preparación
+El recorrido completo terminó con código 0 en Edge, escritorio 1440×1000 y celular 390×844. No se interceptaron solicitudes ni se insertaron mocks en producción.
 
-- Plataforma: `.railway/railway.ts` (sustituye `railway.json`), `vercel.json`, `.railwayignore`, `.vercelignore`, `.gitignore`.
-- Backend: `package.json`, `prisma.config.ts`, nuevo `prisma.produccion.config.ts`, plantilla de entorno de producción y `scripts/prepararProduccion.ts`.
-- Servidor: `src/index.ts`, `src/aplicacion.ts`, `src/configuracion.ts`, `src/lib/configuracionBase.ts`, `src/lib/prisma.ts`.
-- Pruebas backend: `tests/configuracion.test.ts`, `tests/produccion.test.ts`, `tests/arranqueProduccion.test.ts`, `tests/infraestructura.test.ts`; bootstrap de rol/base: `scripts/configurarRolProduccion.sql`.
-- Frontend: `package.json`, `vite.config.ts`, `src/lib/api.ts`, `src/lib/configuracionPublicacion.ts` y su prueba, plantilla de entorno de producción.
-- Raíz/documentación: `package.json`, `package-lock.json`, `tsconfig.herramientas.json`, `eslint.config.mjs`, `README.md`, `docs/DECISIONES.md` y este informe.
+1. Portada HTTPS y registro de una cuenta temporal con clave aleatoria; cierre y login válidos.
+2. Perfil y prioridades guardadas: agua 5, suelo 2, ingresos 4.
+3. Selección en mapa y alternativa manual, punto de Latacunga -0.93/-78.62, altitud estimada real 2775 m.
+4. Terreno y dos siembras de prueba de papa/haba persistidos; fechas DATE sin desplazamiento.
+5. NASA POWER real y después caché válida: doce meses, periodo recibido 2001–2025; temperatura C y precipitación original mm/day, convertida por el módulo existente.
+6. Open-Meteo real: siete días, °C/mm, cero alertas en la respuesta observada. No se fabricaron heladas para la demostración.
+7. Calendario: 120 celdas; selección por teclado y explicación visible.
+8. Comparador: tres posiciones; patrón actual, una sugerencia evaluable y segunda sugerencia no determinada con advertencias. No se inventó otra alternativa para completar el ranking.
+9. Segunda cuenta: GET de terreno, siembras, clima, pronóstico, calendario y rotaciones ajenos devuelven 404; PUT ajeno también se rechaza.
+10. Cierre, nuevo login, recarga de detalle y persistencia; revisión móvil sin desbordamiento global.
+11. Reinicio confirmado por API y cambio real del inicio del proceso Node; salud 200 y las dos siembras conservadas; nuevo login posterior.
+12. Limpieza SQL limitada a las cuentas temporales; cero errores de consola y cero respuestas HTTP fallidas inesperadas en el recorrido aprobado.
 
-## Pasos pendientes para publicar
+La primera llamada de reinicio mediante el CLI agotó su espera y ese intento no se declaró aprobado. Se sustituyó el verificador por API más observación privada del proceso y se repitió con éxito. La primera respuesta NASA fue obtenida desde el proveedor; las repeticiones muestran caché real con su fecha original. El riesgo de helada sigue siendo preventivo y los índices de rotaciones son referenciales, sin moneda ni garantía agronómica.
 
-1. Aprobar el envío de la adaptación IaC posterior a `b81cda8`. El repositorio privado, su identidad y la etiqueta original ya están verificados; no sobrescribirlos ni forzar historia.
-2. Aprobar el proyecto `rotaandes` en el espacio personal Railway comprobado, PostgreSQL 18 privado y backend, sin contratar planes, dentro de los 5 USD de crédito de prueba. Revisar el plan de recursos antes de aplicarlo; no hay autorización para eliminaciones. Aprobar también el proyecto Vercel Hobby de demostración y la activación pública correspondiente.
-3. Preparar la base privada `rotaandes_prod` y el rol `rotaandes_app` mediante el script revisado, referencias privadas, secreto JWT nuevo, perfil de proxy, dominio backend y origen frontend. Verificar privilegios, volumen y ausencia de acceso público PostgreSQL. No copiar datos o claves locales.
-4. Obtener autorización de migración de esa base y de activación pública. Ejecutar el predeploy reproducible, verificar esquema, semillas y estado de migraciones.
-5. Crear/configurar Vercel autorizado con URL backend real y rama estable; no activar autodeploy de ramas de trabajo. Verificar health, CORS y SPA por HTTPS, sin confundir un build aprobado con una aplicación utilizable.
-6. Ejecutar el recorrido real en escritorio/celular: registro aleatorio, login, prioridades, terreno, dos siembras, NASA, pronóstico, calendario, rotaciones, nuevo login/persistencia y aislamiento frente a una segunda cuenta. Vigilar consola/red y atribuciones. Eliminar solo filas de esas cuentas por identificadores exactos, sin tocar datos de terceros. No guardar credenciales en capturas/trazas.
-7. Reiniciar el backend y verificar persistencia; volver a comprobar permisos y errores. Documentar URLs/commit/evidencias reales y sus limitaciones antes de declarar la publicación operativa.
+Las evidencias de producción se guardan en **.tmp/evidencias-publicacion/**, ignorada por Git y separada de las carpetas que Playwright limpia. Incluyen escritorio-portada.png, escritorio-detalle.png, escritorio-clima.png, escritorio-pronostico.png, escritorio-calendario.png, escritorio-rotaciones.png, escritorio-persistencia-tras-reinicio.png y capturas equivalentes del celular, incluida su explicación. evidencia-real.json, interfaz-movil-real.json y cierre-produccion.json contienen resultados sin contraseñas ni tokens. Las capturas representan cuentas/registros temporales ya eliminados; sus datos climáticos proceden de consultas reales.
 
-## Actualización y reversión previstas
+La comprobación móvil adicional espera explícitamente dos gráficas, siete días, trece encabezados de calendario y tres tarjetas antes de capturar. No se presenta una pantalla todavía cargando como evidencia del resultado final.
 
-Para actualizar: trabajar en rama, ejecutar check, revisar contenido/historial/secretos, aprobar el commit y el push, y publicar únicamente la revisión aprobada. Mantener migraciones aditivas revisadas y respaldos propios del proveedor; no usar una base local ni ejecutar semillas de prueba. Reconstruir frontend si cambia `VITE_API_URL` y actualizar CORS exacto si cambia el origen.
+## Calidad y seguridad comprobadas
 
-Para revertir código: seleccionar el último despliegue funcional en cada proveedor y comprobar sus variables/compatibilidad con el esquema persistente. No revertir una base mediante reset ni eliminar registros para acomodar código anterior. Una migración futura incompatible necesita un plan específico de respaldo/recuperación y aprobación. Estas operaciones todavía no se han ejecutado en producción.
+| Comprobación local final | Resultado real |
+| --- | --- |
+| npm.cmd run check | Código 0; lint, TypeScript, pruebas, PostgreSQL, build y Playwright |
+| Backend | 262 pruebas, 17 archivos |
+| Frontend | 85 pruebas, 9 archivos |
+| PostgreSQL aislado | 124 pruebas, 9 archivos |
+| Playwright local | 20 casos de escritorio/celular, incluidos recorridos integrales previos |
+| Total local | **491 pruebas aprobadas** |
+| Auditoría npm | Sin vulnerabilidades conocidas en las consultas realizadas; no se aplicó audit fix |
+| Publicación | Recorrido adicional real aprobado, separado de las fixtures de las 491 pruebas |
 
-Vigilar consumo/costos, cuotas de APIs científicas, almacenamiento/respaldos, memoria del backend, latencia y registros sin secretos. Las cachés, deduplicación y límites actuales son por proceso o PostgreSQL según el módulo; no se ha realizado una prueba de carga distribuida. Los indicadores agrícolas siguen siendo referenciales, sin validación agronómica local ni garantías de resultados.
+También se verificaron HTTPS, redirección HTTP del frontend (308) y backend (301), CORS exacto/403 ajeno, rutas privadas sin token/401, HSTS y rutas SPA de registro/login/detalle con 200. En el contenedor no existen backend/.env local, la clave SSH temporal ni resultados locales. Las contraseñas hash no se devuelven al cliente. Se preservaron validación, JWT, permisos y cuotas originales.
 
-Referencias oficiales: [monorepos Railway](https://docs.railway.com/deployments/monorepo), [IaC Railway](https://docs.railway.com/infrastructure-as-code), [referencia IaC](https://docs.railway.com/infrastructure-as-code/reference), [planes Railway](https://docs.railway.com/pricing/plans), [red privada Railway](https://docs.railway.com/networking/private-networking), [Railpack Node](https://railpack.com/languages/node/), [Git Vercel](https://vercel.com/docs/project-configuration/git-configuration), [rewrites Vercel](https://vercel.com/docs/routing/rewrites), [exclusiones Vercel](https://vercel.com/docs/deployments/vercel-ignore).
+Correcciones de esta fase:
+
+- Perfil de producción: 0.0.0.0/PORT, CORS exacto, destino PostgreSQL privado fijado y errores sin conexiones sensibles.
+- SELECT 1 antes de escuchar: se reprodujo que $connect podía inicializar un pool sin validar la conexión real.
+- Rechazo de localhost y dominios escritos con comodín en la configuración pública.
+- Formato IaC vigente y seguimiento del aprovisionamiento: el primer plan creó PostgreSQL; un segundo plan aplicó sus referencias privadas omitidas en la creación inicial.
+- Build Railpack: se eliminó la segunda instalación npm ci, que fallaba con EBUSY sobre un montaje de caché de Vite. Instalación y compilación quedan separadas.
+- Guardas SQL: psql ignoraba el argumento numérico de quit y devolvía éxito. Se sustituyó por excepciones con ON_ERROR_STOP y cuatro regresiones locales, siempre en conexión de solo lectura.
+- Exportación limpia y manifiesto de carga, evitando depender exclusivamente de las exclusiones del CLI para las evidencias temporales.
+
+## Actualización y reversión
+
+Para actualizar: trabajar en rama, ejecutar check, revisar diff/historial/secretos, crear el commit y obtener aprobación de su envío. Desplegar solo la revisión aprobada de release/publicacion desde la raíz, preferentemente una exportación limpia. Revisar el plan IaC sin eliminaciones antes de aplicar; nunca usar confirm-destructive por rutina. En Windows, el SDK se invocó con la ruta del ejecutable oficial 5.71.0 en su entorno de evaluación para evitar que intentara ejecutar un shim inexistente; no se desactivó la comprobación de versión.
+
+El backend instala con npm ci --include=dev, compila su workspace, ejecuta el predeploy reproducible y debe superar salud/Prisma antes de promover frontend. Vercel compila en modo publicacion con VITE_API_URL real; si cambia el dominio, reconstruir frontend y ajustar CORS exacto. Mantener variables privadas en Railway y no copiar archivos .env locales.
+
+Para revertir código, seleccionar la última revisión/despliegue funcional en cada proveedor y comprobar compatibilidad de variables y esquema. No resetear la base ni borrar registros para acomodar código anterior. El despliegue ec413ca conserva la misma migración original; futuros cambios incompatibles requieren un plan específico de respaldo/recuperación y autorización. No se realizó una reversión de base.
+
+La clave SSH temporal usada para el bootstrap y las verificaciones privadas fue retirada de Railway y su archivo privado local fue eliminado, comprobado el 8 de noviembre de 2026 a las 17:38 UTC. No queda como credencial permanente de la aplicación. Las futuras operaciones privadas deben utilizar una autenticación oficial propia, sin contraseñas en documentos. El cierre está registrado en acceso-y-recursos.json, dentro de la carpeta de evidencias ignorada.
+
+## Recursos y limitaciones
+
+Railway está en Trial, con crédito inicial de 5 USD y 30 días de prueba, sin contratar una suscripción pagada. Al cierre de las verificaciones (8 de noviembre de 2026, 17:38 UTC), la API informó aproximadamente 4,9969 USD de crédito y 0,0031 USD de consumo; estos importes cambian con el uso y no garantizan una duración concreta. El intento de fijar un tope opcional de 5 USD fue rechazado porque la plataforma admite como mínimo 10 USD o cero; **no se estableció un tope de 10 USD** ni se amplió el presupuesto autorizado. Vigilar crédito y consumo desde el panel. La prueba puede terminar al agotar el crédito y no garantiza alojamiento permanente; el proveedor establece retención limitada de volúmenes tras su vencimiento. Un plan pagado, más recursos, respaldos adicionales o dominios personalizados necesitan nueva autorización.
+
+Vercel Hobby se utiliza para demostración no comercial. Mantener las condiciones/atribución de Open-Meteo, NASA y OpenStreetMap. No se hizo prueba de carga distribuida ni se contrató un SLA; una publicación técnica no equivale a validación agronómica. La climatología representa una zona, el pronóstico puede fallar, la altitud es estimada y el catálogo requiere validación local. La ausencia de una segunda alternativa compatible se muestra expresamente.
+
+## Archivos principales de la fase
+
+Infraestructura y exclusiones: .railway/railway.ts, vercel.json, .gitignore, .railwayignore y .vercelignore; railway.json inicial retirado. Backend: configuración/arranque/aplicación, conexión Prisma, configuración Prisma de producción, prepararProduccion.ts, configurarRolProduccion.sql, scripts y ejemplos sin secretos. Frontend: validación del modo publicacion, api.ts, Vite, scripts y ejemplo público. Pruebas: producción/arranque/IaC y guardas SQL; raíz: package.json/lockfile, ESLint y tsconfig.herramientas.json. Documentación: README.md, DECISIONES.md y este informe. Los scripts efímeros/evidencias no se versionan.
+
+Referencias oficiales: [IaC Railway](https://docs.railway.com/infrastructure-as-code), [referencia IaC](https://docs.railway.com/infrastructure-as-code/reference), [Railpack Node](https://railpack.com/languages/node/), [red privada](https://docs.railway.com/networking/private-networking), [prueba Railway](https://docs.railway.com/pricing/free-trial), [Vercel SPA](https://vercel.com/docs/routing/rewrites), [Git Vercel](https://vercel.com/docs/project-configuration/git-configuration), [Hobby](https://vercel.com/docs/plans/hobby), [Open-Meteo](https://open-meteo.com/en/terms).

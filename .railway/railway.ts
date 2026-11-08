@@ -14,7 +14,7 @@ export default defineRailway((contexto) => {
   const servidor = service('backend', {
     // Sin source GitHub: no hay autodeploy; subir únicamente la revisión aprobada.
     root: '/',
-    build: { builder: 'RAILPACK', buildCommand: 'npm ci --include=dev && npm run build --workspace backend' },
+    build: { builder: 'RAILPACK', buildCommand: 'npm run build --workspace backend' },
     start: 'npm run start --workspace backend',
     preDeploy: 'npm run produccion:preparar --workspace backend',
     healthcheck: '/api/health',
