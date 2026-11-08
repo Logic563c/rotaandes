@@ -11,3 +11,16 @@ coverage/
 Thumbs.db
 test-results/
 playwright-report/
+backend/src/generated/
+*.pgpass
+pgpass.conf
+.tmp/
+# Claves privadas y almacenes de certificados locales.
+*.key
+*.pem
+*.p8
+*.p12
+*.pfx
+*.pkcs12
+id_rsa
+id_ed25519

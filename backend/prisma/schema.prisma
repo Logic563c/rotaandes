@@ -1,0 +1,99 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String    @unique(map: "usuarios_email_key") @db.Text
+  passwordHash      String    @map("password_hash") @db.Text
+  rol               String    @default("agricultor") @db.Text
+  nombre            String    @db.Text
+  parroquia         String?   @db.Text
+  telefono          String?   @db.Text
+  prioridadAgua     Int?      @default(3) @map("prioridad_agua") @db.SmallInt
+  prioridadSuelo    Int?      @default(3) @map("prioridad_suelo") @db.SmallInt
+  prioridadIngresos Int?      @default(3) @map("prioridad_ingresos") @db.SmallInt
+  creadoEn          DateTime? @default(now()) @map("creado_en") @db.Timestamptz(6)
+  terrenos          Terreno[]
+
+  @@map("usuarios")
+}
+
+model Terreno {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  usuarioId  String    @map("usuario_id") @db.Uuid
+  nombre     String    @db.Text
+  latitud    Float     @db.DoublePrecision
+  longitud   Float     @db.DoublePrecision
+  altitudM   Int?      @map("altitud_m")
+  areaHa     Decimal?  @map("area_ha") @db.Decimal(8, 2)
+  tieneRiego Boolean?  @default(false) @map("tiene_riego")
+  tipoSuelo  String?   @map("tipo_suelo") @db.Text
+  creadoEn   DateTime? @default(now()) @map("creado_en") @db.Timestamptz(6)
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  siembras   Siembra[]
+
+  @@map("terrenos")
+}
+
+model Cultivo {
+  id                    String    @id @db.Text
+  nombre                String    @db.Text
+  familia               String    @db.Text
+  altitudMin            Int       @map("altitud_min")
+  altitudMax            Int       @map("altitud_max")
+  cicloMeses            Int       @map("ciclo_meses") @db.SmallInt
+  mesesSiembra          Int[]     @map("meses_siembra") @db.SmallInt
+  lluviaMinMensualMm    Int       @map("lluvia_min_mensual_mm")
+  demandaAgua           Int       @map("demanda_agua") @db.SmallInt
+  toleranciaHelada      Int       @map("tolerancia_helada") @db.SmallInt
+  toleranciaSequia      Int       @map("tolerancia_sequia") @db.SmallInt
+  fijaNitrogeno         Boolean   @default(false) @map("fija_nitrogeno")
+  aporteMateriaOrganica Int       @map("aporte_materia_organica") @db.SmallInt
+  proteccionErosion     Int       @map("proteccion_erosion") @db.SmallInt
+  valorForraje          Int       @map("valor_forraje") @db.SmallInt
+  valorMercado          Int       @map("valor_mercado") @db.SmallInt
+  descripcion           String?   @db.Text
+  siembras              Siembra[]
+
+  @@map("cultivos")
+}
+
+model Siembra {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  terrenoId    String    @map("terreno_id") @db.Uuid
+  cultivoId    String    @map("cultivo_id") @db.Text
+  fechaSiembra DateTime  @map("fecha_siembra") @db.Date
+  fechaCosecha DateTime? @map("fecha_cosecha") @db.Date
+  notas        String?   @db.Text
+  creadoEn     DateTime? @default(now()) @map("creado_en") @db.Timestamptz(6)
+  terreno      Terreno   @relation(fields: [terrenoId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  cultivo      Cultivo   @relation(fields: [cultivoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("siembras")
+}
+
+model PlantillaRotacion {
+  id          String   @id @db.Text
+  nombre      String   @db.Text
+  secuencia   String[] @db.Text
+  descripcion String?  @db.Text
+
+  @@map("plantillas_rotacion")
+}
+
+model ClimaCache {
+  clave         String    @id @db.Text
+  datos         Json      @db.JsonB
+  actualizadoEn DateTime? @default(now()) @map("actualizado_en") @db.Timestamptz(6)
+
+  @@map("clima_cache")
+}
