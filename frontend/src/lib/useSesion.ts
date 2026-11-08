@@ -10,6 +10,7 @@ export interface Sesion {
   cerrarSesion: (tokenEsperado?: string) => void;
   reintentar: () => void;
   guardarPerfil: (usuario: UsuarioPublico, tokenSolicitud: string) => void;
+  esSesionActual: (tokenSolicitud: string) => boolean;
 }
 
 export const ContextoSesion = createContext<Sesion | null>(null);

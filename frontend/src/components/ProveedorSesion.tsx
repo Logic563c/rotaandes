@@ -54,7 +54,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   }
   return <ContextoSesion.Provider value={{ token, usuario: token && !consulta.isError ? consulta.data : undefined,
     estaValidando: confirmando || Boolean(token && consulta.isPending), error: token && consulta.isError ? consulta.error.message : null,
-    confirmarSesion, cerrarSesion, guardarPerfil: (usuario, tokenSolicitud) => {
+    confirmarSesion, cerrarSesion, esSesionActual: (tokenSolicitud) => tokenActual.current === tokenSolicitud, guardarPerfil: (usuario, tokenSolicitud) => {
       if (tokenActual.current === tokenSolicitud) cliente.setQueryData(['sesion', 'usuario'], usuario);
     }, reintentar: () => { void consulta.refetch(); } }}>{children}</ContextoSesion.Provider>;
 }

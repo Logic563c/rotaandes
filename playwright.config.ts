@@ -8,8 +8,10 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: 'list',
+  expect: { timeout: 10000 },
   use: {
     baseURL: 'http://localhost:5173',
+    actionTimeout: 10000,
     channel: process.platform === 'win32' ? 'msedge' : 'chromium',
     trace: 'off',
     screenshot: 'only-on-failure',

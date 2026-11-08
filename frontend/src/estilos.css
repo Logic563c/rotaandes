@@ -14,7 +14,7 @@
   body { margin: 0; min-width: 320px; }
   button { font: inherit; }
   a, button, input { outline-offset: 4px; }
-  input:not([type="range"]) { width: 100%; min-height: 48px; border: 1px solid #52645180; border-radius: 0.75rem; background: #fff; padding: 0.7rem 0.9rem; color: #23483c; font-size: 1rem; }
+  input:not([type="range"]):not([type="checkbox"]), select, textarea { width: 100%; min-height: 48px; border: 1px solid #52645180; border-radius: 0.75rem; background: #fff; padding: 0.7rem 0.9rem; color: #23483c; font-size: 1rem; }
   input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid #23483c; }
   input[type="range"] { min-height: 36px; cursor: pointer; }
   ::selection { background: #d9e3ce; color: #23483c; }
@@ -30,4 +30,13 @@
   .enlace-nav:hover, .enlace-nav[aria-current="page"] { background: #e9e4d6; }
   .etiqueta-seccion { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #526451; }
   .aviso-error { padding: 1rem; border: 1px solid #98553560; border-radius: 0.75rem; background: #fff5ef; color: #7d391f; font-size: 0.875rem; line-height: 1.5; }
+  .boton-secundario { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid #23483c55; border-radius: 0.75rem; padding: 0.7rem 1rem; background: white; color: #23483c; font-weight: 600; font-size: 0.875rem; cursor: pointer; }
+  .boton-peligro { min-height: 48px; border-radius: 0.75rem; padding: 0.7rem 1rem; background: #985535; color: white; font-weight: 600; cursor: pointer; }
+  .boton-secundario:disabled, .boton-peligro:disabled { opacity: 0.6; cursor: wait; }
+  .casilla-riego { width: 1.2rem; height: 1.2rem; accent-color: #23483c; }
+  .mapa-terrenos { height: 370px; width: 100%; z-index: 0; }
+  .marcador-terreno { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; background: #23483c; color: white; font: 700 14px "Segoe UI", sans-serif; box-shadow: 0 2px 6px #0005; }
+  .marcador-terreno--seleccionado { background: #985535; font-size: 23px; }
+  .dialogo-confirmacion { max-width: min(480px, calc(100vw - 32px)); margin: auto; border: 1px solid #23483c33; border-radius: 1.5rem; padding: 1.75rem; background: #f7f5ed; color: #23483c; }
+  .dialogo-confirmacion::backdrop { background: #142d25aa; }
 }

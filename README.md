@@ -2,9 +2,9 @@
 
 Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene la página inicial, persistencia PostgreSQL + Prisma, registro de agricultores, inicio y cierre local de sesión, perfil y autorización por roles. No incluye CRUD agrícola, semillas ni integraciones externas.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo y los diez cultivos referenciales autorizados. No incluye todavía clima, calendario, rotaciones, capas satelitales ni reportes.
 
-El estado local y los resultados están en [el informe de autenticación](docs/INFORME_AUTENTICACION.md). El [informe de persistencia](docs/INFORME_PERSISTENCIA.md) conserva el cierre de la fase anterior.
+El estado de esta fase y sus resultados están en [el informe de terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md). Los informes de [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
 ## Requisitos
 
@@ -62,7 +62,7 @@ npm.cmd run dev
 
 Las URLs PostgreSQL de esta fase se limitan al servidor, puerto, rol y bases locales autorizados. Solo admiten el parámetro opcional `schema=public`, sin duplicados ni fragmentos; otros parámetros podrían sobrescribir la conexión en pg.
 
-El backend escucha solo en `127.0.0.1`. CORS permite exactamente el origen configurado: `http://localhost:5173` o, si se elige expresamente, `http://127.0.0.1:5173`, métodos GET/POST/PUT y encabezados Content-Type/Authorization. No permite comodines, dominios externos ni otros puertos. Las solicitudes sin `Origin`, como las de `curl`, pueden consultar el endpoint público. Las rutas privadas exigen Bearer independientemente de CORS.
+El backend escucha solo en `127.0.0.1`. CORS permite exactamente el origen configurado: `http://localhost:5173` o, si se elige expresamente, `http://127.0.0.1:5173`, métodos GET/POST/PUT/DELETE y encabezados Content-Type/Authorization. No permite comodines, dominios externos ni otros puertos. Las solicitudes sin `Origin`, como las de `curl`, pueden consultar el endpoint público. Las rutas privadas exigen Bearer independientemente de CORS.
 
 Vite utiliza el puerto **5173** con `strictPort`: si está ocupado, muestra un error en lugar de cambiar de puerto. El backend informa si no puede abrir el **3000**. Si PowerShell no encuentra `backend/`, comprobar que la terminal está en la raíz indicada arriba.
 
@@ -86,6 +86,14 @@ npm.cmd run db:status --workspace backend
 npm.cmd run db:verify --workspace backend
 npm.cmd run test:db
 ```
+
+El catálogo ya está cargado en esta computadora. Para reproducirlo en un clon nuevo, después de aplicar la migración:
+
+```powershell
+npm.cmd run db:seed --workspace backend
+```
+
+También está configurado `prisma db seed`. La semilla realiza upsert de los diez cultivos exactos de la sección 10 de `PROYECTO.md` en una transacción. Se ejecutó dos veces para verificar su idempotencia. No crea usuarios, terrenos, siembras ni plantillas y no borra filas ajenas. Los valores son referenciales y están pendientes de validación agronómica local; las descripciones sin texto de referencia permanecen nulas. El comando de desarrollo rechaza `NODE_ENV=test`; las pruebas utilizan el mismo catálogo dentro de su aislamiento y lo revierten o limpian.
 
 Se fijan `prisma`, `@prisma/client` y `@prisma/adapter-pg` a **7.10.1**. Prisma 7 usa `backend/prisma.config.ts` para la URL y el adaptador `pg` para el cliente. El cliente se genera explícitamente en `backend/src/generated/prisma/`, excluido de Git, y se compila con el backend. `dev`, `typecheck` y `build` lo generan automáticamente; generar el cliente no conecta a PostgreSQL.
 
@@ -132,6 +140,30 @@ npm.cmd run check
 Los mismos scripts `dev`, `build`, `lint`, `typecheck` y `test` están disponibles dentro de `backend/` y `frontend/`. `test` ejecuta las pruebas una vez; `test:watch` las mantiene observando cambios dentro de cada paquete.
 
 Las pruebas del backend usan Vitest y Supertest para comprobar HTTP, salud, CORS, JWT, configuración y errores; `test:db` añade registro, login, perfil, roles y restricciones contra PostgreSQL aislado, con rollback. Las del frontend usan Vitest, jsdom y Testing Library para validar respuestas, sesión, formularios, carga, errores, reintentos y cierre. Sus fixtures son exclusivas de pruebas.
+
+La Fase 2 añade pruebas de CRUD de terrenos y siembras, autorización horizontal, lectura técnica sin escritura, fechas DATE, catálogo idempotente, límites del área y fallos/tiempos de espera de elevación. Los recorridos de navegador prueban el mapa real, marcadores, formularios, edición, eliminación con confirmación y persistencia tras recargar, además de la alternativa manual cuando las teselas fallan. Las cuentas E2E usan claves aleatorias y se limpian por correo exacto en finally; los cultivos insertados para E2E se eliminan al finalizar sin sobrescribir los que ya existieran.
+
+## Probar terrenos y siembras
+
+Con los servicios activos, ingresar en http://localhost:5173 y abrir **Mis terrenos**. **Añadir terreno** permite tocar un punto del mapa o escribir latitud/longitud manualmente. El mapa comienza en Latacunga, Cotopaxi. El área es declarada, opcional, mayor que cero y admite hasta 999999,99 ha con dos decimales; no se calcula con el mapa. Suelo admite franco, arenoso, arcilloso o «No sé».
+
+Al guardar, el backend obtiene la altitud estimada; al cambiar coordenadas la recalcula. Si una estimación anterior quedó nula, guardar nuevamente la ubicación permite reintentar. Si Open-Meteo no responde, se conserva NULL y la interfaz lo informa. Fuente: Open-Meteo / Copernicus DEM GLO-90, resolución de 90 m; no es una medición exacta. La consulta tiene cinco segundos de espera máxima, valida tipos/rango y no sigue redirecciones. Se permiten hasta 20 consultas externas/minuto y dos simultáneas por proceso, con caché acotada; un fallo o falta de cupo no inventa una altitud.
+
+El detalle muestra ubicación, área, riego, suelo, altitud e historial. **Mis siembras** permite escoger del catálogo referencial, indicar fecha de siembra y, opcionalmente, cosecha y notas. Las fechas viajan como `AAAA-MM-DD`; cosecha vacía se envía como NULL, y una fecha inválida o anterior a la siembra se rechaza. El historial se ordena desde la fecha de siembra más reciente.
+
+Los agricultores únicamente consultan y modifican sus propios registros; acceder a UUID ajenos devuelve 404. Un técnico existente puede consultar terrenos e historiales, con controles de escritura ocultos y rechazo 403 del servidor. El panel técnico con filtros y alertas queda pendiente. El catálogo es público. Las eliminaciones piden confirmación; eliminar un terreno elimina sus siembras mediante la relación existente.
+
+| Método | Ruta | Respuesta |
+| --- | --- | --- |
+| GET | `/api/cultivos` | Arreglo del catálogo, campos originales snake_case |
+| GET / POST | `/api/terrenos` | Arreglo de terrenos / terreno creado, 201 |
+| GET / PUT / DELETE | `/api/terrenos/:id` | Terreno / terreno actualizado / 204 sin cuerpo |
+| GET / POST | `/api/terrenos/:id/siembras` | Historial / siembra creada, 201 |
+| PUT / DELETE | `/api/siembras/:id` | Siembra actualizada / 204 sin cuerpo |
+
+PUT admite los campos editables presentes y rechaza cuerpos vacíos o claves adicionales. No acepta propietario, ID, altitud ni una asociación de terreno elegida por el cliente. `area_ha` se serializa como número o NULL; fechas DATE sin hora y timestamps como ISO. Los errores mantienen `{ error: "mensaje" }`. Guardados de terreno se limitan a 20 por usuario/minuto; el exceso responde 429.
+
+Los datos JSON se consumen únicamente mediante `frontend/src/lib/api.ts`; Open-Meteo se consulta desde el servidor. Leaflet carga las imágenes cartográficas públicas de OpenStreetMap directamente como recurso visual del mapa solicitado, sin enviar JWT ni información de perfiles. Se mantiene atribución visible y el caché HTTP del navegador, sin precarga masiva. Las teselas pueden fallar; las coordenadas y la lista siguen disponibles. Las cachés privadas incorporan el ID del usuario y se limpian al cerrar sesión; las operaciones tardías comprueban que la sesión sigue activa.
 
 Las pruebas de navegador usan Playwright contra los dos servicios compilados, sin simular el backend, con tamaños de escritorio y celular:
 
@@ -207,6 +239,7 @@ rotaandes/
 │   ├── prisma.pruebas.config.ts
 │   ├── prisma/
 │   │   ├── schema.prisma
+│   │   ├── seed.ts
 │   │   └── migrations/20261107000100_esquema_inicial/migration.sql
 │   ├── scripts/
 │   │   ├── comprobarConfiguracion.ts
@@ -218,9 +251,11 @@ rotaandes/
 │   │   ├── configuracion.ts
 │   │   ├── lib/configuracionBase.ts
 │   │   ├── lib/prisma.ts
-│   │   ├── middleware/errores.ts
-│   │   └── routes/salud.ts
-│   └── tests/base-datos/persistencia.integration.test.ts
+│   │   ├── middleware/       (auth, rol, errores)
+│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras)
+│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion)
+│   │   └── data/catalogoCultivos.ts
+│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras)
 └── frontend/
     ├── .env.example
     ├── index.html
@@ -230,9 +265,11 @@ rotaandes/
     ├── vitest.config.ts
     └── src/
         ├── main.tsx
+        ├── Aplicacion.tsx
         ├── estilos.css
-        ├── pages/Inicio.tsx
-        ├── lib/api.ts
+        ├── pages/            (Inicio, Acceso, EspacioPersonal, Perfil, Terrenos, EditarTerreno, DetalleTerreno)
+        ├── components/      (Marco, ProveedorSesion, mapas, siembras y confirmaciones)
+        ├── lib/             (api, useSesion, useAgricultura)
         ├── types/api.ts
         └── tests/preparacion.ts
 ```

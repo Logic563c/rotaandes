@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express';
+import { Prisma } from '../generated/prisma/client.js';
 
 export class ErrorHttp extends Error {
   constructor(public readonly codigoHttp: number, mensaje: string) {
@@ -20,6 +21,11 @@ export const manejarErrores: ErrorRequestHandler = (
 
   if (error instanceof ErrorHttp) {
     respuesta.status(error.codigoHttp).json({ error: error.message });
+    return;
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === 'P2025' || error.code === 'P2003')) {
+    respuesta.status(error.code === 'P2025' ? 404 : 400).json({ error: error.code === 'P2025' ? 'Recurso no encontrado.' : 'La referencia indicada ya no está disponible.' });
     return;
   }
 

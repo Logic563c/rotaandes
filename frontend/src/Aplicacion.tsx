@@ -6,6 +6,9 @@ import { Perfil } from './pages/Perfil';
 import { EspacioPersonal } from './pages/EspacioPersonal';
 import { useSesion } from './lib/useSesion';
 import { Marco } from './components/Marco';
+import { Terrenos } from './pages/Terrenos';
+import { EditarTerreno } from './pages/EditarTerreno';
+import { DetalleTerreno } from './pages/DetalleTerreno';
 function RutaPrivada({ children }: { children: ReactNode }) {
   const sesion = useSesion();
   if (sesion.estaValidando) return <Marco><p role="status">Validando tu sesión…</p></Marco>;
@@ -21,6 +24,10 @@ export function Aplicacion() {
       <Route path="/registro" element={<Acceso key="registro" esRegistro />} />
       <Route path="/inicio" element={<RutaPrivada><EspacioPersonal /></RutaPrivada>} />
       <Route path="/perfil" element={<RutaPrivada><Perfil /></RutaPrivada>} />
+      <Route path="/terrenos" element={<RutaPrivada><Terrenos /></RutaPrivada>} />
+      <Route path="/terrenos/nuevo" element={<RutaPrivada><EditarTerreno /></RutaPrivada>} />
+      <Route path="/terrenos/:id/editar" element={<RutaPrivada><EditarTerreno /></RutaPrivada>} />
+      <Route path="/terrenos/:id" element={<RutaPrivada><DetalleTerreno /></RutaPrivada>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
