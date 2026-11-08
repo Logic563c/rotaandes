@@ -4,7 +4,7 @@ Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cot
 
 Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas y calendario mensual de siembra explicable. Tendencias, rotaciones, simulador visual, capas satelitales y reportes siguen pendientes.
 
-La entrega actual está documentada en [el informe del calendario de siembra](docs/INFORME_CALENDARIO_SIEMBRA.md). Los informes de [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
 ## Requisitos
 
@@ -138,6 +138,8 @@ O ejecutar todo con:
 npm.cmd run check
 ```
 
+La auditoría del 8 de noviembre de 2026 ejecutó `check` con código 0: 210 pruebas backend, 63 frontend, 113 PostgreSQL y 18 E2E. También aprobó 14 comprobaciones PowerShell y dos recorridos integrales separados con proveedores meteorológicos reales. `npm audit` completo y de producción informó cero vulnerabilidades conocidas en esa consulta; no equivale a una certificación de seguridad.
+
 Los mismos scripts `dev`, `build`, `lint`, `typecheck` y `test` están disponibles dentro de `backend/` y `frontend/`. `test` ejecuta las pruebas una vez; `test:watch` las mantiene observando cambios dentro de cada paquete.
 
 Las pruebas del backend usan Vitest y Supertest para comprobar HTTP, salud, CORS, JWT, configuración y errores; `test:db` añade registro, login, perfil, roles y restricciones contra PostgreSQL aislado, con rollback. Las del frontend usan Vitest, jsdom y Testing Library para validar respuestas, sesión, formularios, carga, errores, reintentos y cierre. Sus fixtures son exclusivas de pruebas.
@@ -162,7 +164,7 @@ Los agricultores únicamente consultan y modifican sus propios registros; accede
 | GET / POST | `/api/terrenos/:id/siembras` | Historial / siembra creada, 201 |
 | PUT / DELETE | `/api/siembras/:id` | Siembra actualizada / 204 sin cuerpo |
 
-PUT admite los campos editables presentes y rechaza cuerpos vacíos o claves adicionales. No acepta propietario, ID, altitud ni una asociación de terreno elegida por el cliente. `area_ha` se serializa como número o NULL; fechas DATE sin hora y timestamps como ISO. Los errores mantienen `{ error: "mensaje" }`. Guardados de terreno se limitan a 20 por usuario/minuto; el exceso responde 429.
+PUT admite los campos editables presentes y rechaza cuerpos vacíos o claves adicionales. No acepta propietario, ID, altitud ni una asociación de terreno elegida por el cliente. Los campos omitidos no se reescriben desde una lectura anterior. Coordenadas/altitud y fechas vinculadas tienen comprobación optimista contra cambios concurrentes; ante conflicto se responde 400 para recargar y revisar. No hay versionado general ni detección de toda edición simultánea: sobre un campo enviado explícitamente puede prevalecer la última escritura. `area_ha` se serializa como número o NULL; fechas DATE sin hora y timestamps como ISO. Los errores mantienen `{ error: "mensaje" }`. Guardados de terreno se limitan a 20 por usuario/minuto; el exceso responde 429.
 
 Los datos JSON se consumen únicamente mediante `frontend/src/lib/api.ts`; Open-Meteo se consulta desde el servidor. Leaflet carga las imágenes cartográficas públicas de OpenStreetMap directamente como recurso visual del mapa solicitado, sin enviar JWT ni información de perfiles. Se mantiene atribución visible y el caché HTTP del navegador, sin precarga masiva. Las teselas pueden fallar; las coordenadas y la lista siguen disponibles. Las cachés privadas incorporan el ID del usuario y se limpian al cerrar sesión; las operaciones tardías comprueban que la sesión sigue activa.
 
@@ -173,6 +175,8 @@ npm.cmd run test:e2e
 ```
 
 En Windows utilizan Microsoft Edge instalado. En otros sistemas, instalar primero Chromium con `npx playwright install chromium`. Dejar libres los puertos 3000 y 5173: las pruebas arrancan y detienen sus propios servidores. El backend E2E usa `NODE_ENV=test`, únicamente `TEST_DATABASE_URL` y un secreto JWT efímero. Las cuentas aleatorias se eliminan en `finally`, por correo exacto; las trazas están deshabilitadas para no almacenar credenciales ni Bearer. Las capturas quedan en `test-results/`, ignorado. `npm.cmd run check` incluye las pruebas SQL, las de navegador y el build. El frontend compilado debe usar el valor local predeterminado de `VITE_API_URL` para esta comprobación.
+
+`test:e2e` ejecuta primero los 16 casos anteriores y después el recorrido integral de escritorio/celular con `playwright.integral.config.ts`. Este segundo proceso inicia servidores nuevos para conservar los límites reales de registro/login sin consumir los de la suite anterior; no se aumentan ni desactivan los límites. Sus capturas quedan en `test-results/integral/`. `npm.cmd run test:integral` permite repetir únicamente ese recorrido. Clima/pronóstico se controlan en la base aislada por defecto; la cuenta, perfil, terreno y siembras sí se persisten. El modo externo separado y sus evidencias están descritos en [la guía de demostración](docs/DEMO_PRIMERA_ENTREGA.md). No ejecutar suites que escriban simultáneamente en la misma base de pruebas.
 
 ## Consultar climatología histórica
 
@@ -185,6 +189,8 @@ La respuesta conserva `fuente`, `resolucion` y los campos mensuales originales b
 La respuesta real archivada para Latacunga (-0,93; -78,62) declara **2001–2025**. Enero: 11,86 °C de media, mínima 3,97 °C, máxima 21,03 °C y 4 mm/día. La lluvia mensual se estima multiplicando por los días medios del mes del periodo: enero 124 mm y febrero 28,24 días (seis bisiestos). No son acumulados observados exactos de un año concreto. La resolución meteorológica es 0,5° × 0,625°; la solar 1° × 1°. No representa el microclima del lote.
 
 `clima_cache` conserva datos normalizados por coordenadas exactas durante **30 días**. Se distingue consulta NASA, caché, dato anterior desactualizado y respaldo. Un fallo puede reutilizar datos anteriores válidos de la misma ubicación; cinco respuestas reales archivadas solo sirven de respaldo si coinciden exactamente sus coordenadas. No se sustituye un terreno por el punto regional más cercano. Sin información fiable se informa indisponibilidad. Los archivos públicos y su procedencia/SHA-256 están en `backend/src/data/clima/`; no se necesitan nuevas variables de entorno, claves NASA ni migraciones.
+
+En una consulta real desde el mapa, NASA devolvió (-0,93; -78,62) para el punto solicitado (-0,93002; -78,620248). Se admite la coincidencia exacta o una respuesta expresada en centésimas con diferencia máxima de 0,005° por eje, con aviso visible de menor precisión. Es una compatibilidad limitada basada en la respuesta observada, no una garantía documentada de precisión de NASA. La solicitud, las coordenadas guardadas, la clave de caché y la selección de respaldo conservan el punto exacto; no se aproximan ubicaciones para reutilizar otros datos.
 
 La comprobación real independiente, sin escribir en la base, es:
 

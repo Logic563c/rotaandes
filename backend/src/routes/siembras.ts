@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { RequestHandler } from 'express';
+import { Prisma } from '../generated/prisma/client.js';
 import { obtenerUsuarioActual } from '../middleware/auth.js';
 import { permitirRoles } from '../middleware/rol.js';
 import { ErrorHttp } from '../middleware/errores.js';
@@ -41,11 +42,21 @@ export function crearRutasSiembras(obtenerBase: ObtenerBaseAgricola, verificarSe
     validarOrdenFechas(fechaSiembra, fechaCosecha);
     const cultivoId = datos.cultivo_id ?? anterior.cultivoId;
     if (!await obtenerBase().cultivo.findUnique({ where: { id: cultivoId }, select: { id: true } })) throw new ErrorHttp(400, 'El cultivo no está registrado en el catálogo.');
-    const siembra = await obtenerBase().siembra.update({ where: { id, terreno: { usuarioId } }, data: {
-      cultivoId, fechaSiembra: new Date(`${fechaSiembra}T00:00:00.000Z`), fechaCosecha: fechaCosecha ? new Date(`${fechaCosecha}T00:00:00.000Z`) : null,
-      ...(datos.notas !== undefined && { notas: datos.notas }),
-    } });
-    respuesta.json(publicarSiembra(siembra));
+    const cambiaFechas = datos.fecha_siembra !== undefined || datos.fecha_cosecha !== undefined;
+    try {
+      const siembra = await obtenerBase().siembra.update({ where: { id, terreno: { usuarioId },
+        ...(cambiaFechas && { fechaSiembra: anterior.fechaSiembra, fechaCosecha: anterior.fechaCosecha }),
+      }, data: {
+        ...(datos.cultivo_id !== undefined && { cultivoId }),
+        ...(cambiaFechas && { fechaSiembra: new Date(`${fechaSiembra}T00:00:00.000Z`), fechaCosecha: fechaCosecha ? new Date(`${fechaCosecha}T00:00:00.000Z`) : null }),
+        ...(datos.notas !== undefined && { notas: datos.notas }),
+      } });
+      respuesta.json(publicarSiembra(siembra));
+    } catch (error: unknown) {
+      if (cambiaFechas && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
+        && await obtenerBase().siembra.count({ where: { id, terreno: { usuarioId } } })) throw new ErrorHttp(400, 'Las fechas de la siembra cambiaron durante el guardado. Recarga el historial y vuelve a intentarlo.');
+      throw error;
+    }
   });
   rutas.delete('/siembras/:id', verificarSesion, escritura, async (solicitud, respuesta) => {
     await obtenerBase().siembra.delete({ where: { id: validarId(solicitud.params.id), terreno: { usuarioId: obtenerUsuarioActual(solicitud).id } } });

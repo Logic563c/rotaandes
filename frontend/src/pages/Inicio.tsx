@@ -40,7 +40,7 @@ export function Inicio() {
             Un espacio para acompañar a los agricultores de Cotopaxi en el cuidado de su tierra y sus cultivos.
           </p>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-oliva">
-            Crea tu cuenta y elige tus prioridades. Las herramientas de apoyo a la siembra se incorporarán en próximas etapas.
+            Registra tus terrenos y siembras. Consulta el clima histórico de NASA POWER, el pronóstico de Open-Meteo y un calendario de siembra orientativo con datos referenciales.
           </p>
           <Link to="/registro" className="boton-primario mt-6 inline-flex">Registrarme <span aria-hidden="true" className="ml-3">↗</span></Link>
 

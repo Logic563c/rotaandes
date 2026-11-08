@@ -34,11 +34,21 @@ export function procesarRespuestaNasa(entrada: unknown, latitud: number, longitu
   const lectura = esquemaRespuesta.safeParse(entrada);
   if (!lectura.success) throw new ErrorClima();
   const respuesta = lectura.data;
-  if (respuesta.geometry.coordinates[0] !== longitud || respuesta.geometry.coordinates[1] !== latitud) throw new ErrorClima();
+  const [longitudDevuelta, latitudDevuelta] = respuesta.geometry.coordinates;
+  // En la comprobación real NASA devolvió centésimas para coordenadas con seis decimales.
+  // Admitir solo el mismo valor o ese redondeo, nunca una ubicación regional alternativa.
+  const coincideCoordenada = (devuelta: number | undefined, solicitada: number): boolean => devuelta !== undefined && (
+    devuelta === solicitada || (Math.abs(devuelta * 100 - Math.round(devuelta * 100)) <= 1e-9
+      && Math.abs(devuelta - solicitada) <= 0.005 + 1e-9)
+  );
+  if (!coincideCoordenada(longitudDevuelta, longitud) || !coincideCoordenada(latitudDevuelta, latitud)) throw new ErrorClima();
   const periodoDeclarado = respuesta.header.range?.match(/January (\d{4})\s*-\s*December (\d{4})/);
   const inicio = Number(periodoDeclarado?.[1] ?? respuesta.header.start?.slice(0, 4));
   const fin = Number(periodoDeclarado?.[2] ?? respuesta.header.end?.slice(0, 4));
   const advertencias: string[] = [];
+  if (longitudDevuelta !== longitud || latitudDevuelta !== latitud) advertencias.push(
+    `NASA devolvió coordenadas con menor precisión (${latitudDevuelta}, ${longitudDevuelta}) para el punto solicitado (${latitud}, ${longitud}). Se conserva la consulta exacta; la climatología es regional y no una medición del lote.`,
+  );
   const vacio = () => ({ unidad: 'no disponible', valores: Array<number | null>(12).fill(null) });
   const parametros: Record<ParametroNasa, { unidad: string; valores: (number | null)[] }> = {
     T2M: vacio(), T2M_MIN: vacio(), T2M_MAX: vacio(), PRECTOTCORR: vacio(), RH2M: vacio(), GWETTOP: vacio(), GWETROOT: vacio(), ALLSKY_SFC_SW_DWN: vacio(),

@@ -19,8 +19,9 @@ function InteraccionesMapa({ terrenos, punto, alSeleccionar }: MapaTerrenosProps
     alSeleccionar?.({ latitud: Number(ubicacion.lat.toFixed(6)), longitud: Number(ubicacion.lng.toFixed(6)) });
   } });
   useEffect(() => {
-    if (punto) mapa.panTo([punto.latitud, punto.longitud]);
-    else if (terrenos.length > 0) mapa.fitBounds(latLngBounds(terrenos.map((terreno) => [terreno.latitud, terreno.longitud])), { padding: [35, 35], maxZoom: 14 });
+    // Evita transiciones pendientes que accedan al mapa después de navegar y desmontarlo.
+    if (punto) mapa.panTo([punto.latitud, punto.longitud], { animate: false });
+    else if (terrenos.length > 0) mapa.fitBounds(latLngBounds(terrenos.map((terreno) => [terreno.latitud, terreno.longitud])), { padding: [35, 35], maxZoom: 14, animate: false });
   }, [mapa, punto, terrenos]);
   return null;
 }
@@ -31,7 +32,7 @@ export function MapaTerrenos({ terrenos, punto, alSeleccionar }: MapaTerrenosPro
   const [version, establecerVersion] = useState(0);
   return (
     <section aria-label="Mapa de terrenos" className="overflow-hidden rounded-2xl border border-pino/20 bg-arena">
-      <MapContainer className="mapa-terrenos" center={[-0.93, -78.62]} zoom={12} scrollWheelZoom={false}>
+      <MapContainer className="mapa-terrenos" center={[-0.93, -78.62]} zoom={12} scrollWheelZoom={false} zoomAnimation={false}>
         <TileLayer key={version} url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           eventHandlers={{ loading: () => establecerCarga(true), load: () => establecerCarga(false), tileerror: () => { establecerError(true); establecerCarga(false); } }} />

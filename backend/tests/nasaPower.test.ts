@@ -7,6 +7,25 @@ import procedencia from '../src/data/clima/procedencia.json' with { type: 'json'
 import { cambiarValor, crearBasePrueba, crearRespuestaPrueba } from './fixtures/nasaPruebas.js';
 
 describe('NASA POWER: procesamiento científico y procedencia', () => {
+  it('acepta la precisión de dos decimales observada en NASA para un punto de mapa, sin cambiar la ubicación solicitada', () => {
+    const base = procesarRespuestaNasa(crearRespuestaPrueba(), -0.93002, -78.620248, '2030-01-01T00:00:00.000Z');
+    expect(base.latitud).toBe(-0.93002); expect(base.longitud).toBe(-78.620248);
+    expect(base.advertencias.join(' ')).toContain('menor precisión');
+    expect(base.advertencias.join(' ')).toContain('-78.62');
+  });
+  it('rechaza geometrías de otro punto o una diferencia no compatible con redondeo a centésimas', () => {
+    const datos = crearRespuestaPrueba(); datos.geometry.coordinates = [-78.63, -0.94, 2958.26];
+    expect(() => procesarRespuestaNasa(datos, -0.93002, -78.620248, '2030-01-01T00:00:00.000Z')).toThrow();
+    datos.geometry.coordinates = [-78.6203, -0.93004, 2958.26];
+    expect(() => procesarRespuestaNasa(datos, -0.93002, -78.620248, '2030-01-01T00:00:00.000Z')).toThrow();
+  });
+  it('limita a media centésima por eje la menor precisión observada, sin ampliar el respaldo exacto', () => {
+    const datos = crearRespuestaPrueba();
+    expect(procesarRespuestaNasa(datos, -0.934999, -78.624999, '2030-01-01T00:00:00.000Z').latitud).toBe(-0.934999);
+    expect(() => procesarRespuestaNasa(datos, -0.935001, -78.62, '2030-01-01T00:00:00.000Z')).toThrow();
+    expect(() => procesarRespuestaNasa(datos, -0.93, -78.625001, '2030-01-01T00:00:00.000Z')).toThrow();
+    expect(buscarRespaldoClima(-0.934999, -78.624999)).toBeNull();
+  });
   it('conserva las ocho unidades y procesa doce meses de una respuesta real archivada', () => {
     const base = crearBasePrueba(); const meses = construirMensual(base, 3000);
     expect(base.periodo).toEqual({ inicio: 2001, fin: 2025 });

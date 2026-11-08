@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
+import { Prisma } from '../generated/prisma/client.js';
 import { obtenerUsuarioActual } from '../middleware/auth.js';
 import { permitirRoles } from '../middleware/rol.js';
 import { ErrorHttp } from '../middleware/errores.js';
@@ -42,16 +43,26 @@ export function crearRutasTerrenos(obtenerBase: ObtenerBaseAgricola, obtenerAlti
     const datos = validarDatosAgricolas(cambiosTerreno, entrada);
     const latitud = datos.latitud ?? anterior.latitud;
     const longitud = datos.longitud ?? anterior.longitud;
+    const cambiaUbicacion = datos.latitud !== undefined || datos.longitud !== undefined;
     const necesitaAltitud = latitud !== anterior.latitud || longitud !== anterior.longitud
       || (anterior.altitudM === null && (datos.latitud !== undefined || datos.longitud !== undefined));
     const altitudM = necesitaAltitud ? await obtenerAltitud(latitud, longitud) : anterior.altitudM;
-    const terreno = await obtenerBase().terreno.update({ where: { id, usuarioId }, data: {
-      nombre: datos.nombre ?? anterior.nombre, latitud, longitud, altitudM,
-      ...(datos.area_ha !== undefined && { areaHa: datos.area_ha }),
-      ...(datos.tiene_riego !== undefined && { tieneRiego: datos.tiene_riego }),
-      ...(datos.tipo_suelo !== undefined && { tipoSuelo: datos.tipo_suelo }),
-    } });
-    respuesta.json(publicarTerreno(terreno));
+    try {
+      const terreno = await obtenerBase().terreno.update({ where: { id, usuarioId,
+        ...(cambiaUbicacion && { latitud: anterior.latitud, longitud: anterior.longitud, altitudM: anterior.altitudM }),
+      }, data: {
+        ...(datos.nombre !== undefined && { nombre: datos.nombre }),
+        ...(cambiaUbicacion && { latitud, longitud, altitudM }),
+        ...(datos.area_ha !== undefined && { areaHa: datos.area_ha }),
+        ...(datos.tiene_riego !== undefined && { tieneRiego: datos.tiene_riego }),
+        ...(datos.tipo_suelo !== undefined && { tipoSuelo: datos.tipo_suelo }),
+      } });
+      respuesta.json(publicarTerreno(terreno));
+    } catch (error: unknown) {
+      if (cambiaUbicacion && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025'
+        && await obtenerBase().terreno.count({ where: { id, usuarioId } })) throw new ErrorHttp(400, 'La ubicación del terreno cambió durante el guardado. Recarga sus datos y vuelve a intentarlo.');
+      throw error;
+    }
   });
   rutas.delete('/:id', escritura, async (solicitud, respuesta) => {
     await obtenerBase().terreno.delete({ where: { id: validarId(solicitud.params.id), usuarioId: obtenerUsuarioActual(solicitud).id } });
