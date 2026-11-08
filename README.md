@@ -447,3 +447,5 @@ rotaandes/
 ```
 
 El asistente está en `scripts/configurarBaseLocal.ps1`; también se conservan todas las pruebas previas de backend, frontend y navegador. `dist/`, `node_modules/`, cliente generado, coberturas, archivos `.env` y pgpass quedan ignorados. Los ejemplos contienen únicamente valores ficticios y configuración pública local. Los módulos posteriores se implementarán cuando se soliciten y revisen.
+
+La actualización conjunta de escenarios y visor NASA GIBS está preparada en una rama de integración, con 561 pruebas aprobadas; su envío y despliegue requieren autorización. El [informe de actualización](docs/INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) registra la versión pública anterior, las comprobaciones y el plan de reversión. No confundir el visor de imágenes con GeoJSON analítico, que sigue indisponible.

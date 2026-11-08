@@ -1,5 +1,11 @@
 # Decisiones técnicas de RotaAndes
 
+## Prompt 16: integración para publicación
+
+- **Historial y aprobación:** `feat/integracion-escenarios-capas` parte de `f368ce5`, contiene `f96ffe8` y desciende linealmente de la publicación `749c672`, comprobada en GitHub. Se propone fast-forward después de autorizar el commit exacto; no se realiza push o despliegue durante la preparación. Main y la etiqueta de primera entrega permanecen intactas.
+- **Infraestructura conservada:** reutilizar los servicios Railway y proyecto Vercel existentes, referencias privadas y predeploy idempotente. No hay migraciones nuevas, cambios de credenciales ni servicios de pago adicionales. La CSP incorpora solo el permiso de imagen blob ya revisado en el visor. No aplicar IaC ni conectar autodeploy por esta integración.
+- **Evidencia y límites:** check repetido en integración con código 0 y 561 pruebas; build de publicación con URL HTTPS real separado de los artefactos locales de Playwright. Los recorridos controlados no se presentan como comprobaciones de producción. El visor GIBS mantiene el GeoJSON analítico indisponible explícitamente. El [informe de actualización](INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) separa verificaciones ejecutadas, autorización pendiente, recorrido real posterior y reversión sin tocar los datos.
+
 ## Prompt 15: visualizaciones satelitales oficiales
 
 - **Alcance autorizado:** rama `feat/capas-satelitales` desde `f96ffe823a52d83cba3dcb6e3fb3692f4297983b`, con Git limpio al comenzar. No se modifican las ramas protegidas, documentos rectores, esquema o migraciones. Tras comprobar la falta de acceso Earthdata, el usuario autorizó continuar con fuentes públicas/GIBS, documentar la parte analítica pendiente y completar interfaz/pruebas. Sin push ni despliegue.
