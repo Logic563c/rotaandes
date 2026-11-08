@@ -1,5 +1,13 @@
 # Publicación de RotaAndes
 
+## Actualización de escenarios y capas — 8 de noviembre de 2026
+
+La versión pública actual es **`012d6be4ebd2df22dfb3062b8645dfe1c95ec017`**, rama `release/publicacion`, enviada y desplegada tras autorización expresa. URLs: [frontend](https://rotaandes.vercel.app) y [backend/salud](https://backend-production-954a9.up.railway.app/api/health). Railway ejecuta `022133e1-d1e1-4d86-9c40-595f8e300cd8`; Vercel publica `dpl_4PLbbQ3ZQoNbYJrixBBSbYq4ws5q`.
+
+Se aprobaron 561 pruebas locales antes del envío y un recorrido adicional real completo de escritorio/celular con 27 capturas, sin mocks científicos. Escenarios y visor MODIS/SMAP pueden usarse en Internet; GeoJSON analítico y agregaciones mensuales siguen pendientes. PostgreSQL conserva la migración original, diez cultivos, ocho plantillas y todos los datos previos, con las cuentas temporales eliminadas. No se crearon servicios, modificaron credenciales o contrataron planes. El [informe de actualización](INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) detalla resultados, incidencias de verificación, accesos retirados y reversión.
+
+## Publicación inicial — registro histórico
+
 Comprobaciones realizadas el 8 de noviembre de 2026. **Aplicación publicada y recorrido real aprobado.**
 
 - Frontend: [https://rotaandes.vercel.app](https://rotaandes.vercel.app).
