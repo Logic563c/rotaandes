@@ -2,6 +2,7 @@ import type { RespuestaSalud } from '../types/api';
 import type { Credenciales, DatosRegistro, DatosPerfil, RespuestaAutenticacion, UsuarioPublico } from '../types/api';
 import { z } from 'zod';
 import type { Terreno, DatosTerreno, Siembra, DatosSiembra, Cultivo } from '../types/api';
+import type { RespuestaClima } from '../types/api';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -113,3 +114,14 @@ export async function listarCultivos(signal?: AbortSignal): Promise<Cultivo[]> {
 export async function listarSiembras(token: string, terrenoId: string, signal?: AbortSignal): Promise<Siembra[]> { return comprobarRespuesta(z.array(esquemaSiembra), await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/siembras`, 'GET', token, undefined, signal)); }
 export async function guardarSiembra(token: string, terrenoId: string, datos: DatosSiembra, id?: string): Promise<Siembra> { return comprobarRespuesta(esquemaSiembra, await solicitar(id ? `/siembras/${encodeURIComponent(id)}` : `/terrenos/${encodeURIComponent(terrenoId)}/siembras`, id ? 'PUT' : 'POST', token, datos)); }
 export async function eliminarSiembra(token: string, id: string): Promise<void> { await solicitar(`/siembras/${encodeURIComponent(id)}`, 'DELETE', token); }
+
+const esquemaClima = z.object({
+  mensual: z.array(z.object({ mes: numero.int().min(1).max(12), t_min: numero.nullable(), t_med: numero.nullable(), t_max: numero.nullable(),
+    lluvia_mm: numero.min(0).nullable(), humedad_suelo: numero.min(0).max(1).nullable(), riesgo_helada: z.enum(['alto', 'medio', 'bajo']).nullable() })).length(12).refine((meses) => meses.every((mes, indice) => mes.mes === indice + 1)),
+  fuente: z.literal('NASA POWER'), resolucion: z.string(), periodo: z.object({ inicio: numero.int(), fin: numero.int() }), actualizado_en: z.iso.datetime(),
+  estado_datos: z.enum(['nasa', 'cache', 'desactualizado', 'respaldo']), desactualizado: z.boolean(), coordenadas: z.object({ latitud: numero, longitud: numero }),
+  advertencias: z.array(z.string()), metodologia: z.string(), parametros: z.record(z.string(), z.object({ unidad: z.string(), valores: z.array(numero.nullable()).length(12) })),
+});
+export async function obtenerClima(token: string, terrenoId: string, signal?: AbortSignal): Promise<RespuestaClima> {
+  return comprobarRespuesta(esquemaClima, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/clima`, 'GET', token, undefined, signal));
+}

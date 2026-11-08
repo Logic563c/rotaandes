@@ -1,0 +1,47 @@
+[
+  {
+    "lugar": "latacunga",
+    "latitud": -0.93,
+    "longitud": -78.62,
+    "archivo": "latacunga.json",
+    "consultado_en": "2026-11-08T03:53:14.301Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.93&longitude=-78.62&format=JSON",
+    "sha256": "e26fddbe56b63e143789a62c0bc44513a63d668d21ca20fb5923c7275cdb1565"
+  },
+  {
+    "lugar": "pujili",
+    "latitud": -0.957,
+    "longitud": -78.696,
+    "archivo": "pujili.json",
+    "consultado_en": "2026-11-08T03:56:41.425Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.957&longitude=-78.696&format=JSON",
+    "sha256": "bbb0bc64c05fe01c2030b84e31dfa8ef23afbf2194f699bda9efd38db2c12ae8"
+  },
+  {
+    "lugar": "saquisili",
+    "latitud": -0.84,
+    "longitud": -78.667,
+    "archivo": "saquisili.json",
+    "consultado_en": "2026-11-08T03:56:42.151Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.84&longitude=-78.667&format=JSON",
+    "sha256": "68964951bdd9c7b7abc6f0774a340e19f880833184479f613c7516a938d1c6e1"
+  },
+  {
+    "lugar": "salcedo",
+    "latitud": -1.045,
+    "longitud": -78.591,
+    "archivo": "salcedo.json",
+    "consultado_en": "2026-11-08T03:56:42.925Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.045&longitude=-78.591&format=JSON",
+    "sha256": "716154aff2767248321bd98d53399a8cd549361bf41e36c912827b0a33c18b68"
+  },
+  {
+    "lugar": "paramo",
+    "latitud": -0.75,
+    "longitud": -78.55,
+    "archivo": "paramo.json",
+    "consultado_en": "2026-11-08T03:56:43.527Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.75&longitude=-78.55&format=JSON",
+    "sha256": "534a59c615624e43069d1decae8bb32d6822e4304ccb6237f081b8bef845b32c"
+  }
+]

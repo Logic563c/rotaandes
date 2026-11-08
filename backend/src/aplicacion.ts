@@ -15,10 +15,14 @@ import { crearRutasCultivos } from './routes/cultivos.js';
 import { crearServicioElevacion } from './services/elevacion.js';
 import type { ObtenerAltitud } from './services/elevacion.js';
 import type { ObtenerBaseAgricola } from './services/datosAgricolas.js';
+import { crearRutasClima } from './routes/clima.js';
+import { crearServicioClima } from './services/clima.js';
+import type { ObtenerCacheClima, ServicioClima } from './services/clima.js';
 
 export function crearAplicacion(configuracion: ConfiguracionServidor, dependencias: {
   obtenerUsuarios?: ObtenerUsuarios; obtenerSecreto?: () => string;
   obtenerBase?: ObtenerBaseAgricola; obtenerAltitud?: ObtenerAltitud;
+  obtenerCacheClima?: ObtenerCacheClima; consultarClima?: ServicioClima;
 } = {}) {
   const aplicacion = express();
   aplicacion.disable('x-powered-by');
@@ -44,6 +48,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   aplicacion.use('/api/perfil', crearRutasPerfil(obtenerUsuarios, obtenerSecreto));
   const obtenerBase = dependencias.obtenerBase ?? obtenerClientePrisma;
   aplicacion.use('/api/cultivos', crearRutasCultivos(obtenerBase));
+  aplicacion.use('/api', crearRutasClima(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarClima ?? crearServicioClima(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache))));
   aplicacion.use('/api', crearRutasSiembras(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto)));
   aplicacion.use('/api/terrenos', autenticar(obtenerUsuarios, obtenerSecreto), crearRutasTerrenos(obtenerBase, dependencias.obtenerAltitud ?? crearServicioElevacion()));
   aplicacion.use((_solicitud, respuesta) => {

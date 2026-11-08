@@ -36,3 +36,14 @@ export interface Cultivo {
   tolerancia_helada: number; tolerancia_sequia: number; fija_nitrogeno: boolean; aporte_materia_organica: number;
   proteccion_erosion: number; valor_forraje: number; valor_mercado: number; descripcion: string | null;
 }
+
+export interface MesClima {
+  mes: number; t_min: number | null; t_max: number | null; t_med: number | null;
+  lluvia_mm: number | null; humedad_suelo: number | null; riesgo_helada: 'alto' | 'medio' | 'bajo' | null;
+}
+export interface RespuestaClima {
+  mensual: MesClima[]; fuente: 'NASA POWER'; resolucion: string; periodo: { inicio: number; fin: number };
+  actualizado_en: string; estado_datos: 'nasa' | 'cache' | 'desactualizado' | 'respaldo'; desactualizado: boolean;
+  coordenadas: { latitud: number; longitud: number }; advertencias: string[]; metodologia: string;
+  parametros: Record<string, { unidad: string; valores: (number | null)[] }>;
+}

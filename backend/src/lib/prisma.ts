@@ -8,7 +8,8 @@ export function obtenerClientePrisma(): PrismaClient {
   if (!clientePrisma) {
     const esPrueba = process.env.NODE_ENV === 'test';
     const connectionString = validarUrlBase(esPrueba ? process.env.TEST_DATABASE_URL : process.env.DATABASE_URL, esPrueba);
-    clientePrisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+    // PrismaPg 7.10.1 normaliza TIMESTAMPTZ sin convertir offsets: la sesión UTC preserva el instante.
+    clientePrisma = new PrismaClient({ adapter: new PrismaPg({ connectionString, options: '-c TimeZone=UTC' }) });
   }
   return clientePrisma;
 }

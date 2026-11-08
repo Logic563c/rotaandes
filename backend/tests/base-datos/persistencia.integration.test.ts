@@ -8,7 +8,7 @@ import { validarUrlBase } from '../../src/lib/configuracionBase.js';
 
 const urlPruebas = validarUrlBase(process.env.TEST_DATABASE_URL, true);
 const grupo = new Pool({ connectionString: urlPruebas, max: 2, connectionTimeoutMillis: 3000 });
-const prismaPruebas = new PrismaClient({ adapter: new PrismaPg({ connectionString: urlPruebas, connectionTimeoutMillis: 3000 }) });
+const prismaPruebas = new PrismaClient({ adapter: new PrismaPg({ connectionString: urlPruebas, connectionTimeoutMillis: 3000, options: '-c TimeZone=UTC' }) });
 let conexion: PoolClient;
 
 beforeAll(async () => {

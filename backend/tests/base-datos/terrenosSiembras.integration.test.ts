@@ -10,7 +10,7 @@ import { obtenerConfiguracion } from '../../src/configuracion.js';
 import { firmarToken } from '../../src/services/autenticacion.js';
 import { cargarCultivos } from '../../src/data/catalogoCultivos.js';
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: validarUrlBase(process.env.TEST_DATABASE_URL, true) }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: validarUrlBase(process.env.TEST_DATABASE_URL, true), options: '-c TimeZone=UTC' }) });
 const secreto = randomBytes(48).toString('base64url');
 const parcela = { nombre: 'Parcela de prueba', latitud: -0.93, longitud: -78.62, area_ha: 1.25, tiene_riego: false, tipo_suelo: 'franco' };
 const datosSiembra = { cultivo_id: 'papa', fecha_siembra: '2024-02-29', fecha_cosecha: null, notas: null };

@@ -15,7 +15,7 @@ import { permitirRoles } from '../../src/middleware/rol.js';
 import { manejarErrores } from '../../src/middleware/errores.js';
 import { AUDIENCIA_JWT, COSTE_BCRYPT, EMISOR_JWT, firmarToken } from '../../src/services/autenticacion.js';
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: validarUrlBase(process.env.TEST_DATABASE_URL, true) }) });
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: validarUrlBase(process.env.TEST_DATABASE_URL, true), options: '-c TimeZone=UTC' }) });
 const secreto = randomBytes(48).toString('base64url');
 const password = randomBytes(24).toString('base64url');
 const datosRegistro = () => ({ email: `auth-${randomUUID()}@example.invalid`, nombre: 'Agricultora de prueba', password });

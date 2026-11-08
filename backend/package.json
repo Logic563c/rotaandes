@@ -18,6 +18,7 @@
     "prisma:validate": "prisma validate",
     "auth:preparar": "tsx scripts/prepararAutenticacion.ts",
     "db:seed": "tsx prisma/seed.ts",
+    "clima:verificar": "tsx scripts/verificarNasa.ts",
     "db:migrate": "tsx scripts/comprobarConfiguracion.ts && prisma migrate deploy",
     "db:status": "tsx scripts/comprobarConfiguracion.ts && prisma migrate status",
     "db:verify": "tsx scripts/verificarBase.ts",

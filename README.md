@@ -2,9 +2,9 @@
 
 Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo y los diez cultivos referenciales autorizados. No incluye todavía clima, calendario, rotaciones, capas satelitales ni reportes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados y climatología histórica NASA POWER. Pronósticos, tendencias, calendario, rotaciones, capas satelitales y reportes siguen pendientes.
 
-El estado de esta fase y sus resultados están en [el informe de terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md). Los informes de [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+La entrega actual está documentada en [el informe de clima NASA](docs/INFORME_CLIMA_NASA.md). Los informes de [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
 ## Requisitos
 
@@ -99,7 +99,7 @@ Se fijan `prisma`, `@prisma/client` y `@prisma/adapter-pg` a **7.10.1**. Prisma 
 
 La migración `20261107000100_esquema_inicial` crea las seis tablas en una transacción. Incluye los cuatro `CHECK`, el correo único, la nulabilidad exacta y las acciones de claves foráneas de `PROYECTO.md`. No ejecutar `db push`, `migrate reset` ni editar una migración ya aplicada. En esta etapa se aplica con `migrate deploy`; no necesita shadow database ni conceder `CREATEDB` a la aplicación.
 
-`backend/src/lib/prisma.ts` proporciona una instancia reutilizable y su cierre explícito. `/api/health` conserva `{ "ok": true }` como comprobación del proceso HTTP y funciona de forma independiente de la base. La verificación de PostgreSQL se realiza con `db:verify`, sin añadir endpoints al contrato.
+`backend/src/lib/prisma.ts` proporciona una instancia reutilizable y su cierre explícito. Las conexiones Prisma utilizan `TimeZone=UTC` para preservar los instantes TIMESTAMPTZ con el adaptador 7.10.1; no cambia la configuración global de PostgreSQL ni las fechas civiles DATE. `/api/health` conserva `{ "ok": true }` como comprobación del proceso HTTP y funciona de forma independiente de la base. La verificación de PostgreSQL se realiza con `db:verify`, sin añadir endpoints al contrato.
 
 Las pruebas SQL solo aceptan una URL local del rol de aplicación que apunte a `rotaandes_pruebas_<sufijo>`. Primero reproducen las migraciones en esa base aislada y después verifican el esquema, restricciones, relaciones, cascadas, tipos, valores predeterminados, JSONB, arreglos, escritura con Prisma y rechazo de credenciales incorrectas. Toda escritura de prueba se revierte con `ROLLBACK`; las fixtures son sintéticas y no constituyen datos agronómicos ni semillas. `rotaandes_dev` no recibe datos de prueba.
 
@@ -173,6 +173,26 @@ npm.cmd run test:e2e
 
 En Windows utilizan Microsoft Edge instalado. En otros sistemas, instalar primero Chromium con `npx playwright install chromium`. Dejar libres los puertos 3000 y 5173: las pruebas arrancan y detienen sus propios servidores. El backend E2E usa `NODE_ENV=test`, únicamente `TEST_DATABASE_URL` y un secreto JWT efímero. Las cuentas aleatorias se eliminan en `finally`, por correo exacto; las trazas están deshabilitadas para no almacenar credenciales ni Bearer. Las capturas quedan en `test-results/`, ignorado. `npm.cmd run check` incluye las pruebas SQL, las de navegador y el build. El frontend compilado debe usar el valor local predeterminado de `VITE_API_URL` para esta comprobación.
 
+## Consultar climatología histórica
+
+Abrir un terreno y pulsar **Ver climatología histórica**. El panel muestra lluvia mensual estimada y temperaturas con Recharts, una tabla accesible de los doce meses, humedad de raíces y riesgo heurístico de helada. Los valores ausentes aparecen como **Sin dato**; las curvas conservan los huecos. La tabla permite desplazamiento horizontal dentro de su contenedor en celular.
+
+`GET /api/terrenos/:id/clima` exige Bearer y utiliza exclusivamente las coordenadas guardadas en PostgreSQL. Agricultores solo leen sus terrenos; técnicos pueden leerlos todos. UUID ajenos e inexistentes responden 404. La ruta no admite parámetros de consulta. Se conservan errores `{ error: "mensaje" }`, con 400/401/404/500 según corresponda y 429 para exceso de consultas (30 por usuario/minuto). No se amplía CORS.
+
+La respuesta conserva `fuente`, `resolucion` y los campos mensuales originales bajo `mensual`; añade metadatos de periodo, consulta, coordenadas, parámetros/unidades, advertencias y estado. NASA se consulta únicamente desde el backend mediante `/api/temporal/climatology/point`, `community=AG`, `format=JSON`. Se verificaron los ocho parámetros: temperaturas en °C, PRECTOTCORR en mm/día, RH2M en %, GWETTOP/GWETROOT como índices 0–1 y radiación en MJ/m²/día. No confundir el índice de suelo con humedad volumétrica ni la mínima climatológica con días de helada observados.
+
+La respuesta real archivada para Latacunga (-0,93; -78,62) declara **2001–2025**. Enero: 11,86 °C de media, mínima 3,97 °C, máxima 21,03 °C y 4 mm/día. La lluvia mensual se estima multiplicando por los días medios del mes del periodo: enero 124 mm y febrero 28,24 días (seis bisiestos). No son acumulados observados exactos de un año concreto. La resolución meteorológica es 0,5° × 0,625°; la solar 1° × 1°. No representa el microclima del lote.
+
+`clima_cache` conserva datos normalizados por coordenadas exactas durante **30 días**. Se distingue consulta NASA, caché, dato anterior desactualizado y respaldo. Un fallo puede reutilizar datos anteriores válidos de la misma ubicación; cinco respuestas reales archivadas solo sirven de respaldo si coinciden exactamente sus coordenadas. No se sustituye un terreno por el punto regional más cercano. Sin información fiable se informa indisponibilidad. Los archivos públicos y su procedencia/SHA-256 están en `backend/src/data/clima/`; no se necesitan nuevas variables de entorno, claves NASA ni migraciones.
+
+La comprobación real independiente, sin escribir en la base, es:
+
+```powershell
+npm.cmd run clima:verificar --workspace backend
+```
+
+Las pruebas habituales no consultan NASA: usan respuestas controladas identificadas como tales. Las pruebas SQL verifican autorización, caché y persistencia con rollback; las E2E climáticas usan una caché temporal en la base aislada, comprueban gráficas reales y fallo sin datos ficticios, y limpian sus registros. Las capturas de escritorio/celular quedan en `test-results/`, ignorado por Git. Véanse metodología, procedencia, resultados y limitaciones en [INFORME_CLIMA_NASA.md](docs/INFORME_CLIMA_NASA.md).
+
 ## Probar registro, acceso y perfil
 
 Con `npm.cmd run dev` activo, abrir http://localhost:5173/registro. Crear una cuenta con correo válido, nombre y una contraseña de al menos 15 caracteres y hasta 72 bytes UTF-8. No se recorta ni normaliza la contraseña; algunos caracteres ocupan varios bytes. El correo se recorta y convierte a minúsculas, sin eliminar puntos ni sufijos `+`.
@@ -244,6 +264,7 @@ rotaandes/
 │   ├── scripts/
 │   │   ├── comprobarConfiguracion.ts
 │   │   ├── verificarBase.ts
+│   │   ├── verificarNasa.ts
 │   │   └── verificarEsquema.sql
 │   ├── src/
 │   │   ├── index.ts
@@ -252,10 +273,10 @@ rotaandes/
 │   │   ├── lib/configuracionBase.ts
 │   │   ├── lib/prisma.ts
 │   │   ├── middleware/       (auth, rol, errores)
-│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras)
-│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion)
-│   │   └── data/catalogoCultivos.ts
-│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras)
+│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras, clima)
+│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion, nasaPower, clima)
+│   │   └── data/             (catalogoCultivos, respaldosClima, clima/)
+│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras, clima)
 └── frontend/
     ├── .env.example
     ├── index.html
@@ -268,7 +289,7 @@ rotaandes/
         ├── Aplicacion.tsx
         ├── estilos.css
         ├── pages/            (Inicio, Acceso, EspacioPersonal, Perfil, Terrenos, EditarTerreno, DetalleTerreno)
-        ├── components/      (Marco, ProveedorSesion, mapas, siembras y confirmaciones)
+        ├── components/      (Marco, ProveedorSesion, mapas, siembras, clima y confirmaciones)
         ├── lib/             (api, useSesion, useAgricultura)
         ├── types/api.ts
         └── tests/preparacion.ts
