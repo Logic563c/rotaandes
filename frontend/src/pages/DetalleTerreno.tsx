@@ -10,6 +10,7 @@ import { ClimaTerreno } from '../components/ClimaTerreno';
 import { PronosticoTerreno } from '../components/PronosticoTerreno';
 import { CalendarioSiembra } from '../components/CalendarioSiembra';
 import { ComparadorRotaciones } from '../components/ComparadorRotaciones';
+import { SimuladorEscenarios } from '../components/SimuladorEscenarios';
 import { obtenerTerreno, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 
@@ -47,6 +48,7 @@ export function DetalleTerreno() {
       <PronosticoTerreno key={`pronostico:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} />
       <CalendarioSiembra key={`calendario:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} tieneRiego={terreno.tiene_riego} areaHa={terreno.area_ha} />
       <ComparadorRotaciones key={`rotaciones:${sesion.usuario?.id}:${id}`} terrenoId={id} contexto={[terreno.latitud, terreno.longitud, terreno.altitud_m, terreno.tiene_riego, terreno.area_ha]} />
+      <SimuladorEscenarios key={`escenarios:${sesion.usuario?.id}:${id}`} terrenoId={id} contexto={[terreno.latitud, terreno.longitud, terreno.altitud_m, terreno.tiene_riego, terreno.area_ha]} />
       <SiembrasTerreno key={`${sesion.usuario?.id}:${id}`} terrenoId={id} />
       {confirmando && <ConfirmarEliminacion titulo={`¿Eliminar ${terreno.nombre}?`} mensaje="Se eliminarán el terreno y todas sus siembras. Esta acción no se puede deshacer." estaEliminando={eliminar.isPending} error={eliminar.error?.message ?? null} alConfirmar={() => eliminar.mutate()} alCancelar={() => establecerConfirmacion(false)} />}
     </>}

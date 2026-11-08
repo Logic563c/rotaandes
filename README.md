@@ -2,7 +2,7 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual y comparador explicable de rotaciones. Tendencias, simulador visual, capas satelitales, panel técnico avanzado y reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones y simulador visual de escenarios. Tendencias, capas satelitales, panel técnico avanzado y reportes siguen pendientes.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
@@ -214,7 +214,21 @@ En Windows utilizan Microsoft Edge instalado. En otros sistemas, instalar primer
 
 En el detalle del terreno, pulsar **Comparar rotaciones**. Muestra el patrón actual del historial y las dos plantillas originales mejor puntuadas que puedan evaluarse y programarse según el calendario. Cada tarjeta incluye secuencia, ciclos y esperas, indicadores, explicación, evidencia, riesgos y vacíos. Las prioridades guardadas del propietario ponderan la comparación; el técnico autorizado consulta con esas mismas prioridades.
 
-`GET /api/terrenos/:id/rotaciones?lluvia_pct=0&temp_delta=0` conserva el contrato original y sus campos `estrategias`, `puntajes`, `por_que`, `evidencia`, `beneficios`, `vacios_informacion`, `riesgos` y `aviso`. Requiere JWT y propiedad o lectura técnica. Usa coordenadas/historial/catálogo de PostgreSQL y comparte el servicio/caché NASA del calendario. No escribe siembras. Los escenarios admiten lluvia -30…30 % y temperatura -2…2 °C; no hay simulador visual.
+`GET /api/terrenos/:id/rotaciones?lluvia_pct=0&temp_delta=0` conserva el contrato original y sus campos `estrategias`, `puntajes`, `por_que`, `evidencia`, `beneficios`, `vacios_informacion`, `riesgos` y `aviso`. Requiere JWT y propiedad o lectura técnica. Usa coordenadas/historial/catálogo de PostgreSQL y comparte el servicio/caché NASA del calendario. No escribe siembras. Los escenarios admiten lluvia -30…30 % y temperatura -2…2 °C; el simulador visual reutiliza esos mismos parámetros.
+
+## Simular escenarios climáticos
+
+En el detalle, pulsar **Abrir simulador de escenarios**. Los deslizadores modifican lluvia entre −30 % y +30 % (pasos de 1 %) y temperatura entre −2 °C y +2 °C (pasos de 0,5 °C). El teclado permite usar flechas, Inicio y Fin. Los valores se muestran inmediatamente y se consulta al backend 600 ms después del último cambio. **Restaurar escenario original** vuelve a 0 % / 0 °C.
+
+El panel compara las 120 celdas originales/simuladas y sus motivos; muestra cambios de estado, cinco índices y las tres posiciones de rotaciones con planificación y advertencias. La comparación numérica corresponde a la misma estrategia por ID, aunque cambie su puesto. Una alternativa que entra o sale no se compara contra otra distinta; los indicadores sin referencia o sin datos conservan su incertidumbre. No se garantiza disponer de dos sugerencias evaluables.
+
+Las llamadas GET siguen centralizadas y validadas en `frontend/src/lib/api.ts`. No hay nuevas rutas, fórmulas agrícolas, tablas ni migraciones. Lluvia × (1 + porcentaje/100) y variación de temperatura se aplican en el motor existente, sin escribir historial o datos climáticos transformados. La caché y cancelación se separan por usuario, terreno y escenario. Se comprueba la coherencia de fuente/fecha/periodo y contexto antes de comparar; **Actualizar ambos escenarios** permite recoger datos recientes.
+
+Es una **simulación hipotética**, sin validez predictiva ni validación agronómica local. Consulta metodología, pruebas y capturas en [INFORME_ESCENARIOS.md](docs/INFORME_ESCENARIOS.md). Esta actualización se desarrolla en `feat/escenarios-climaticos`; la versión pública descrita arriba sigue siendo la anterior hasta una publicación autorizada.
+
+`npm.cmd run test:escenarios` compila y ejecuta el recorrido del simulador en escritorio/celular con PostgreSQL aislado y climatología controlada. `test:e2e` y `check` lo incluyen como tercer proceso, después de las suites anteriores, conservando las cuotas de autenticación. Las evidencias están en `test-results/escenarios/`, ignorado por Git. No ejecutar simultáneamente suites que escriban en la misma base aislada.
+
+El cierre del simulador ejecutó `check` con código 0: **262 backend, 103 frontend, 127 PostgreSQL y 22 E2E; 514 pruebas aprobadas**. Los dos recorridos nuevos verificaron el cálculo real con datos controlados, la ausencia de escrituras de simulación y el aislamiento de cuentas. Esta validación local no publica la actualización.
 
 Las fórmulas cuantitativas no estaban definidas en el documento original; se diseñaron con autorización explícita del usuario y se documentan como **heurística referencial sin validación agronómica**. Los índices 0–100 no representan litros, dinero, rendimientos o probabilidades. Total: promedio ponderado de agua, suelo, valor de mercado y compatibilidad climática; esta última tiene peso fijo 3, declarado, porque el perfil solo define las otras tres prioridades. Ver fórmulas, normalización y penalización de familias en [el informe](docs/INFORME_ROTACIONES.md).
 
@@ -291,7 +305,7 @@ Se aplica diciembre→enero→febrero correctamente. Brócoli requiere riego con
 
 `GET /api/terrenos/:id/calendario?lluvia_pct=0&temp_delta=0` exige JWT. Agricultor solo consulta terrenos propios; técnico puede leerlos todos. Coordenadas, altitud, riego, área y catálogo proceden de PostgreSQL. Se conservan `{ celdas: [{ cultivo_id, mes, estado, motivo }] }` y errores `{ error }`. Metadatos adicionales identifican cultivos, contexto, escenario, procedencia y aviso. El estado `no_determinado` expresa la falta de datos solicitada; el contrato original no fijaba un enum de estados.
 
-Los parámetros son opcionales y valen cero cuando se omiten. Se admiten números decimales finitos: lluvia_pct entre -30 y +30 y temp_delta entre -2 y +2. Valores vacíos, repetidos, fuera de rango o claves adicionales se rechazan con 400. La API aplica lluvia × (1 + porcentaje/100) y suma el delta a temperaturas; recalcula el riesgo mediante la función NASA existente, sin alterar la caché base. La interfaz muestra solo el escenario base: no implementa todavía el simulador visual.
+Los parámetros son opcionales y valen cero cuando se omiten. Se admiten números decimales finitos: lluvia_pct entre -30 y +30 y temp_delta entre -2 y +2. Valores vacíos, repetidos, fuera de rango o claves adicionales se rechazan con 400. La API aplica lluvia × (1 + porcentaje/100) y suma el delta a temperaturas; recalcula el riesgo mediante la función NASA existente, sin alterar la caché base. El panel de calendario conserva la referencia original; el apartado de simulación permite compararla con otros parámetros.
 
 El calendario comparte el servicio NASA con `/clima`: caché de 30 días, deduplicación y respaldos exactos existentes, sin una nueva caché SQL de recomendaciones. Mantiene origen, periodo, fecha, advertencias y antigüedad, incluso al utilizar un dato anterior identificado. Sin fuente fiable devuelve error y permite reintentar. Las claves de frontend separan usuario, terreno, contexto y escenario.
 

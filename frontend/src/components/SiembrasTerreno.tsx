@@ -28,6 +28,7 @@ export function SiembrasTerreno({ terrenoId }: { terrenoId: string }) {
     establecerEdicion(null); establecerEliminacion(null); establecerMensaje(mensajeNuevo);
     void cliente.invalidateQueries({ queryKey: [...sesion.clave, 'siembras', terrenoId] });
     void cliente.invalidateQueries({ queryKey: [...sesion.clave, 'rotaciones', terrenoId] });
+    void cliente.invalidateQueries({ queryKey: [...sesion.clave, 'escenarios', terrenoId] });
   }
   const guardar = useMutation({ mutationFn: ({ datos, id }: { datos: DatosSiembra; id?: string }) => sesion.ejecutar((token) => guardarSiembra(token, terrenoId, datos, id)), onSuccess: (_respuesta, variables) => {
     if (!sesion.sigueActiva()) return;

@@ -194,3 +194,13 @@ export async function obtenerRotaciones(token: string, terrenoId: string, escena
   const consulta = new URLSearchParams({ lluvia_pct: String(escenario.lluvia_pct), temp_delta: String(escenario.temp_delta) });
   return comprobarRespuesta(esquemaRotaciones, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/rotaciones?${consulta}`, 'GET', token, undefined, signal));
 }
+
+export async function obtenerResultadosEscenario(token: string, terrenoId: string, escenario: EscenarioCalendario, signal?: AbortSignal): Promise<{ calendario: RespuestaCalendario; rotaciones: RespuestaRotaciones }> {
+  const [calendario, rotaciones] = await Promise.all([
+    obtenerCalendario(token, terrenoId, escenario, signal), obtenerRotaciones(token, terrenoId, escenario, signal),
+  ]);
+  if ([calendario, rotaciones].some((datos) => datos.escenario.lluvia_pct !== escenario.lluvia_pct || datos.escenario.temp_delta !== escenario.temp_delta)) {
+    throw new ErrorApi('La respuesta no corresponde al escenario solicitado. Reintenta la consulta.');
+  }
+  return { calendario, rotaciones };
+}

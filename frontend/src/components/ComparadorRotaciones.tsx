@@ -11,7 +11,7 @@ const mostrarFecha = (fecha: string) => new Intl.DateTimeFormat('es-EC', { year:
 function ListaFactores({ titulo, valores }: { titulo: string; valores: string[] }) {
   return valores.length > 0 ? <div className="mt-5"><h4 className="font-semibold">{titulo}</h4><ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed text-oliva">{valores.map((valor, indice) => <li key={indice}>{valor}</li>)}</ul></div> : null;
 }
-function TarjetaEstrategia({ estrategia, posicion }: { estrategia: EstrategiaRotacion; posicion: number }) {
+export function TarjetaEstrategia({ estrategia, posicion }: { estrategia: EstrategiaRotacion; posicion: number }) {
   const titulo = useId();
   return <article aria-labelledby={titulo} className="tarjeta min-w-0 p-5 sm:p-6">
     <p className="etiqueta-seccion">{estrategia.es_actual ? 'Referencia del historial' : `Alternativa ${posicion}`}</p>
