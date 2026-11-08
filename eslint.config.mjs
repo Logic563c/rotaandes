@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'backend/src/generated/**', '.tmp/**', '.vercel/**', '.railway/**', 'test-results/**', 'playwright-report/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'backend/src/generated/**', '.tmp/**', '.vercel/**', '.railway/**/*', '!.railway/railway.ts', 'test-results/**', 'playwright-report/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

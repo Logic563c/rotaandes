@@ -6,7 +6,7 @@ Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma,
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
-La preparación de publicación está en `release/publicacion`. **Todavía no hay URLs públicas verificadas**, repositorio remoto creado ni servicios de producción configurados. El estado, las comprobaciones locales y las autorizaciones pendientes están en [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md).
+La preparación de publicación está en `release/publicacion`. El repositorio privado [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes) ya contiene el commit aprobado `b81cda8` y el hito de primera entrega. **Todavía no hay URLs públicas verificadas ni servicios de producción creados.** La adaptación posterior a Railway IaC debe revisarse antes de su envío. El estado y las autorizaciones pendientes están en [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md).
 
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
@@ -73,7 +73,7 @@ Vite utiliza el puerto **5173** con `strictPort`: si está ocupado, muestra un e
 
 ## Preparación de publicación
 
-La publicación requiere aprobación antes de crear el repositorio, enviar código, crear servicios con costos, migrar producción o activar el acceso público. Seleccionar la cuenta GitHub `Logic563c` no autoriza esas operaciones. No copiar las credenciales ni los datos locales a producción.
+La publicación requiere aprobación antes de enviar código, crear servicios con costos, migrar producción o activar el acceso público. El usuario autorizó crear el repositorio privado `Logic563c/rotaandes` y enviar `b81cda8` y la etiqueta original; esas operaciones están verificadas. Los siguientes envíos y las operaciones de producción conservan su requisito de aprobación. No copiar las credenciales ni los datos locales a producción.
 
 Ambas plataformas deben utilizar **la raíz del monorepo**, con su único lockfile y sus workspaces:
 
@@ -83,7 +83,11 @@ Ambas plataformas deben utilizar **la raíz del monorepo**, con su único lockfi
 | Railway, predeploy autorizado | `npm run produccion:preparar --workspace backend` | `prisma migrate deploy`, verificación y semillas originales de diez cultivos y ocho plantillas |
 | Vercel, frontend | `npm ci --include=dev` y `npm run build:publicacion --workspace frontend` | `frontend/dist`; rutas SPA en `vercel.json` |
 
-`railway.json` configura compilación, predeploy, arranque y healthcheck. `backend/.env.production.example` enumera variables sin secretos: `NODE_ENV`, `TRUST_PROXY_HOPS`, `CORS_ORIGIN`, `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_USER`, `JWT_SECRET` y opciones Railpack. `PORT` lo proporciona Railway. Se fijan Node 24.20.0 y npm 11.19.0; las dependencias de desarrollo se conservan para ejecutar Prisma CLI/tsx en el predeploy.
+`.railway/railway.ts` declara PostgreSQL privado y backend, compilación, predeploy, arranque y healthcheck. Railway ya no acepta `railway.json` en servicios nuevos; se sustituyó tras verificar la documentación y el CLI actuales. El SDK oficial `railway@3.16.0` es una dependencia de desarrollo, sin cambios al stack de aplicación. IaC se evalúa localmente; planificar no crea servicios, aplicar sí requiere aprobación y revisar que no haya eliminaciones.
+
+`backend/.env.production.example` enumera variables sin secretos: `NODE_ENV`, `TRUST_PROXY_HOPS`, `CORS_ORIGIN`, `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_USER`, `JWT_SECRET` y opciones Railpack. `PORT` lo proporciona Railway. Las variables compartidas privadas `ROTAANDES_APP_PASSWORD`, `ROTAANDES_JWT_SECRET` y el origen público `ROTAANDES_CORS_ORIGIN` deben prepararse dentro del entorno autorizado antes de aplicar IaC. Las claves se generarán con criptografía segura, no con el generador determinista del contexto SDK ni con valores versionados. Se fijan Node 24.20.0 y npm 11.19.0; las dependencias de desarrollo se conservan para Prisma CLI/tsx.
+
+El script `backend/scripts/configurarRolProduccion.sql`, pendiente de ejecución autorizada mediante SSH al PostgreSQL nuevo, crea únicamente `rotaandes_app` sin privilegios administrativos y `rotaandes_prod` si faltan. Reutiliza recursos compatibles sin cambiar contraseñas, recibe la clave del entorno privado y evita registrar la sentencia que la utiliza. El backend referencia la URL de ese rol, sin recibir la clave administrativa del proveedor. Verificar conexión y permisos antes de migrar.
 
 El backend de producción no carga `.env` local: solo acepta el PostgreSQL privado de Railway que coincida con host, base y usuario autorizados. Antes de escuchar realiza `SELECT 1`; un fallo detiene el proceso con un mensaje sin credenciales. Se confía únicamente en un salto del proxy. El origen CORS real debe configurarse después de conocer el dominio del frontend.
 

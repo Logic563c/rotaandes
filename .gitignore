@@ -17,7 +17,8 @@ backend/src/generated/
 pgpass.conf
 .tmp/
 .vercel/
-.railway/
+.railway/*
+!.railway/railway.ts
 # Claves privadas y almacenes de certificados locales.
 *.key
 *.pem
