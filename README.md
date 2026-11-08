@@ -6,6 +6,8 @@ Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma,
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
+La preparación de publicación está en `release/publicacion`. **Todavía no hay URLs públicas verificadas**, repositorio remoto creado ni servicios de producción configurados. El estado, las comprobaciones locales y las autorizaciones pendientes están en [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md).
+
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
 ## Requisitos
@@ -65,9 +67,29 @@ npm.cmd run dev
 
 Las URLs PostgreSQL de esta fase se limitan al servidor, puerto, rol y bases locales autorizados. Solo admiten el parámetro opcional `schema=public`, sin duplicados ni fragmentos; otros parámetros podrían sobrescribir la conexión en pg.
 
-El backend escucha solo en `127.0.0.1`. CORS permite exactamente el origen configurado: `http://localhost:5173` o, si se elige expresamente, `http://127.0.0.1:5173`, métodos GET/POST/PUT/DELETE y encabezados Content-Type/Authorization. No permite comodines, dominios externos ni otros puertos. Las solicitudes sin `Origin`, como las de `curl`, pueden consultar el endpoint público. Las rutas privadas exigen Bearer independientemente de CORS.
+En desarrollo, el backend escucha solo en `127.0.0.1`. CORS permite exactamente el origen configurado: `http://localhost:5173` o, si se elige expresamente, `http://127.0.0.1:5173`, métodos GET/POST/PUT/DELETE y encabezados Content-Type/Authorization. No permite comodines ni otros puertos. El perfil de producción exige un origen HTTPS concreto de Vercel y escucha en `0.0.0.0` con el puerto de Railway. Las solicitudes sin `Origin`, como las de `curl`, pueden consultar el endpoint público. Las rutas privadas exigen Bearer independientemente de CORS.
 
 Vite utiliza el puerto **5173** con `strictPort`: si está ocupado, muestra un error en lugar de cambiar de puerto. El backend informa si no puede abrir el **3000**. Si PowerShell no encuentra `backend/`, comprobar que la terminal está en la raíz indicada arriba.
+
+## Preparación de publicación
+
+La publicación requiere aprobación antes de crear el repositorio, enviar código, crear servicios con costos, migrar producción o activar el acceso público. Seleccionar la cuenta GitHub `Logic563c` no autoriza esas operaciones. No copiar las credenciales ni los datos locales a producción.
+
+Ambas plataformas deben utilizar **la raíz del monorepo**, con su único lockfile y sus workspaces:
+
+| Servicio | Instalación / compilación | Arranque / salida |
+| --- | --- | --- |
+| Railway, backend | `npm ci --include=dev` y `npm run build --workspace backend` | `npm run start --workspace backend`; salud `/api/health` |
+| Railway, predeploy autorizado | `npm run produccion:preparar --workspace backend` | `prisma migrate deploy`, verificación y semillas originales de diez cultivos y ocho plantillas |
+| Vercel, frontend | `npm ci --include=dev` y `npm run build:publicacion --workspace frontend` | `frontend/dist`; rutas SPA en `vercel.json` |
+
+`railway.json` configura compilación, predeploy, arranque y healthcheck. `backend/.env.production.example` enumera variables sin secretos: `NODE_ENV`, `TRUST_PROXY_HOPS`, `CORS_ORIGIN`, `DATABASE_URL`, `DATABASE_HOST`, `DATABASE_NAME`, `DATABASE_USER`, `JWT_SECRET` y opciones Railpack. `PORT` lo proporciona Railway. Se fijan Node 24.20.0 y npm 11.19.0; las dependencias de desarrollo se conservan para ejecutar Prisma CLI/tsx en el predeploy.
+
+El backend de producción no carga `.env` local: solo acepta el PostgreSQL privado de Railway que coincida con host, base y usuario autorizados. Antes de escuchar realiza `SELECT 1`; un fallo detiene el proceso con un mensaje sin credenciales. Se confía únicamente en un salto del proxy. El origen CORS real debe configurarse después de conocer el dominio del frontend.
+
+El modo `publicacion` exige `VITE_API_URL` con un origen HTTPS de Railway válido, sin `/api` ni credenciales. El build local habitual se conserva para desarrollo y pruebas: no usar su `dist` local como artefacto de publicación. Las variables `VITE_*` son públicas. `vercel.json` desactiva despliegues automáticos por Git y configura SPA y encabezados de seguridad; cada publicación debe aprobarse. `.vercelignore` y `.railwayignore` excluyen entornos privados, dependencias y resultados locales de las cargas por CLI.
+
+Los archivos están preparados, pero falta verificarlos en las plataformas reales: permisos, costos, red privada, migraciones, encabezados, CORS, arranque y recorrido HTTPS con proveedores reales. Consultar el informe antes de publicar.
 
 ## PostgreSQL y Prisma
 

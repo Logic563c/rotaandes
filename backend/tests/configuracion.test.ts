@@ -3,7 +3,7 @@ import { obtenerConfiguracion } from '../src/configuracion.js';
 
 describe('Configuración del servidor', () => {
   it('usa el puerto 3000 y el origen local de Vite por defecto', () => {
-    expect(obtenerConfiguracion({})).toEqual({ puerto: 3000, origenPermitido: 'http://localhost:5173' });
+    expect(obtenerConfiguracion({})).toEqual({ puerto: 3000, origenPermitido: 'http://localhost:5173', host: '127.0.0.1', esProduccion: false, saltosProxy: 0 });
   });
 
   it.each(['', '0', '-1', '65536', '3000abc', '3.5', ' 3000 ', '1e3'])(

@@ -19,6 +19,8 @@
     "auth:preparar": "tsx scripts/prepararAutenticacion.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:rotaciones": "tsx prisma/seedRotaciones.ts",
+    "produccion:preparar": "tsx scripts/prepararProduccion.ts",
+    "produccion:status": "prisma migrate status --config prisma.produccion.config.ts",
     "clima:verificar": "tsx scripts/verificarNasa.ts",
     "pronostico:verificar": "tsx scripts/verificarPronostico.ts",
     "calendario:verificar": "tsx scripts/verificarCalendario.ts",

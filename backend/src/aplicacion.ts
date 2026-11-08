@@ -32,6 +32,15 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
 } = {}) {
   const aplicacion = express();
   aplicacion.disable('x-powered-by');
+  aplicacion.set('trust proxy', configuracion.saltosProxy);
+  aplicacion.use((_solicitud, respuesta, siguiente) => {
+    respuesta.setHeader('X-Content-Type-Options', 'nosniff');
+    respuesta.setHeader('X-Frame-Options', 'DENY');
+    respuesta.setHeader('Referrer-Policy', 'no-referrer');
+    respuesta.setHeader('Cache-Control', 'no-store');
+    if (configuracion.esProduccion) respuesta.setHeader('Strict-Transport-Security', 'max-age=31536000');
+    siguiente();
+  });
 
   aplicacion.use(cors({
     origin(origen, resolver) {

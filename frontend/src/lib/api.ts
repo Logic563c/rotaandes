@@ -6,6 +6,7 @@ import type { RespuestaClima } from '../types/api';
 import type { RespuestaPronostico } from '../types/api';
 import type { EscenarioCalendario, RespuestaCalendario } from '../types/api';
 import type { RespuestaRotaciones } from '../types/api';
+import { validarUrlPublicacion } from './configuracionPublicacion';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -14,7 +15,7 @@ export class ErrorApi extends Error {
 function obtenerUrl(ruta: string): URL {
   let urlBase: URL;
   try {
-    urlBase = new URL(import.meta.env.VITE_API_URL ?? 'http://localhost:3000');
+    urlBase = import.meta.env.MODE === 'publicacion' ? validarUrlPublicacion(import.meta.env.VITE_API_URL) : new URL(import.meta.env.VITE_API_URL ?? 'http://localhost:3000');
   } catch {
     throw new ErrorApi('La dirección del servicio no está configurada correctamente.');
   }

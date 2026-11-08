@@ -7,6 +7,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.production.example
 .DS_Store
 Thumbs.db
 test-results/
@@ -15,6 +16,8 @@ backend/src/generated/
 *.pgpass
 pgpass.conf
 .tmp/
+.vercel/
+.railway/
 # Claves privadas y almacenes de certificados locales.
 *.key
 *.pem
