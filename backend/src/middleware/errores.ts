@@ -23,6 +23,12 @@ export const manejarErrores: ErrorRequestHandler = (
     return;
   }
 
+  if (typeof error === 'object' && error !== null && 'type' in error
+    && (error.type === 'entity.parse.failed' || error.type === 'entity.too.large')) {
+    respuesta.status(400).json({ error: 'El cuerpo debe ser JSON válido y no superar 16 KB.' });
+    return;
+  }
+
   console.error('Error inesperado del servidor.', error instanceof Error ? error.name : 'Error desconocido');
   respuesta.status(500).json({ error: 'No se pudo completar la solicitud.' });
 };

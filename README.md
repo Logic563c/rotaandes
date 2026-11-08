@@ -2,9 +2,9 @@
 
 Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene la página inicial, la comprobación de conexión con el backend y la persistencia PostgreSQL + Prisma de los seis modelos del proyecto. No incluye autenticación, CRUD, semillas ni integraciones agrícolas.
+Esta entrega contiene la página inicial, persistencia PostgreSQL + Prisma, registro de agricultores, inicio y cierre local de sesión, perfil y autorización por roles. No incluye CRUD agrícola, semillas ni integraciones externas.
 
-El estado local comprobado, las versiones, las migraciones, los resultados reales y la lista de cambios están en [el informe de persistencia](docs/INFORME_PERSISTENCIA.md).
+El estado local y los resultados están en [el informe de autenticación](docs/INFORME_AUTENTICACION.md). El [informe de persistencia](docs/INFORME_PERSISTENCIA.md) conserva el cierre de la fase anterior.
 
 ## Requisitos
 
@@ -21,10 +21,11 @@ Desde PowerShell:
 ```powershell
 Set-Location C:\Users\DELL\Documents\PROYECTOS\rotaandes
 npm.cmd ci
+npm.cmd run auth:preparar --workspace backend
 npm.cmd run dev
 ```
 
-La página y `/api/health` arrancan con valores predeterminados sin archivos `.env` ni una conexión activa a PostgreSQL. Para utilizar persistencia, seguir la configuración segura de la siguiente sección. No sobrescribir archivos `.env` existentes con los ejemplos ficticios. El frontend utiliza por defecto `http://localhost:3000` y puede configurarse con `frontend/.env.example`.
+En esta computadora PostgreSQL y `backend/.env` ya están preparados. `auth:preparar` generó el secreto JWT y lo reutiliza en posteriores ejecuciones sin mostrarlo ni cambiar contraseñas. En un clon nuevo, preparar primero PostgreSQL con el asistente de la siguiente sección. El backend exige un secreto válido al arrancar; `/api/health` sigue siendo una comprobación HTTP independiente de la base. No sobrescribir archivos `.env` existentes con los ejemplos ficticios. El frontend utiliza por defecto `http://localhost:3000` y puede configurarse con `frontend/.env.example`.
 
 - Página inicial: **http://localhost:5173**.
 - Comprobación del backend: **http://localhost:3000/api/health**.
@@ -55,12 +56,13 @@ npm.cmd run dev
 | `frontend/.env` | `VITE_API_URL` | `http://localhost:3000` |
 | `backend/.env` | `DATABASE_URL` | Sin valor real predeterminado; configuración segura local |
 | `backend/.env` | `TEST_DATABASE_URL` | Base aislada creada por el asistente local |
+| `backend/.env` | `JWT_SECRET` | Sin valor predeterminado; generado con 48 bytes aleatorios |
 
 `VITE_API_URL` es el origen del backend, sin `/api`, credenciales, consulta ni fragmento. Las variables `VITE_*` son públicas; no colocar secretos en ellas. Reiniciar Vite después de cambiar su entorno y reconstruir el frontend si cambia su URL de producción.
 
 Las URLs PostgreSQL de esta fase se limitan al servidor, puerto, rol y bases locales autorizados. Solo admiten el parámetro opcional `schema=public`, sin duplicados ni fragmentos; otros parámetros podrían sobrescribir la conexión en pg.
 
-El backend escucha solo en `127.0.0.1`. CORS permite exactamente el origen configurado: `http://localhost:5173` o, si se elige expresamente, `http://127.0.0.1:5173`. No permite comodines, dominios externos ni otros puertos. Las solicitudes sin `Origin`, como las de `curl`, pueden consultar el endpoint público. CORS es una restricción del navegador y no sustituye autenticación para futuros módulos.
+El backend escucha solo en `127.0.0.1`. CORS permite exactamente el origen configurado: `http://localhost:5173` o, si se elige expresamente, `http://127.0.0.1:5173`, métodos GET/POST/PUT y encabezados Content-Type/Authorization. No permite comodines, dominios externos ni otros puertos. Las solicitudes sin `Origin`, como las de `curl`, pueden consultar el endpoint público. Las rutas privadas exigen Bearer independientemente de CORS.
 
 Vite utiliza el puerto **5173** con `strictPort`: si está ocupado, muestra un error en lugar de cambiar de puerto. El backend informa si no puede abrir el **3000**. Si PowerShell no encuentra `backend/`, comprobar que la terminal está en la raíz indicada arriba.
 
@@ -129,7 +131,7 @@ npm.cmd run check
 
 Los mismos scripts `dev`, `build`, `lint`, `typecheck` y `test` están disponibles dentro de `backend/` y `frontend/`. `test` ejecuta las pruebas una vez; `test:watch` las mantiene observando cambios dentro de cada paquete.
 
-Las pruebas del backend usan Vitest y Supertest para comprobar HTTP real, contrato de salud, CORS, configuración, rutas inexistentes y errores. Las del frontend usan Vitest, jsdom y Testing Library para validar respuestas externas, carga, errores y reintentos. Las respuestas simuladas de estas pruebas se limitan al endpoint de salud; no representan módulos agrícolas.
+Las pruebas del backend usan Vitest y Supertest para comprobar HTTP, salud, CORS, JWT, configuración y errores; `test:db` añade registro, login, perfil, roles y restricciones contra PostgreSQL aislado, con rollback. Las del frontend usan Vitest, jsdom y Testing Library para validar respuestas, sesión, formularios, carga, errores, reintentos y cierre. Sus fixtures son exclusivas de pruebas.
 
 Las pruebas de navegador usan Playwright contra los dos servicios compilados, sin simular el backend, con tamaños de escritorio y celular:
 
@@ -137,7 +139,24 @@ Las pruebas de navegador usan Playwright contra los dos servicios compilados, si
 npm.cmd run test:e2e
 ```
 
-En Windows utilizan Microsoft Edge instalado. En otros sistemas, instalar primero Chromium con `npx playwright install chromium`. Dejar libres los puertos 3000 y 5173: las pruebas arrancan y detienen sus propios servidores. `npm.cmd run check` incluye las pruebas SQL (requiere el entorno de base de datos), las de navegador y el build. El frontend compilado debe usar el valor local predeterminado de `VITE_API_URL` para esta comprobación.
+En Windows utilizan Microsoft Edge instalado. En otros sistemas, instalar primero Chromium con `npx playwright install chromium`. Dejar libres los puertos 3000 y 5173: las pruebas arrancan y detienen sus propios servidores. El backend E2E usa `NODE_ENV=test`, únicamente `TEST_DATABASE_URL` y un secreto JWT efímero. Las cuentas aleatorias se eliminan en `finally`, por correo exacto; las trazas están deshabilitadas para no almacenar credenciales ni Bearer. Las capturas quedan en `test-results/`, ignorado. `npm.cmd run check` incluye las pruebas SQL, las de navegador y el build. El frontend compilado debe usar el valor local predeterminado de `VITE_API_URL` para esta comprobación.
+
+## Probar registro, acceso y perfil
+
+Con `npm.cmd run dev` activo, abrir http://localhost:5173/registro. Crear una cuenta con correo válido, nombre y una contraseña de al menos 15 caracteres y hasta 72 bytes UTF-8. No se recorta ni normaliza la contraseña; algunos caracteres ocupan varios bytes. El correo se recorta y convierte a minúsculas, sin eliminar puntos ni sufijos `+`.
+
+Después del registro se abre `/inicio`. Entrar en **Mi perfil**, editar datos y prioridades entre 1 y 5 y guardar. Recargar comprueba la persistencia. **Cerrar sesión** vuelve a `/login`; una visita a `/perfil` exige ingresar nuevamente. No hay cuentas demo ni cuentas técnicas creadas por esta fase.
+
+| Método | Ruta | Resultado |
+| --- | --- | --- |
+| POST | `/api/auth/registro` | 201, `{ token, usuario }`; solo agricultor |
+| POST | `/api/auth/login` | 200, `{ token, usuario }` |
+| GET | `/api/auth/yo` | 200, usuario público autenticado |
+| PUT | `/api/perfil` | 200, usuario público actualizado |
+
+Se conserva el contrato de `PROYECTO.md`. Los campos públicos usan nombres originales, como `prioridad_agua` y `creado_en`. Nunca se devuelve `password_hash`. Campos adicionales, cambios de rol, ID o contraseña se rechazan. Registro y login tienen límites por IP de 5 y 10 solicitudes por 15 minutos, respectivamente; el exceso devuelve 429 con `{ error }` y Retry-After. Las credenciales incorrectas devuelven el mismo mensaje, exista o no el correo.
+
+La sesión usa JWT HS256 de 15 minutos, emisor/audiencia verificados, `Authorization: Bearer`, y `sessionStorage` por pestaña; no usa localStorage ni cookies. Antes de mostrar una sesión se consulta `/auth/yo`; los permisos se leen de PostgreSQL en cada solicitud. El cierre elimina token y caché local. **No revoca el JWT en el servidor: sigue siendo válido hasta vencer.** No hay renovación automática. sessionStorage es accesible a JavaScript y una vulnerabilidad XSS podría robar el token; cerrar una pestaña normalmente lo elimina, aunque el navegador puede restaurar sesiones. El vencimiento del servidor es el límite definitivo. El limitador actual vive en memoria por proceso y se reinicia con el servidor. HTTPS, despliegue con proxy, revocación, recuperación de contraseña y verificación de correo quedan fuera de esta fase local.
 
 Con el backend arrancado, comprobar manualmente:
 

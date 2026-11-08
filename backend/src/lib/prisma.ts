@@ -6,7 +6,8 @@ let clientePrisma: PrismaClient | undefined;
 
 export function obtenerClientePrisma(): PrismaClient {
   if (!clientePrisma) {
-    const connectionString = validarUrlBase(process.env.DATABASE_URL);
+    const esPrueba = process.env.NODE_ENV === 'test';
+    const connectionString = validarUrlBase(esPrueba ? process.env.TEST_DATABASE_URL : process.env.DATABASE_URL, esPrueba);
     clientePrisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
   }
   return clientePrisma;

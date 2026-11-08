@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { obtenerEstadoServicio } from '../lib/api';
+import { Link } from 'react-router-dom';
 
 export function Inicio() {
   const consultaSalud = useQuery({
@@ -24,7 +25,7 @@ export function Inicio() {
           </span>
           <span className="text-xl font-bold tracking-tight">RotaAndes</span>
         </div>
-        <span className="text-right text-xs font-medium tracking-wide text-oliva sm:text-sm">Cotopaxi, Ecuador</span>
+        <Link to="/login" className="enlace-nav text-sm font-semibold">Ingresar</Link>
       </header>
 
       <main id="contenido" className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-10 px-6 py-10 sm:px-10 lg:grid-cols-2 lg:gap-16 lg:py-16">
@@ -39,8 +40,9 @@ export function Inicio() {
             Un espacio para acompañar a los agricultores de Cotopaxi en el cuidado de su tierra y sus cultivos.
           </p>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-oliva">
-            Estamos preparando RotaAndes. Las herramientas de apoyo a la siembra se incorporarán en próximas etapas.
+            Crea tu cuenta y elige tus prioridades. Las herramientas de apoyo a la siembra se incorporarán en próximas etapas.
           </p>
+          <Link to="/registro" className="boton-primario mt-6 inline-flex">Registrarme <span aria-hidden="true" className="ml-3">↗</span></Link>
 
           <section aria-labelledby="titulo-conexion" className="mt-9 rounded-2xl border border-pino/15 bg-white/65 p-6 shadow-sm">
             <p className="mb-3 text-xs font-semibold tracking-widest text-oliva uppercase">Estado de RotaAndes</p>

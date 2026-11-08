@@ -13,5 +13,21 @@
 @layer base {
   body { margin: 0; min-width: 320px; }
   button { font: inherit; }
+  a, button, input { outline-offset: 4px; }
+  input:not([type="range"]) { width: 100%; min-height: 48px; border: 1px solid #52645180; border-radius: 0.75rem; background: #fff; padding: 0.7rem 0.9rem; color: #23483c; font-size: 1rem; }
+  input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid #23483c; }
+  input[type="range"] { min-height: 36px; cursor: pointer; }
   ::selection { background: #d9e3ce; color: #23483c; }
+}
+
+@layer components {
+  .tarjeta { border: 1px solid #23483c26; border-radius: 1.5rem; background: #ffffffb3; box-shadow: 0 4px 20px #23483c06; }
+  .campo { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; }
+  .boton-primario { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 0.75rem; background: #23483c; color: white; padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+  .boton-primario:hover { background: #345c4e; }
+  .boton-primario:disabled { opacity: 0.6; cursor: wait; }
+  .enlace-nav { display: inline-flex; align-items: center; min-height: 44px; border-radius: 0.65rem; padding: 0.5rem 0.7rem; cursor: pointer; }
+  .enlace-nav:hover, .enlace-nav[aria-current="page"] { background: #e9e4d6; }
+  .etiqueta-seccion { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #526451; }
+  .aviso-error { padding: 1rem; border: 1px solid #98553560; border-radius: 0.75rem; background: #fff5ef; color: #7d391f; font-size: 0.875rem; line-height: 1.5; }
 }

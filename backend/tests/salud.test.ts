@@ -27,7 +27,7 @@ describe('GET /api/health', () => {
       .set('Origin', 'http://localhost:5173')
       .set('Access-Control-Request-Method', 'GET')
       .expect(204)
-      .expect('Access-Control-Allow-Methods', 'GET');
+      .expect('Access-Control-Allow-Methods', 'GET,POST,PUT');
   });
 
   it.each(['https://ejemplo.com', 'http://localhost:5174', 'http://localhost:5173.ejemplo.com', 'null'])(

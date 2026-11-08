@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { obtenerEstadoServicio } from './api';
+import { obtenerEstadoServicio, obtenerUsuario } from './api';
 
 describe('Cliente de la API', () => {
+  it('valida el usuario remoto antes de confiar en la sesión', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ password_hash: 'fixture-no-real' }))));
+    await expect(obtenerUsuario('fixture-sin-firma')).rejects.toThrow('formato esperado');
+  });
   it('consulta el endpoint real del contrato usando VITE_API_URL', async () => {
     vi.stubEnv('VITE_API_URL', 'http://localhost:3000');
     const solicitar = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })));

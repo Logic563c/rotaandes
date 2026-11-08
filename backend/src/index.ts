@@ -1,9 +1,12 @@
 import 'dotenv/config';
 import { crearAplicacion } from './aplicacion.js';
 import { obtenerConfiguracion } from './configuracion.js';
+import { obtenerSecretoJwt } from './services/autenticacion.js';
+import { cerrarConexionBase } from './lib/prisma.js';
 
 try {
   const configuracion = obtenerConfiguracion();
+  obtenerSecretoJwt();
   const aplicacion = crearAplicacion(configuracion);
   const servidor = aplicacion.listen(configuracion.puerto, '127.0.0.1', () => {
     console.info(`RotaAndes: http://localhost:${configuracion.puerto}`);
@@ -16,6 +19,7 @@ try {
 
   function cerrarServidor() {
     servidor.close((error) => {
+      void cerrarConexionBase().catch(() => { console.error('No se pudo cerrar la conexión a la base.'); process.exitCode = 1; });
       if (error) {
         console.error('No se pudo cerrar el servidor correctamente.');
         process.exitCode = 1;

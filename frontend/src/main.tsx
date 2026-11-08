@@ -1,7 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Inicio } from './pages/Inicio';
+import { BrowserRouter } from 'react-router-dom';
+import { Aplicacion } from './Aplicacion';
+import { ProveedorSesion } from './components/ProveedorSesion';
 import './estilos.css';
 
 const elementoRaiz = document.getElementById('root');
@@ -14,7 +16,7 @@ const clienteConsultas = new QueryClient({
 createRoot(elementoRaiz).render(
   <StrictMode>
     <QueryClientProvider client={clienteConsultas}>
-      <Inicio />
+      <BrowserRouter><ProveedorSesion><Aplicacion /></ProveedorSesion></BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
 );

@@ -3,13 +3,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Inicio } from './Inicio';
+import { MemoryRouter } from 'react-router-dom';
 
 const clientes: QueryClient[] = [];
 
 function mostrarInicio() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   clientes.push(cliente);
-  render(<QueryClientProvider client={cliente}><Inicio /></QueryClientProvider>);
+  render(<QueryClientProvider client={cliente}><MemoryRouter><Inicio /></MemoryRouter></QueryClientProvider>);
 }
 
 afterEach(() => {

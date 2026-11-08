@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
+import { config } from 'dotenv';
+config({ path: 'backend/.env', quiet: true });
 
 export default defineConfig({
   testDir: './tests/navegador',
@@ -8,7 +11,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5173',
     channel: process.platform === 'win32' ? 'msedge' : 'chromium',
-    trace: 'retain-on-failure',
+    trace: 'off',
     screenshot: 'only-on-failure',
   },
   projects: [
@@ -19,7 +22,7 @@ export default defineConfig({
     {
       command: 'npm run start --workspace backend',
       url: 'http://localhost:3000/api/health',
-      env: { PORT: '3000', CORS_ORIGIN: 'http://localhost:5173' },
+      env: { PORT: '3000', CORS_ORIGIN: 'http://localhost:5173', NODE_ENV: 'test', JWT_SECRET: randomBytes(48).toString('base64url') },
       reuseExistingServer: false,
     },
     {
