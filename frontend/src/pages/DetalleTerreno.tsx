@@ -8,6 +8,7 @@ import { ConfirmarEliminacion } from '../components/ConfirmarEliminacion';
 import { SiembrasTerreno } from '../components/SiembrasTerreno';
 import { ClimaTerreno } from '../components/ClimaTerreno';
 import { PronosticoTerreno } from '../components/PronosticoTerreno';
+import { CalendarioSiembra } from '../components/CalendarioSiembra';
 import { obtenerTerreno, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 
@@ -43,6 +44,7 @@ export function DetalleTerreno() {
       </dl><p className="mt-7 text-xs leading-relaxed text-oliva">Fuente de altitud: <a href="https://open-meteo.com/en/docs/elevation-api" target="_blank" rel="noreferrer" className="underline">Open-Meteo</a> / Copernicus DEM GLO-90, resolución de 90 m. Es una estimación, no una medición exacta del terreno.{terreno.altitud_m === null && ' No hay una estimación disponible; no se ha sustituido por un dato inventado.'}</p></div><MapaDiferido terrenos={[terreno]} /></div>
       <ClimaTerreno key={`clima:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} />
       <PronosticoTerreno key={`pronostico:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} />
+      <CalendarioSiembra key={`calendario:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} tieneRiego={terreno.tiene_riego} areaHa={terreno.area_ha} />
       <SiembrasTerreno key={`${sesion.usuario?.id}:${id}`} terrenoId={id} />
       {confirmando && <ConfirmarEliminacion titulo={`¿Eliminar ${terreno.nombre}?`} mensaje="Se eliminarán el terreno y todas sus siembras. Esta acción no se puede deshacer." estaEliminando={eliminar.isPending} error={eliminar.error?.message ?? null} alConfirmar={() => eliminar.mutate()} alCancelar={() => establecerConfirmacion(false)} />}
     </>}

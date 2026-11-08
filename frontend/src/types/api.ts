@@ -55,3 +55,13 @@ export interface RespuestaPronostico {
   coordenadas: { latitud: number; longitud: number }; cuadricula: { latitud: number; longitud: number };
   unidades: { temperatura: '°C'; precipitacion: 'mm' }; umbral_helada_c: number; advertencias: string[]; aviso: string;
 }
+
+export type EstadoCalendario = 'recomendado' | 'posible_con_cuidado' | 'no_recomendado' | 'no_determinado';
+export interface CeldaCalendario { cultivo_id: string; mes: number; estado: EstadoCalendario; motivo: string }
+export interface EscenarioCalendario { lluvia_pct: number; temp_delta: number }
+export interface RespuestaCalendario {
+  celdas: CeldaCalendario[]; cultivos: { id: string; nombre: string; altitud_min: number; altitud_max: number }[];
+  terreno: { altitud_m: number | null; tiene_riego: boolean | null; area_ha: number | null }; escenario: EscenarioCalendario;
+  clima: Pick<RespuestaClima, 'fuente' | 'resolucion' | 'periodo' | 'actualizado_en' | 'estado_datos' | 'desactualizado' | 'advertencias'>;
+  aviso: string;
+}

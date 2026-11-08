@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { Terreno, DatosTerreno, Siembra, DatosSiembra, Cultivo } from '../types/api';
 import type { RespuestaClima } from '../types/api';
 import type { RespuestaPronostico } from '../types/api';
+import type { EscenarioCalendario, RespuestaCalendario } from '../types/api';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -146,4 +147,22 @@ const esquemaPronostico = z.object({
 });
 export async function obtenerPronostico(token: string, terrenoId: string, signal?: AbortSignal): Promise<RespuestaPronostico> {
   return comprobarRespuesta(esquemaPronostico, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/pronostico`, 'GET', token, undefined, signal));
+}
+
+const esquemaEscenarioCalendario = z.object({ lluvia_pct: numero.min(-30).max(30), temp_delta: numero.min(-2).max(2) });
+const esquemaCalendario = z.object({
+  celdas: z.array(z.object({ cultivo_id: z.string().min(1), mes: numero.int().min(1).max(12), estado: z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']), motivo: z.string().min(1) })).max(120),
+  cultivos: z.array(z.object({ id: z.string().min(1), nombre: z.string().min(1), altitud_min: numero.int(), altitud_max: numero.int() })).max(10),
+  terreno: z.object({ altitud_m: numero.int().nullable(), tiene_riego: z.boolean().nullable(), area_ha: numero.positive().nullable() }), escenario: esquemaEscenarioCalendario,
+  clima: esquemaClima.pick({ fuente: true, resolucion: true, periodo: true, actualizado_en: true, estado_datos: true, desactualizado: true, advertencias: true }), aviso: z.string().min(1),
+}).refine((datos) => {
+  const ids = new Set(datos.cultivos.map((cultivo) => cultivo.id));
+  return ids.size === datos.cultivos.length && datos.celdas.length === datos.cultivos.length * 12
+    && new Set(datos.celdas.map((celda) => `${celda.cultivo_id}:${celda.mes}`)).size === datos.celdas.length
+    && datos.celdas.every((celda) => ids.has(celda.cultivo_id));
+});
+export async function obtenerCalendario(token: string, terrenoId: string, escenario: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 }, signal?: AbortSignal): Promise<RespuestaCalendario> {
+  if (!esquemaEscenarioCalendario.safeParse(escenario).success) throw new ErrorApi('Parámetros de escenario inválidos.');
+  const consulta = new URLSearchParams({ lluvia_pct: String(escenario.lluvia_pct), temp_delta: String(escenario.temp_delta) });
+  return comprobarRespuesta(esquemaCalendario, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/calendario?${consulta}`, 'GET', token, undefined, signal));
 }

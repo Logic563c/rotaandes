@@ -2,9 +2,9 @@
 
 Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER y pronóstico de siete días con alertas preventivas de posibles heladas. Tendencias, calendario, rotaciones, capas satelitales y reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas y calendario mensual de siembra explicable. Tendencias, rotaciones, simulador visual, capas satelitales y reportes siguen pendientes.
 
-La entrega actual está documentada en [el informe de pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md). Los informes de [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+La entrega actual está documentada en [el informe del calendario de siembra](docs/INFORME_CALENDARIO_SIEMBRA.md). Los informes de [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
 ## Requisitos
 
@@ -218,6 +218,35 @@ npm.cmd run pronostico:verificar --workspace backend
 
 Las pruebas habituales de pronóstico usan respuestas sintéticas controladas, sin Internet. Las E2E usan el backend compilado y PostgreSQL aislado con caché temporal; sus capturas no representan pronósticos reales. Las pruebas eliminan únicamente sus registros y restauran cualquier entrada previa. Ver metodología, evidencia real, resultados y capturas en [INFORME_PRONOSTICO_HELADAS.md](docs/INFORME_PRONOSTICO_HELADAS.md).
 
+## Consultar el calendario de siembra
+
+En el detalle del terreno, abrir **Ver calendario de siembra**. La matriz tiene doce meses y filas de cultivos compatibles o evaluables por altitud. Cada celda es un botón: tocarla o usar Tab/Enter abre sus motivos completos, con fuente y limitaciones. La matriz tiene desplazamiento propio y encabezados fijos; no ensancha toda la página en celular. Los cultivos fuera del rango de altitud se enumeran aparte y conservan clasificación negativa en la API.
+
+| Resultado | Interpretación |
+| --- | --- |
+| ✓ Recomendado, verde | Ventana y altitud compatibles, agua suficiente según lluvia o riego y, si tolerancia a heladas ≤2, riesgo bajo en tres meses |
+| ! Posible con cuidado, amarillo | Condiciones conocidas parcialmente cumplidas: agua insuficiente sin riego o riesgo medio para cultivo sensible |
+| × No recomendado, rojo | Fuera de ventana/altitud, helada alta en alguno de los tres meses para cultivo sensible o brócoli sin riego |
+| ? No determinado, gris | Faltan datos esenciales y no hay una exclusión comprobada; no se usa amarillo para ocultar incertidumbre |
+
+Se aplica diciembre→enero→febrero correctamente. Brócoli requiere riego confirmado para la ventana anual; `vicia_avena` sigue siendo el cultivo combinado del catálogo. Altitud desconocida nunca produce verde o amarillo. El riego satisface solo el criterio de agua de la regla, sin medir su caudal; el área declarada no modifica la clasificación porque el proyecto no define una fórmula para ello. Las tolerancias mayores que 2 no reciben un veto por heladas inventado, pero tampoco garantizan resistencia real.
+
+`GET /api/terrenos/:id/calendario?lluvia_pct=0&temp_delta=0` exige JWT. Agricultor solo consulta terrenos propios; técnico puede leerlos todos. Coordenadas, altitud, riego, área y catálogo proceden de PostgreSQL. Se conservan `{ celdas: [{ cultivo_id, mes, estado, motivo }] }` y errores `{ error }`. Metadatos adicionales identifican cultivos, contexto, escenario, procedencia y aviso. El estado `no_determinado` expresa la falta de datos solicitada; el contrato original no fijaba un enum de estados.
+
+Los parámetros son opcionales y valen cero cuando se omiten. Se admiten números decimales finitos: lluvia_pct entre -30 y +30 y temp_delta entre -2 y +2. Valores vacíos, repetidos, fuera de rango o claves adicionales se rechazan con 400. La API aplica lluvia × (1 + porcentaje/100) y suma el delta a temperaturas; recalcula el riesgo mediante la función NASA existente, sin alterar la caché base. La interfaz muestra solo el escenario base: no implementa todavía el simulador visual.
+
+El calendario comparte el servicio NASA con `/clima`: caché de 30 días, deduplicación y respaldos exactos existentes, sin una nueva caché SQL de recomendaciones. Mantiene origen, periodo, fecha, advertencias y antigüedad, incluso al utilizar un dato anterior identificado. Sin fuente fiable devuelve error y permite reintentar. Las claves de frontend separan usuario, terreno, contexto y escenario.
+
+El catálogo es **referencial y no está validado agronómicamente de forma local**. La climatología regional no es pronóstico ni medición del microclima. El calendario no reemplaza el criterio del agricultor o del técnico.
+
+Comprobación real independiente, sin crear parcelas ni modificar datos:
+
+```powershell
+npm.cmd run calendario:verificar --workspace backend
+```
+
+Lee los diez cultivos de PostgreSQL en una transacción de solo lectura y consulta NASA para el punto de verificación de Latacunga. Como ese punto no tiene información de altitud, riego o área de una parcela, los deja desconocidos. Las pruebas habituales usan condiciones controladas; E2E usa backend/PostgreSQL reales y caché temporal en la base aislada. Resultados, tabla de decisión, casos especiales y capturas están en [INFORME_CALENDARIO_SIEMBRA.md](docs/INFORME_CALENDARIO_SIEMBRA.md).
+
 ## Probar registro, acceso y perfil
 
 Con `npm.cmd run dev` activo, abrir http://localhost:5173/registro. Crear una cuenta con correo válido, nombre y una contraseña de al menos 15 caracteres y hasta 72 bytes UTF-8. No se recorta ni normaliza la contraseña; algunos caracteres ocupan varios bytes. El correo se recorta y convierte a minúsculas, sin eliminar puntos ni sufijos `+`.
@@ -291,6 +320,7 @@ rotaandes/
 │   │   ├── verificarBase.ts
 │   │   ├── verificarNasa.ts
 │   │   ├── verificarPronostico.ts
+│   │   ├── verificarCalendario.ts
 │   │   └── verificarEsquema.sql
 │   ├── src/
 │   │   ├── index.ts
@@ -299,10 +329,10 @@ rotaandes/
 │   │   ├── lib/configuracionBase.ts
 │   │   ├── lib/prisma.ts
 │   │   ├── middleware/       (auth, rol, errores)
-│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras, clima, pronostico)
-│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion, nasaPower, clima, openMeteo, pronostico)
+│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras, clima, pronostico, calendario)
+│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion, nasaPower, clima, openMeteo, pronostico, calendario)
 │   │   └── data/             (catalogoCultivos, respaldosClima, clima/)
-│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras, clima, pronostico)
+│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras, clima, pronostico, calendario)
 └── frontend/
     ├── .env.example
     ├── index.html
