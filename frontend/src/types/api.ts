@@ -47,3 +47,11 @@ export interface RespuestaClima {
   coordenadas: { latitud: number; longitud: number }; advertencias: string[]; metodologia: string;
   parametros: Record<string, { unidad: string; valores: (number | null)[] }>;
 }
+
+export interface DiaPronostico { fecha: string; t_min: number | null; t_max: number | null; precipitacion_mm: number | null }
+export interface RespuestaPronostico {
+  dias: DiaPronostico[]; alertas: { fecha: string; tipo: 'helada'; mensaje: string }[];
+  fuente: 'Open-Meteo'; actualizado_en: string; vigente_hasta: string; estado_datos: 'open_meteo' | 'cache'; zona_horaria: 'America/Guayaquil';
+  coordenadas: { latitud: number; longitud: number }; cuadricula: { latitud: number; longitud: number };
+  unidades: { temperatura: '°C'; precipitacion: 'mm' }; umbral_helada_c: number; advertencias: string[]; aviso: string;
+}

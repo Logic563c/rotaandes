@@ -18,11 +18,15 @@ import type { ObtenerBaseAgricola } from './services/datosAgricolas.js';
 import { crearRutasClima } from './routes/clima.js';
 import { crearServicioClima } from './services/clima.js';
 import type { ObtenerCacheClima, ServicioClima } from './services/clima.js';
+import { crearRutasPronostico } from './routes/pronostico.js';
+import { crearServicioPronostico } from './services/pronostico.js';
+import type { ObtenerCachePronostico, ServicioPronostico } from './services/pronostico.js';
 
 export function crearAplicacion(configuracion: ConfiguracionServidor, dependencias: {
   obtenerUsuarios?: ObtenerUsuarios; obtenerSecreto?: () => string;
   obtenerBase?: ObtenerBaseAgricola; obtenerAltitud?: ObtenerAltitud;
   obtenerCacheClima?: ObtenerCacheClima; consultarClima?: ServicioClima;
+  obtenerCachePronostico?: ObtenerCachePronostico; consultarPronostico?: ServicioPronostico;
 } = {}) {
   const aplicacion = express();
   aplicacion.disable('x-powered-by');
@@ -48,6 +52,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   aplicacion.use('/api/perfil', crearRutasPerfil(obtenerUsuarios, obtenerSecreto));
   const obtenerBase = dependencias.obtenerBase ?? obtenerClientePrisma;
   aplicacion.use('/api/cultivos', crearRutasCultivos(obtenerBase));
+  aplicacion.use('/api', crearRutasPronostico(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarPronostico ?? crearServicioPronostico(dependencias.obtenerCachePronostico ?? (() => obtenerClientePrisma().climaCache))));
   aplicacion.use('/api', crearRutasClima(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarClima ?? crearServicioClima(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache))));
   aplicacion.use('/api', crearRutasSiembras(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto)));
   aplicacion.use('/api/terrenos', autenticar(obtenerUsuarios, obtenerSecreto), crearRutasTerrenos(obtenerBase, dependencias.obtenerAltitud ?? crearServicioElevacion()));

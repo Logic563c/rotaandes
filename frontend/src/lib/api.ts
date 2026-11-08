@@ -3,6 +3,7 @@ import type { Credenciales, DatosRegistro, DatosPerfil, RespuestaAutenticacion, 
 import { z } from 'zod';
 import type { Terreno, DatosTerreno, Siembra, DatosSiembra, Cultivo } from '../types/api';
 import type { RespuestaClima } from '../types/api';
+import type { RespuestaPronostico } from '../types/api';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -124,4 +125,25 @@ const esquemaClima = z.object({
 });
 export async function obtenerClima(token: string, terrenoId: string, signal?: AbortSignal): Promise<RespuestaClima> {
   return comprobarRespuesta(esquemaClima, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/clima`, 'GET', token, undefined, signal));
+}
+
+const coordenadasPronostico = z.object({ latitud: numero.min(-90).max(90), longitud: numero.min(-180).max(180) });
+const esquemaPronostico = z.object({
+  dias: z.array(z.object({ fecha: z.iso.date(), t_min: numero.min(-100).max(70).nullable(), t_max: numero.min(-100).max(70).nullable(), precipitacion_mm: numero.min(0).max(2000).nullable() })).length(7),
+  alertas: z.array(z.object({ fecha: z.iso.date(), tipo: z.literal('helada'), mensaje: z.string().min(1) })),
+  fuente: z.literal('Open-Meteo'), actualizado_en: z.iso.datetime(), vigente_hasta: z.iso.datetime(), estado_datos: z.enum(['open_meteo', 'cache']), zona_horaria: z.literal('America/Guayaquil'),
+  coordenadas: coordenadasPronostico, cuadricula: coordenadasPronostico, unidades: z.object({ temperatura: z.literal('°C'), precipitacion: z.literal('mm') }),
+  umbral_helada_c: numero.min(-10).max(10), advertencias: z.array(z.string()), aviso: z.string().min(1),
+}).refine((valor) => {
+  const primero = valor.dias[0]; if (!primero) return false;
+  const inicio = Date.parse(`${primero.fecha}T00:00:00Z`);
+  return valor.dias.every((dia, indice) => Date.parse(`${dia.fecha}T00:00:00Z`) === inicio + indice * 86400000 && (dia.t_min === null || dia.t_max === null || dia.t_min <= dia.t_max))
+    && valor.dias.some((dia) => dia.t_min !== null || dia.t_max !== null || dia.precipitacion_mm !== null)
+    && new Set(valor.alertas.map((alerta) => alerta.fecha)).size === valor.alertas.length
+    && valor.dias.every((dia) => valor.alertas.some((alerta) => alerta.fecha === dia.fecha) === (dia.t_min !== null && dia.t_min <= valor.umbral_helada_c))
+    && valor.alertas.every((alerta) => valor.dias.some((dia) => dia.fecha === alerta.fecha))
+    && Date.parse(valor.vigente_hasta) > Date.parse(valor.actualizado_en) && Date.parse(valor.vigente_hasta) - Date.parse(valor.actualizado_en) <= 1800000;
+});
+export async function obtenerPronostico(token: string, terrenoId: string, signal?: AbortSignal): Promise<RespuestaPronostico> {
+  return comprobarRespuesta(esquemaPronostico, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/pronostico`, 'GET', token, undefined, signal));
 }

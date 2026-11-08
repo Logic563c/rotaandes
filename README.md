@@ -2,9 +2,9 @@
 
 Base local de la plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados y climatología histórica NASA POWER. Pronósticos, tendencias, calendario, rotaciones, capas satelitales y reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER y pronóstico de siete días con alertas preventivas de posibles heladas. Tendencias, calendario, rotaciones, capas satelitales y reportes siguen pendientes.
 
-La entrega actual está documentada en [el informe de clima NASA](docs/INFORME_CLIMA_NASA.md). Los informes de [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+La entrega actual está documentada en [el informe de pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md). Los informes de [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
 
 ## Requisitos
 
@@ -57,6 +57,7 @@ npm.cmd run dev
 | `backend/.env` | `DATABASE_URL` | Sin valor real predeterminado; configuración segura local |
 | `backend/.env` | `TEST_DATABASE_URL` | Base aislada creada por el asistente local |
 | `backend/.env` | `JWT_SECRET` | Sin valor predeterminado; generado con 48 bytes aleatorios |
+| `backend/.env` | `UMBRAL_HELADA_C` | `2` °C, opcional, entre -10 y 10 con hasta dos decimales |
 
 `VITE_API_URL` es el origen del backend, sin `/api`, credenciales, consulta ni fragmento. Las variables `VITE_*` son públicas; no colocar secretos en ellas. Reiniciar Vite después de cambiar su entorno y reconstruir el frontend si cambia su URL de producción.
 
@@ -193,6 +194,30 @@ npm.cmd run clima:verificar --workspace backend
 
 Las pruebas habituales no consultan NASA: usan respuestas controladas identificadas como tales. Las pruebas SQL verifican autorización, caché y persistencia con rollback; las E2E climáticas usan una caché temporal en la base aislada, comprueban gráficas reales y fallo sin datos ficticios, y limpian sus registros. Las capturas de escritorio/celular quedan en `test-results/`, ignorado por Git. Véanse metodología, procedencia, resultados y limitaciones en [INFORME_CLIMA_NASA.md](docs/INFORME_CLIMA_NASA.md).
 
+## Consultar pronóstico y alertas
+
+En el detalle del terreno, abrir **Ver pronóstico de siete días**. Incluye hoy y los seis días siguientes en Ecuador continental (`America/Guayaquil`, UTC−5). Se muestran mínima/máxima previstas, precipitación diaria en mm, fecha y día, alertas y fuente. No es la climatología histórica NASA ni una medición exacta del lote.
+
+`GET /api/terrenos/:id/pronostico` exige Bearer y toma la ubicación de PostgreSQL. Agricultores solo leen sus terrenos; técnicos pueden consultarlos todos. Recursos ajenos e inexistentes responden 404; UUID inválidos o parámetros de consulta, 400; sin sesión, 401; falta de pronóstico fiable, 500 controlado. El límite local de 30 consultas por usuario/minuto devuelve 429. No se amplía CORS ni se admiten coordenadas o umbrales desde la petición.
+
+El backend consulta exclusivamente `https://api.open-meteo.com/v1/forecast`, con `daily=temperature_2m_max,temperature_2m_min,precipitation_sum`, `timezone=America/Guayaquil` y `forecast_days=7`. Se verifican unidades °C/mm, siete fechas reales consecutivas, zona/offset, arreglos y valores finitos/coherentes. Se preservan null y se informa **Sin dato**; sin mínima válida no se descarta una helada. Una respuesta totalmente vacía se trata como indisponibilidad.
+
+Con mínima prevista **≤2 °C** se genera una alerta preventiva con fecha y mensaje. `UMBRAL_HELADA_C` permite configurar el umbral del servidor al reiniciarlo; no es necesario añadirlo al `.env` privado para usar el valor predeterminado. No se aplica la corrección por altitud de NASA ni otra corrección propia al pronóstico. Las alertas son reglas de RotaAndes y no avisos oficiales ni confirmaciones de helada.
+
+La caché usa la tabla existente con claves `open_meteo_forecast_v1_<latitud>_<longitud>` y dura **30 minutos**, como máximo hasta medianoche de Ecuador. Es independiente de la caché NASA de 30 días. Los fallos no devuelven pronósticos vencidos ni respaldos estáticos. Se permiten reintentos, con un minuto de espera del servidor tras fallo; **Comprobar actualización** reutiliza una caché que todavía esté vigente. El panel comprueba periódicamente actualizaciones mientras está abierto y retira los datos al vencer.
+
+Tiempo máximo externo 6 s, cuerpo máximo 64 KiB, máximo dos solicitudes simultáneas y presupuestos por proceso de 20/minuto, 200/hora y 2000/día. Las peticiones simultáneas al mismo punto se comparten. No se necesitan nuevas dependencias, migraciones ni claves de API.
+
+Los datos se atribuyen a [Open-Meteo](https://open-meteo.com/) bajo [CC BY 4.0](https://open-meteo.com/en/licence). El servicio gratuito se limita a uso no comercial y tiene cuotas compartidas por IP/aplicación; revisar [sus condiciones](https://open-meteo.com/en/terms) antes de otro tipo de uso o despliegue. La fecha mostrada es la consulta, no una hora de emisión que el proveedor no declara en esta respuesta.
+
+Comprobación real independiente, sin acceder a ninguna base:
+
+```powershell
+npm.cmd run pronostico:verificar --workspace backend
+```
+
+Las pruebas habituales de pronóstico usan respuestas sintéticas controladas, sin Internet. Las E2E usan el backend compilado y PostgreSQL aislado con caché temporal; sus capturas no representan pronósticos reales. Las pruebas eliminan únicamente sus registros y restauran cualquier entrada previa. Ver metodología, evidencia real, resultados y capturas en [INFORME_PRONOSTICO_HELADAS.md](docs/INFORME_PRONOSTICO_HELADAS.md).
+
 ## Probar registro, acceso y perfil
 
 Con `npm.cmd run dev` activo, abrir http://localhost:5173/registro. Crear una cuenta con correo válido, nombre y una contraseña de al menos 15 caracteres y hasta 72 bytes UTF-8. No se recorta ni normaliza la contraseña; algunos caracteres ocupan varios bytes. El correo se recorta y convierte a minúsculas, sin eliminar puntos ni sufijos `+`.
@@ -265,6 +290,7 @@ rotaandes/
 │   │   ├── comprobarConfiguracion.ts
 │   │   ├── verificarBase.ts
 │   │   ├── verificarNasa.ts
+│   │   ├── verificarPronostico.ts
 │   │   └── verificarEsquema.sql
 │   ├── src/
 │   │   ├── index.ts
@@ -273,10 +299,10 @@ rotaandes/
 │   │   ├── lib/configuracionBase.ts
 │   │   ├── lib/prisma.ts
 │   │   ├── middleware/       (auth, rol, errores)
-│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras, clima)
-│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion, nasaPower, clima)
+│   │   ├── routes/           (salud, auth, perfil, cultivos, terrenos, siembras, clima, pronostico)
+│   │   ├── services/         (autenticacion, validacionAgricola, datosAgricolas, elevacion, nasaPower, clima, openMeteo, pronostico)
 │   │   └── data/             (catalogoCultivos, respaldosClima, clima/)
-│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras, clima)
+│   └── tests/base-datos/     (persistencia, autenticacion, terrenosSiembras, clima, pronostico)
 └── frontend/
     ├── .env.example
     ├── index.html
