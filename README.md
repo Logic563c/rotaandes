@@ -2,13 +2,27 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/tendencias-climaticas` añade el análisis histórico 2005–2024; esta actualización todavía no se publica. El GeoJSON satelital analítico, el panel técnico avanzado y los reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/panel-tecnico` conserva el análisis histórico 2005–2024 y añade el panel de técnicos agrícolas; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico y los reportes siguen pendientes.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
 **Versión pública verificada:** [rotaandes.vercel.app](https://rotaandes.vercel.app), con [backend HTTPS y salud](https://backend-production-954a9.up.railway.app/api/health). El código está en el repositorio privado [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes), rama `release/publicacion`; la revisión desplegada es `012d6be4ebd2df22dfb3062b8645dfe1c95ec017`, incluidos escenarios y visor NASA GIBS. El [informe de actualización](docs/INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) registra el recorrido real de escritorio/celular, las 27 capturas, PostgreSQL y la reversión. [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md) conserva también la publicación inicial. Railway usa crédito Trial: esta publicación no garantiza alojamiento permanente ni autoriza contratar un plan.
 
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+
+## Panel de técnicos agrícolas (actualización local)
+
+Con una cuenta autorizada de rol `tecnico`, abrir **Panel técnico** en la navegación o `/tecnico`. Permite consultar terrenos, marcadores, última siembra y alertas preventivas. Los agricultores no ven ese enlace y reciben 403 en `GET /api/tecnico/terrenos`.
+
+- Parroquia: dato del **perfil del propietario**, sin inferir ubicación del terreno.
+- Cultivo: coincidencia en **todo el historial**, aunque la última siembra sea otra.
+- Mapa/lista: 50 terrenos por página, con acceso a todas las páginas. Resumen y alertas indican su alcance.
+- Heladas: solo pronósticos verificados y vigentes en caché Open-Meteo. Sin dato, vencido o cobertura mínima insuficiente: estado desconocido. Abrir el pronóstico en el detalle permite consultar el proveedor; el panel no hace solicitudes externas masivas.
+- Consulta de solo lectura, sin publicar datos de contacto ni cambiar registros agrícolas.
+
+Para aprovisionar una cuenta **local** nueva en Windows, el procedimiento preparado es `npm.cmd run tecnico:crear`. Solicita correo, nombre y una contraseña mediante entrada oculta. Rechaza correos existentes, sin promover agricultores ni cambiar sus contraseñas; nunca utiliza claves predeterminadas. El destino está limitado a `rotaandes_dev` local. El modificador `-BasePruebas` selecciona exclusivamente la base aislada para automatización. El asistente rechaza producción; no se ha creado una cuenta técnica permanente. No hacen falta SQL manual, archivos con contraseñas ni secretos en argumentos.
+
+`npm.cmd run test:tecnico` compila y ejecuta el recorrido de escritorio/celular con cuentas temporales y pronósticos controlados. El [informe del panel](docs/INFORME_PANEL_TECNICO.md) documenta contrato, permisos, procedimiento, pruebas, capturas y límites. Producción continúa en `012d6be`, sin publicar este módulo.
 
 ## Tendencias históricas 2005–2024 (actualización local)
 

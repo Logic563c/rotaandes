@@ -10,6 +10,8 @@ import type { TipoCapa, ConsultaCapaVisual, RespuestaCapaVisual } from '../types
 import { validarUrlPublicacion } from './configuracionPublicacion';
 import type { RespuestaTendencia } from '../types/tendencia';
 import { esquemaTendencia } from './validarTendencia';
+import { esquemaPanelTecnico } from './validarPanelTecnico';
+import type { FiltrosPanelTecnico, RespuestaPanelTecnico } from '../types/tecnico';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -135,6 +137,12 @@ export async function obtenerClima(token: string, terrenoId: string, signal?: Ab
 export async function obtenerTendencia(token: string, terrenoId: string, ubicacion: { latitud: number; longitud: number }, signal?: AbortSignal): Promise<RespuestaTendencia> {
   const datos = comprobarRespuesta(esquemaTendencia, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/tendencia`, 'GET', token, undefined, signal, 25000));
   if (datos.coordenadas.latitud !== ubicacion.latitud || datos.coordenadas.longitud !== ubicacion.longitud) throw new ErrorApi('La serie histórica no corresponde a la ubicación actual. Reintenta la consulta.');
+  return datos;
+}
+export async function obtenerPanelTecnico(token: string, filtros: FiltrosPanelTecnico, signal?: AbortSignal): Promise<RespuestaPanelTecnico> {
+  const consulta = new URLSearchParams({ pagina: String(filtros.pagina), ...(filtros.parroquia && { parroquia: filtros.parroquia }), ...(filtros.cultivo && { cultivo: filtros.cultivo }) });
+  const datos = comprobarRespuesta(esquemaPanelTecnico, await solicitar(`/tecnico/terrenos?${consulta}`, 'GET', token, undefined, signal));
+  if (datos.paginacion.pagina !== filtros.pagina) throw new ErrorApi('El panel no corresponde a la página solicitada. Reintenta.');
   return datos;
 }
 

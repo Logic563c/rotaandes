@@ -33,7 +33,7 @@ export function DetalleTerreno() {
   const esAgricultor = sesion.usuario?.rol === 'agricultor';
   const terreno = consulta.data;
   const tiposSuelo: Record<string, string> = { franco: 'Franco', arenoso: 'Arenoso', arcilloso: 'Arcilloso', no_se: 'No sé' };
-  return <Marco><Link to="/terrenos" className="enlace-nav -ml-3 text-sm">← {esAgricultor ? 'Mis terrenos' : 'Consulta de terrenos'}</Link>
+  return <Marco><Link to={esAgricultor ? '/terrenos' : '/tecnico'} className="enlace-nav -ml-3 text-sm">← {esAgricultor ? 'Mis terrenos' : 'Panel técnico'}</Link>
     <div className="mt-7"><EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} /></div>
     {consulta.isSuccess && terreno && <>
       <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="etiqueta-seccion">Detalle de la parcela</p><h1 className="mt-3 break-words font-campo text-4xl sm:text-5xl">{terreno.nombre}</h1></div>{esAgricultor && <div className="flex flex-wrap gap-3"><Link className="boton-secundario" to={`/terrenos/${id}/editar`}>Editar terreno</Link><button className="enlace-nav font-semibold text-arcilla" onClick={() => { eliminar.reset(); establecerConfirmacion(true); }}>Eliminar terreno</button></div>}</div>

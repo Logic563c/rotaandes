@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 
 export interface PuntoTerreno { latitud: number; longitud: number }
 export interface MapaTerrenosProps {
-  terrenos: Terreno[];
+  terrenos: Pick<Terreno, 'id' | 'nombre' | 'latitud' | 'longitud' | 'area_ha'>[];
   punto?: PuntoTerreno | null;
   alSeleccionar?: (punto: PuntoTerreno) => void;
   imagenSatelital?: { url?: string; limites: readonly [number, number, number, number]; nombre: string };
@@ -43,11 +43,11 @@ export function MapaTerrenos({ terrenos, punto, alSeleccionar, imagenSatelital, 
         {imagenSatelital?.url && <ImageOverlay key={imagenSatelital.url} url={imagenSatelital.url} bounds={[[imagenSatelital.limites[1], imagenSatelital.limites[0]], [imagenSatelital.limites[3], imagenSatelital.limites[2]]]} alt={imagenSatelital.nombre} attribution='&copy; NASA GIBS / EOSDIS' eventHandlers={{ load: () => establecerErrorImagen(false), error: () => establecerErrorImagen(true) }} />}
         <InteraccionesMapa terrenos={terrenos} {...(punto !== undefined && { punto })} {...(alSeleccionar && { alSeleccionar })} {...(imagenSatelital && { imagenSatelital })} />
         {terrenos.map((terreno, indice) => <Marker key={terreno.id} position={[terreno.latitud, terreno.longitud]}
-          title={terreno.nombre} alt={`Terreno ${terreno.nombre}`} icon={divIcon({ className: 'marcador-terreno', html: String(indice + 1), iconSize: [32, 32], iconAnchor: [16, 16] })}>
+          title={terreno.nombre} alt={`Terreno ${terreno.nombre}`} icon={divIcon({ className: 'marcador-terreno', html: `<span class="contenido-marcador-terreno">${indice + 1}</span>`, iconSize: [32, 32], iconAnchor: [16, 16] })}>
           <Popup><strong>{terreno.nombre}</strong><p>{terreno.area_ha === null ? 'Área sin indicar' : `${terreno.area_ha} ha`}</p><Link to={`/terrenos/${terreno.id}`}>Ver detalle de {terreno.nombre}</Link></Popup>
         </Marker>)}
         {punto && <Marker position={[punto.latitud, punto.longitud]} title="Ubicación seleccionada" alt="Ubicación seleccionada"
-          icon={divIcon({ className: 'marcador-terreno marcador-terreno--seleccionado', html: '+', iconSize: [34, 34], iconAnchor: [17, 17] })} />}
+          icon={divIcon({ className: 'marcador-terreno marcador-terreno--seleccionado', html: '<span class="contenido-marcador-terreno">+</span>', iconSize: [34, 34], iconAnchor: [17, 17] })} />}
       </MapContainer>
       <div className="bg-white/90 px-4 py-3 text-xs leading-relaxed text-oliva">
         <p>{alSeleccionar ? 'Toca el mapa para ubicar tu terreno. También puedes escribir las coordenadas en el formulario.' : 'Selecciona un marcador para consultar el terreno.'}</p>

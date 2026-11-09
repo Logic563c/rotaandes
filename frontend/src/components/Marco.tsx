@@ -15,6 +15,7 @@ export function Marco({ children }: { children: ReactNode }) {
           <nav aria-label="Navegación principal" className="flex flex-wrap items-center gap-2 text-sm font-semibold">
             {sesion.usuario ? <>
               <NavLink className="enlace-nav" to="/inicio">Mi espacio</NavLink>
+              {sesion.usuario.rol === 'tecnico' && <NavLink className="enlace-nav" to="/tecnico">Panel técnico</NavLink>}
               <NavLink className="enlace-nav" to="/terrenos">{sesion.usuario.rol === 'agricultor' ? 'Mis terrenos' : 'Terrenos'}</NavLink>
               <NavLink className="enlace-nav" to="/perfil">Mi perfil</NavLink>
               <button className="enlace-nav" type="button" onClick={() => {
