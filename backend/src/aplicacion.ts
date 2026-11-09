@@ -26,6 +26,9 @@ import { crearRutasRotaciones } from './routes/rotaciones.js';
 import { crearRutasCapas } from './routes/capas.js';
 import { crearServicioCapas } from './services/capasSatelitales.js';
 import type { ServicioCapas } from './services/capasSatelitales.js';
+import { crearRutasTendencia } from './routes/tendencia.js';
+import { crearServicioTendencia } from './services/tendencia.js';
+import type { ServicioTendencia } from './services/tendencia.js';
 
 export function crearAplicacion(configuracion: ConfiguracionServidor, dependencias: {
   obtenerUsuarios?: ObtenerUsuarios; obtenerSecreto?: () => string;
@@ -33,6 +36,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   obtenerCacheClima?: ObtenerCacheClima; consultarClima?: ServicioClima;
   obtenerCachePronostico?: ObtenerCachePronostico; consultarPronostico?: ServicioPronostico;
   consultarCapas?: ServicioCapas;
+  consultarTendencia?: ServicioTendencia;
 } = {}) {
   const aplicacion = express();
   aplicacion.disable('x-powered-by');
@@ -67,6 +71,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   aplicacion.use('/api/auth', crearRutasAuth(obtenerUsuarios, obtenerSecreto));
   aplicacion.use('/api/perfil', crearRutasPerfil(obtenerUsuarios, obtenerSecreto));
   const obtenerBase = dependencias.obtenerBase ?? obtenerClientePrisma;
+  aplicacion.use('/api', crearRutasTendencia(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarTendencia ?? crearServicioTendencia(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache))));
   aplicacion.use('/api/cultivos', crearRutasCultivos(obtenerBase));
   aplicacion.use('/api', crearRutasPronostico(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarPronostico ?? crearServicioPronostico(dependencias.obtenerCachePronostico ?? (() => obtenerClientePrisma().climaCache))));
   const consultarClima = dependencias.consultarClima ?? crearServicioClima(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache));

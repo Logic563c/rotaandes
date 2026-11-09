@@ -14,6 +14,11 @@ export type ClimatologiaBase = z.infer<typeof esquemaClimatologiaBase>;
 export class ErrorClima extends Error {
   constructor() { super('No hay climatología fiable disponible para esta ubicación. Inténtalo más tarde.'); }
 }
+// NASA puede devolver centésimas para un punto solicitado con mayor precisión.
+export function coincideCoordenadaNasa(devuelta: number | undefined, solicitada: number): boolean {
+  return devuelta !== undefined && (devuelta === solicitada || (Math.abs(devuelta * 100 - Math.round(devuelta * 100)) <= 1e-9
+    && Math.abs(devuelta - solicitada) <= 0.005 + 1e-9));
+}
 const unidades: Record<ParametroNasa, string> = { T2M: 'C', T2M_MIN: 'C', T2M_MAX: 'C', PRECTOTCORR: 'mm/day', RH2M: '%', GWETTOP: '1', GWETROOT: '1', ALLSKY_SFC_SW_DWN: 'MJ/m^2/day' };
 const limites: Record<ParametroNasa, [number, number]> = { T2M: [-100, 70], T2M_MIN: [-100, 70], T2M_MAX: [-100, 70], PRECTOTCORR: [0, 2000], RH2M: [0, 100], GWETTOP: [0, 1], GWETROOT: [0, 1], ALLSKY_SFC_SW_DWN: [0, 60] };
 const esquemaRespuesta = z.object({
@@ -37,11 +42,7 @@ export function procesarRespuestaNasa(entrada: unknown, latitud: number, longitu
   const [longitudDevuelta, latitudDevuelta] = respuesta.geometry.coordinates;
   // En la comprobación real NASA devolvió centésimas para coordenadas con seis decimales.
   // Admitir solo el mismo valor o ese redondeo, nunca una ubicación regional alternativa.
-  const coincideCoordenada = (devuelta: number | undefined, solicitada: number): boolean => devuelta !== undefined && (
-    devuelta === solicitada || (Math.abs(devuelta * 100 - Math.round(devuelta * 100)) <= 1e-9
-      && Math.abs(devuelta - solicitada) <= 0.005 + 1e-9)
-  );
-  if (!coincideCoordenada(longitudDevuelta, longitud) || !coincideCoordenada(latitudDevuelta, latitud)) throw new ErrorClima();
+  if (!coincideCoordenadaNasa(longitudDevuelta, longitud) || !coincideCoordenadaNasa(latitudDevuelta, latitud)) throw new ErrorClima();
   const periodoDeclarado = respuesta.header.range?.match(/January (\d{4})\s*-\s*December (\d{4})/);
   const inicio = Number(periodoDeclarado?.[1] ?? respuesta.header.start?.slice(0, 4));
   const fin = Number(periodoDeclarado?.[2] ?? respuesta.header.end?.slice(0, 4));

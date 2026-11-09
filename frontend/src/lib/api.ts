@@ -8,6 +8,8 @@ import type { EscenarioCalendario, RespuestaCalendario } from '../types/api';
 import type { RespuestaRotaciones } from '../types/api';
 import type { TipoCapa, ConsultaCapaVisual, RespuestaCapaVisual } from '../types/api';
 import { validarUrlPublicacion } from './configuracionPublicacion';
+import type { RespuestaTendencia } from '../types/tendencia';
+import { esquemaTendencia } from './validarTendencia';
 
 export class ErrorApi extends Error {
   constructor(mensaje: string, public readonly codigoHttp?: number) { super(mensaje); }
@@ -71,12 +73,12 @@ function validarUsuario(datos: unknown): UsuarioPublico {
     prioridad_ingresos: typeof datos.prioridad_ingresos === 'number' ? datos.prioridad_ingresos : null };
 }
 
-async function solicitar(ruta: string, metodo: 'GET' | 'POST' | 'PUT' | 'DELETE', token?: string, cuerpo?: unknown, signal?: AbortSignal): Promise<unknown> {
+async function solicitar(ruta: string, metodo: 'GET' | 'POST' | 'PUT' | 'DELETE', token?: string, cuerpo?: unknown, signal?: AbortSignal, tiempoEsperaMs = 8000): Promise<unknown> {
   try {
     const respuesta = await fetch(obtenerUrl(ruta), { method: metodo, cache: 'no-store', credentials: 'omit',
       headers: { Accept: 'application/json', ...(cuerpo !== undefined && { 'Content-Type': 'application/json' }), ...(token && { Authorization: `Bearer ${token}` }) },
       ...(cuerpo !== undefined && { body: JSON.stringify(cuerpo) }),
-      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(8000)]) : AbortSignal.timeout(8000) });
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(tiempoEsperaMs)]) : AbortSignal.timeout(tiempoEsperaMs) });
     if (respuesta.status === 204) return undefined;
     const datos: unknown = await respuesta.json();
     if (!respuesta.ok) throw new ErrorApi(respuesta.status < 500 && esObjeto(datos) && typeof datos.error === 'string' ? datos.error : 'No se pudo completar la solicitud. Inténtalo de nuevo.', respuesta.status);
@@ -129,6 +131,11 @@ const esquemaClima = z.object({
 });
 export async function obtenerClima(token: string, terrenoId: string, signal?: AbortSignal): Promise<RespuestaClima> {
   return comprobarRespuesta(esquemaClima, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/clima`, 'GET', token, undefined, signal));
+}
+export async function obtenerTendencia(token: string, terrenoId: string, ubicacion: { latitud: number; longitud: number }, signal?: AbortSignal): Promise<RespuestaTendencia> {
+  const datos = comprobarRespuesta(esquemaTendencia, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/tendencia`, 'GET', token, undefined, signal, 25000));
+  if (datos.coordenadas.latitud !== ubicacion.latitud || datos.coordenadas.longitud !== ubicacion.longitud) throw new ErrorApi('La serie histórica no corresponde a la ubicación actual. Reintenta la consulta.');
+  return datos;
 }
 
 const coordenadasPronostico = z.object({ latitud: numero.min(-90).max(90), longitud: numero.min(-180).max(180) });

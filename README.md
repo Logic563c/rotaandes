@@ -2,13 +2,28 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. El GeoJSON satelital analítico, las tendencias, el panel técnico avanzado y los reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/tendencias-climaticas` añade el análisis histórico 2005–2024; esta actualización todavía no se publica. El GeoJSON satelital analítico, el panel técnico avanzado y los reportes siguen pendientes.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
 **Versión pública verificada:** [rotaandes.vercel.app](https://rotaandes.vercel.app), con [backend HTTPS y salud](https://backend-production-954a9.up.railway.app/api/health). El código está en el repositorio privado [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes), rama `release/publicacion`; la revisión desplegada es `012d6be4ebd2df22dfb3062b8645dfe1c95ec017`, incluidos escenarios y visor NASA GIBS. El [informe de actualización](docs/INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) registra el recorrido real de escritorio/celular, las 27 capturas, PostgreSQL y la reversión. [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md) conserva también la publicación inicial. Railway usa crédito Trial: esta publicación no garantiza alojamiento permanente ni autoriza contratar un plan.
 
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+
+## Tendencias históricas 2005–2024 (actualización local)
+
+En el detalle de un terreno, abrir **«¿Cómo ha cambiado el clima?» → «Ver tendencias 2005–2024»**. Se muestran precipitación anual, menor mínima mensual de cada año, días de helada modelados y una tabla accesible con cobertura por variable. El índice superficial GWETTOP también aparece en la tabla. Pendientes y diferencias son descriptivas; no demuestran significancia ni causas.
+
+`GET /api/terrenos/:id/tendencia` requiere sesión y propiedad del terreno, o lectura técnica autorizada. El backend consulta NASA mensual y diaria con las coordenadas guardadas. Guarda ambas series separadamente en `clima_cache` durante 30 días y, ante fallos, identifica el dato anterior del mismo punto como desactualizado. No sustituye datos faltantes por cero ni usa otra localidad como respaldo. La consulta se realiza al abrir la sección.
+
+La lluvia requiere doce meses válidos y se calcula como mm/día × días reales; el conteo de heladas exige 365/366 mínimas diarias válidas a ≤0 °C. Este conteo histórico regional es distinto de las alertas preventivas del pronóstico a ≤2 °C. NASA POWER no mide el microclima del lote.
+
+```powershell
+npm.cmd run tendencia:verificar --workspace backend
+npm.cmd run test:tendencias
+```
+
+El primer comando consulta NASA realmente, sin PostgreSQL; necesita Internet. El segundo compila y ejecuta el recorrido de escritorio/celular en la base aislada, con respuestas archivadas y modificaciones de prueba identificadas. La metodología, procedencia y verificaciones están en [INFORME_TENDENCIAS_CLIMATICAS.md](docs/INFORME_TENDENCIAS_CLIMATICAS.md). Las capturas y logs locales se conservan en `.tmp/`, fuera de Git. La versión pública sigue ejecutando `012d6be`.
 
 ## Requisitos
 

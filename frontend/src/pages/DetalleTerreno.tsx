@@ -11,6 +11,7 @@ import { PronosticoTerreno } from '../components/PronosticoTerreno';
 import { CalendarioSiembra } from '../components/CalendarioSiembra';
 import { ComparadorRotaciones } from '../components/ComparadorRotaciones';
 import { SimuladorEscenarios } from '../components/SimuladorEscenarios';
+import { TendenciaTerreno } from '../components/TendenciaTerreno';
 import { obtenerTerreno, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 
@@ -46,6 +47,7 @@ export function DetalleTerreno() {
       </dl><p className="mt-7 text-xs leading-relaxed text-oliva">Fuente de altitud: <a href="https://open-meteo.com/en/docs/elevation-api" target="_blank" rel="noreferrer" className="underline">Open-Meteo</a> / Copernicus DEM GLO-90, resolución de 90 m. Es una estimación, no una medición exacta del terreno.{terreno.altitud_m === null && ' No hay una estimación disponible; no se ha sustituido por un dato inventado.'}</p></div><VisorCapas key={`capas:${sesion.usuario?.id}:${id}`} terrenos={[terreno]} /></div>
       <ClimaTerreno key={`clima:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} />
       <PronosticoTerreno key={`pronostico:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} />
+      <TendenciaTerreno key={`tendencia:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} />
       <CalendarioSiembra key={`calendario:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} tieneRiego={terreno.tiene_riego} areaHa={terreno.area_ha} />
       <ComparadorRotaciones key={`rotaciones:${sesion.usuario?.id}:${id}`} terrenoId={id} contexto={[terreno.latitud, terreno.longitud, terreno.altitud_m, terreno.tiene_riego, terreno.area_ha]} />
       <SimuladorEscenarios key={`escenarios:${sesion.usuario?.id}:${id}`} terrenoId={id} contexto={[terreno.latitud, terreno.longitud, terreno.altitud_m, terreno.tiene_riego, terreno.area_ha]} />

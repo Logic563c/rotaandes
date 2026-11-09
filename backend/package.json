@@ -25,6 +25,7 @@
     "pronostico:verificar": "tsx scripts/verificarPronostico.ts",
     "calendario:verificar": "tsx scripts/verificarCalendario.ts",
     "capas:verificar": "tsx scripts/verificarCapasSatelitales.ts",
+    "tendencia:verificar": "tsx scripts/verificarTendencias.ts",
     "db:migrate": "tsx scripts/comprobarConfiguracion.ts && prisma migrate deploy",
     "db:status": "tsx scripts/comprobarConfiguracion.ts && prisma migrate status",
     "db:verify": "tsx scripts/verificarBase.ts",

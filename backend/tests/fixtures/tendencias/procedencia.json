@@ -1,0 +1,20 @@
+[
+  {
+    "tipo": "mensual",
+    "archivo": "mensual-latacunga.json",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&longitude=-78.62&latitude=-0.93&start=2005&end=2024&format=JSON",
+    "obtenido_en": "2026-11-09T01:45:01.570Z",
+    "bytes": 11513,
+    "sha256": "e990ea4134ab3784cf6918655571f437508b5d024dbed6cd1618326db549b8d5",
+    "uso": "Respuesta NASA real archivada para verificación reproducible. Las fixtures que alteran valores o fecha son exclusivas de tests y no son datos de producción."
+  },
+  {
+    "tipo": "diario",
+    "archivo": "diario-latacunga.json",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&longitude=-78.62&latitude=-0.93&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "obtenido_en": "2026-11-09T01:45:37.323Z",
+    "bytes": 116744,
+    "sha256": "d3a6a8e2a3674ad8e51931821a3970b7b48e66244f4bd73ebacbbb80731343b3",
+    "uso": "Respuesta NASA real archivada para verificación reproducible. Las fixtures que alteran valores o fecha son exclusivas de tests y no son datos de producción."
+  }
+]
