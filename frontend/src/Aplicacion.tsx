@@ -11,6 +11,8 @@ import { Terrenos } from './pages/Terrenos';
 import { EditarTerreno } from './pages/EditarTerreno';
 import { DetalleTerreno } from './pages/DetalleTerreno';
 const PanelTecnico = lazy(async () => ({ default: (await import('./pages/PanelTecnico')).PanelTecnico }));
+const Glosario = lazy(async () => ({ default: (await import('./pages/Glosario')).Glosario }));
+const Fuentes = lazy(async () => ({ default: (await import('./pages/Fuentes')).Fuentes }));
 function RutaPrivada({ children }: { children: ReactNode }) {
   const sesion = useSesion();
   if (sesion.estaValidando) return <Marco><p role="status">Validando tu sesión…</p></Marco>;
@@ -22,6 +24,9 @@ export function Aplicacion() {
   return (
     <Routes>
       <Route path="/" element={<Inicio />} />
+      <Route path="/glosario" element={<Suspense fallback={<Marco><p role="status">Preparando el glosario…</p></Marco>}><Glosario /></Suspense>} />
+      <Route path="/fuentes" element={<Suspense fallback={<Marco><p role="status">Preparando las fuentes…</p></Marco>}><Fuentes /></Suspense>} />
+      <Route path="/acerca-de" element={<Navigate to="/fuentes" replace />} />
       <Route path="/login" element={<Acceso esRegistro={false} />} />
       <Route path="/registro" element={<Acceso key="registro" esRegistro />} />
       <Route path="/inicio" element={<RutaPrivada><EspacioPersonal /></RutaPrivada>} />

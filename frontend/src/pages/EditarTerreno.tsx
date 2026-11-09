@@ -32,7 +32,7 @@ function FormularioTerreno({ terreno }: { terreno?: Terreno }) {
     establecerError('');
     guardar.mutate({ nombre: String(formulario.get('nombre') ?? ''), ...punto, area_ha: area === '' ? null : Number(area), tiene_riego: formulario.get('tiene_riego') === 'on', tipo_suelo: tipoSuelo });
   }
-  return <form onSubmit={manejarGuardado} aria-busy={guardar.isPending} className="mt-8">
+  return <form onSubmit={manejarGuardado} aria-busy={guardar.isPending} aria-describedby={errorLocal || guardar.isError ? 'error-terreno' : undefined} className="mt-8">
     <fieldset disabled={guardar.isPending} className="grid min-w-0 items-start gap-7 lg:grid-cols-[1fr_1.1fr]">
       <section className="tarjeta min-w-0 space-y-5 p-6 sm:p-8"><h2 className="text-xl font-semibold">Datos de la parcela</h2>
         <label className="campo">Nombre del terreno *<input name="nombre" required minLength={2} maxLength={120} defaultValue={terreno?.nombre ?? ''} autoComplete="off" /></label>
@@ -43,9 +43,9 @@ function FormularioTerreno({ terreno }: { terreno?: Terreno }) {
         <div className="grid gap-4 sm:grid-cols-2"><label className="campo">Latitud *<input name="latitud" type="number" inputMode="decimal" step="any" min="-90" max="90" required value={latitud} onChange={(evento) => establecerLatitud(evento.target.value)} /></label><label className="campo">Longitud *<input name="longitud" type="number" inputMode="decimal" step="any" min="-180" max="180" required value={longitud} onChange={(evento) => establecerLongitud(evento.target.value)} /></label></div>
         <p className="text-xs leading-relaxed text-oliva">Usa grados decimales. La altitud estimada se consulta al guardar y al cambiar las coordenadas. Fuente: Open-Meteo / Copernicus DEM GLO-90 (resolución de 90 m). No es una medición exacta.</p>
       </section>
-      <div className="order-first min-w-0 lg:order-last"><MapaDiferido terrenos={[]} punto={punto} alSeleccionar={(ubicacion) => { if (!guardar.isPending) { establecerLatitud(String(ubicacion.latitud)); establecerLongitud(String(ubicacion.longitud)); } }} /></div>
+      <div className="order-first min-w-0 lg:order-last"><p className="mb-4 rounded-xl bg-arena/60 p-4 text-sm leading-relaxed">Toca o haz clic en el lugar de tu terreno. El marcador señala el punto elegido; puedes moverlo tocando otro lugar. Si el mapa no carga o prefieres usar el teclado, escribe la latitud y longitud en el formulario. El área la declaras tú: no se dibujan límites de propiedad.</p><MapaDiferido terrenos={[]} punto={punto} alSeleccionar={(ubicacion) => { if (!guardar.isPending) { establecerLatitud(String(ubicacion.latitud)); establecerLongitud(String(ubicacion.longitud)); } }} /></div>
     </fieldset>
-    {(errorLocal || guardar.isError) && <p role="alert" className="aviso-error mt-6">{errorLocal || guardar.error?.message}</p>}
+    {(errorLocal || guardar.isError) && <p id="error-terreno" role="alert" className="aviso-error mt-6">{errorLocal || guardar.error?.message}</p>}
     <div className="mt-7 flex flex-wrap gap-3"><button className="boton-primario" disabled={guardar.isPending} type="submit">{guardar.isPending ? 'Guardando y consultando altitud…' : 'Guardar terreno'}</button><Link className="boton-secundario" to={terreno ? `/terrenos/${terreno.id}` : '/terrenos'}>Cancelar</Link></div>
   </form>;
 }

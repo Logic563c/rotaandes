@@ -4,13 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Inicio } from './Inicio';
 import { MemoryRouter } from 'react-router-dom';
+import { ProveedorSesion } from '../components/ProveedorSesion';
 
 const clientes: QueryClient[] = [];
 
 function mostrarInicio() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   clientes.push(cliente);
-  render(<QueryClientProvider client={cliente}><MemoryRouter><Inicio /></MemoryRouter></QueryClientProvider>);
+  render(<QueryClientProvider client={cliente}><MemoryRouter><ProveedorSesion><Inicio /></ProveedorSesion></MemoryRouter></QueryClientProvider>);
 }
 
 afterEach(() => {
@@ -23,7 +24,7 @@ describe('Página inicial', () => {
     const solicitudPendiente = Promise.withResolvers<Response>();
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(solicitudPendiente.promise));
     mostrarInicio();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Nuestra tierra.');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Conoce tu terreno, comprende el clima');
     expect(screen.getByRole('status')).toHaveTextContent('Comprobando conexión');
     expect(screen.getByRole('button', { name: 'Comprobando…' })).toBeDisabled();
     solicitudPendiente.resolve(new Response(JSON.stringify({ ok: true })));

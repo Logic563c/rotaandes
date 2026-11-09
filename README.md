@@ -2,13 +2,29 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/reportes-pdf` conserva el análisis histórico 2005–2024 y el panel de técnicos agrícolas, y añade informes PDF de terrenos; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico sigue pendiente.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/experiencia-agricultor` conserva tendencias 2005–2024, panel técnico y PDF, y añade la portada completa, el glosario, las fuentes y mejoras de navegación; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico sigue pendiente.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
 **Versión pública verificada:** [rotaandes.vercel.app](https://rotaandes.vercel.app), con [backend HTTPS y salud](https://backend-production-954a9.up.railway.app/api/health). El código está en el repositorio privado [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes), rama `release/publicacion`; la revisión desplegada es `012d6be4ebd2df22dfb3062b8645dfe1c95ec017`, incluidos escenarios y visor NASA GIBS. El [informe de actualización](docs/INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) registra el recorrido real de escritorio/celular, las 27 capturas, PostgreSQL y la reversión. [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md) conserva también la publicación inicial. Railway usa crédito Trial: esta publicación no garantiza alojamiento permanente ni autoriza contratar un plan.
 
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+
+## Una experiencia más sencilla para agricultores (actualización local)
+
+- **Portada `/`:** qué hace RotaAndes, tres pasos, cuenta/acceso, fuentes y límites, sin promesas de cosecha ni avales institucionales.
+- **Glosario `/glosario`:** quince términos con ejemplos, búsqueda sin distinguir tildes y recuperación cuando no hay coincidencias.
+- **Fuentes `/fuentes`:** NASA POWER, MODIS, SMAP, GIBS, Open-Meteo, OpenStreetMap, datos declarados y catálogo referencial. `/acerca-de` lleva a esa misma página. El glosario y las fuentes se pueden leer sin iniciar sesión y sin que responda el backend, siempre que la aplicación web haya cargado; no es una aplicación sin conexión.
+- **Mi espacio:** acceso directo a los terrenos del agricultor o al panel del técnico, sin mezclar permisos.
+- **Detalle del terreno:** preguntas para llegar al calendario, pronóstico, rotaciones, escenarios, historial e informe PDF. El calendario ofrece un resumen por mes de los resultados calculados, conservando restricciones, estados no determinados y todas las explicaciones.
+
+Los formularios explican la selección en el mapa y conservan coordenadas manuales. Hay foco visible en enlaces, botones, selectores, áreas de texto y desplegables; al navegar se lleva el foco al contenido. Los controles de zoom tienen objetivos de 44 píxeles. Se comprobaron escritorio y celulares emulados de **320, 375 y 390 px**; esto no acredita certificación WCAG ni una evaluación con agricultores o teléfonos físicos.
+
+```powershell
+npm.cmd run test:experiencia
+```
+
+Este recorrido utiliza PostgreSQL aislado, cuentas temporales, clima controlado y motores reales. Revisa registro, terreno, calendario, rotaciones, glosario, PDF, cierre de sesión y lectura técnica. No modifica producción. El alcance, las capturas y los resultados finales están en [INFORME_EXPERIENCIA_AGRICULTOR.md](docs/INFORME_EXPERIENCIA_AGRICULTOR.md).
 
 ## Informes PDF de terrenos (actualización local)
 

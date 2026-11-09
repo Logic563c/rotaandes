@@ -9,7 +9,7 @@ test('registro, perfil persistente, cierre y login reales', async ({ page }, inf
   const grupo = new Pool({ connectionString: validarUrlBase(process.env.TEST_DATABASE_URL, true) });
   try {
     await page.goto('/');
-    await page.getByRole('link', { name: 'Registrarme' }).click();
+    await page.getByRole('link', { name: 'Crear mi cuenta', exact: true }).click();
     await page.getByLabel('Nombre completo *').fill('Persona de prueba');
     await page.getByLabel('Parroquia', { exact: false }).fill('Latacunga');
     await page.getByLabel('Correo electrónico *').fill(email);

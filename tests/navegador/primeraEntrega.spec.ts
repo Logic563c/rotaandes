@@ -41,7 +41,7 @@ test('primera entrega: recorrido integral persistente de un agricultor', async (
       if (resultado.rows[0]) creados.push(resultado.rows[0].id);
     }
     await page.goto('/'); await expect(page.getByRole('heading', { name: 'Conexión disponible' })).toBeVisible(); await capturar('01-portada');
-    await page.getByRole('link', { name: 'Registrarme' }).click(); await capturar('02-registro');
+    await page.getByRole('link', { name: 'Crear mi cuenta', exact: true }).click(); await capturar('02-registro');
     await page.getByLabel('Nombre completo *').fill('Agricultor de auditoría'); await page.getByLabel('Parroquia', { exact: false }).fill('Latacunga'); await page.getByLabel('Correo electrónico *').fill(email); await page.getByLabel('Contraseña *').fill(password); await page.getByRole('button', { name: 'Registrarme', exact: true }).click();
     await expect(page.getByRole('heading', { name: /Bienvenido/ })).toBeVisible(); await page.getByRole('button', { name: 'Cerrar sesión' }).click(); await capturar('03-acceso'); await ingresar(); await capturar('04-espacio-personal');
     await page.getByRole('link', { name: 'Mi perfil', exact: true }).click();

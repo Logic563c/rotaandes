@@ -1,70 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
-import { obtenerEstadoServicio } from '../lib/api';
 import { Link } from 'react-router-dom';
+import { obtenerEstadoServicio } from '../lib/api';
+import { Marco } from '../components/Marco';
 
+const pasos = [
+  { titulo: 'Registra tu terreno', detalle: 'Ubícalo en el mapa y cuenta qué siembras, si tienes riego y qué es importante para ti.' },
+  { titulo: 'Consulta el clima y tus cultivos', detalle: 'Revisa el clima habitual de tu zona, el pronóstico de siete días y el calendario orientativo.' },
+  { titulo: 'Compara opciones para tus próximas siembras', detalle: 'Explora tres rotaciones y escenarios de lluvia o temperatura. Lee los motivos antes de decidir.' },
+];
 export function Inicio() {
-  const consultaSalud = useQuery({
-    queryKey: ['estadoServicio'],
-    queryFn: ({ signal }) => obtenerEstadoServicio(signal),
-  });
-
-  const tituloEstado = consultaSalud.isFetching
-    ? 'Comprobando conexión…'
-    : consultaSalud.isError ? 'No pudimos conectar' : 'Conexión disponible';
-
-  return (
-    <div className="flex min-h-screen flex-col bg-crema text-pino">
-      <a href="#contenido" className="sr-only focus:not-sr-only focus:p-4">Saltar al contenido</a>
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-7 sm:px-10">
-        <div className="flex items-center gap-3" aria-label="RotaAndes">
-          <span className="flex size-11 items-center justify-center rounded-2xl bg-pino text-crema" aria-hidden="true">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path d="M4 22 13 5l4 8 3-4 5 13H4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-              <path d="m9 13 4 2 3-3M5 25h19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="text-xl font-bold tracking-tight">RotaAndes</span>
-        </div>
-        <Link to="/login" className="enlace-nav text-sm font-semibold">Ingresar</Link>
-      </header>
-
-      <main id="contenido" className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-10 px-6 py-10 sm:px-10 lg:grid-cols-2 lg:gap-16 lg:py-16">
-        <div>
-          <p className="mb-6 flex items-center gap-3 text-xs font-semibold tracking-[0.16em] text-oliva uppercase">
-            <span className="h-px w-8 bg-arcilla" aria-hidden="true" /> Desde los Andes, para nuestra tierra
-          </p>
-          <h1 className="font-campo text-5xl leading-[1.08] tracking-tight sm:text-6xl">
-            Nuestra tierra.<br />Un futuro <span className="text-arcilla">más resiliente.</span>
-          </h1>
-          <p className="mt-7 max-w-md text-lg leading-relaxed text-oliva">
-            Un espacio para acompañar a los agricultores de Cotopaxi en el cuidado de su tierra y sus cultivos.
-          </p>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-oliva">
-            Registra tus terrenos y siembras. Consulta el clima histórico de NASA POWER, el pronóstico de Open-Meteo y un calendario de siembra orientativo con datos referenciales.
-          </p>
-          <Link to="/registro" className="boton-primario mt-6 inline-flex">Registrarme <span aria-hidden="true" className="ml-3">↗</span></Link>
-
-          <section aria-labelledby="titulo-conexion" className="mt-9 rounded-2xl border border-pino/15 bg-white/65 p-6 shadow-sm">
-            <p className="mb-3 text-xs font-semibold tracking-widest text-oliva uppercase">Estado de RotaAndes</p>
-            <div role="status" aria-live="polite" aria-atomic="true">
-              <h2 id="titulo-conexion" className="flex items-center gap-3 text-lg font-semibold">
-                <span aria-hidden="true" className={`size-2.5 shrink-0 rounded-full ${consultaSalud.isFetching ? 'bg-oliva' : consultaSalud.isError ? 'bg-arcilla' : 'bg-pino'}`} />
-                {tituloEstado}
-              </h2>
-              {consultaSalud.isError && <p className="mt-3 text-sm leading-relaxed text-oliva">{consultaSalud.error.message}</p>}
-              {consultaSalud.isSuccess && !consultaSalud.isFetching && (
-                <p className="mt-2 text-sm text-oliva">El servicio está respondiendo correctamente.</p>
-              )}
-            </div>
-            <button type="button" disabled={consultaSalud.isFetching} onClick={() => { void consultaSalud.refetch(); }}
-              className="mt-5 min-h-12 w-full rounded-xl bg-pino px-5 py-3 text-sm font-semibold text-white transition hover:bg-pino/90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-pino disabled:cursor-wait disabled:opacity-60 sm:w-auto">
-              {consultaSalud.isFetching ? 'Comprobando…' : consultaSalud.isError ? 'Reintentar conexión' : 'Volver a comprobar'}
-            </button>
-          </section>
-        </div>
-
-        <div className="paisaje relative mx-auto w-full max-w-lg overflow-hidden rounded-t-[45%] rounded-b-3xl border border-pino/10 bg-arena" aria-hidden="true">
-          <svg viewBox="0 0 480 540" className="block h-auto w-full" fill="none">
+  const consulta = useQuery({ queryKey: ['estadoServicio'], queryFn: ({ signal }) => obtenerEstadoServicio(signal) });
+  return <Marco>
+    <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+      <div><p className="etiqueta-seccion">Desde los Andes, para nuestra tierra</p>
+        <h1 className="mt-5 font-campo text-4xl leading-tight tracking-tight sm:text-5xl">Conoce tu terreno, comprende el clima y explora mejores opciones para sembrar.</h1>
+        <p className="mt-6 max-w-xl text-lg leading-relaxed text-oliva">Un espacio de apoyo para agricultores de Latacunga y Cotopaxi. Tu experiencia del campo, acompañada de información para comparar opciones.</p>
+        <div className="mt-7 flex flex-wrap gap-3"><Link className="boton-primario" to="/registro">Crear mi cuenta</Link><Link className="boton-secundario" to="/login">Iniciar sesión</Link></div>
+        <a className="enlace-nav mt-4 underline" href="#como-funciona">Conocer cómo funciona <span aria-hidden="true" className="ml-2">↓</span></a>
+      </div>
+      <div className="mx-auto w-full max-w-sm overflow-hidden rounded-t-[45%] rounded-b-3xl bg-arena" aria-hidden="true">          <svg viewBox="0 0 480 540" className="block h-auto w-full" fill="none">
             <circle cx="345" cy="112" r="44" fill="#cf9c66" />
             <path d="m0 320 124-178 62 79L284 68l196 252v220H0Z" fill="#aab4a0" />
             <path d="m223 163 61-95 71 91-46-20-24 12-26-19-36 31Z" fill="#f6f3e8" />
@@ -75,18 +29,14 @@ export function Inicio() {
             <path d="M0 510c115-38 170-6 201 30H0v-30Z" fill="#23483c" />
             <path d="M340 540c-52-81-69-104-38-161" stroke="#ede6d7" strokeWidth="13" />
             <path d="M49 326v-43m-13 25 13-27 14 27M407 361v-51m-15 30 15-32 15 32" stroke="#23483c" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div className="absolute inset-x-0 bottom-0 bg-pino/95 px-7 py-5 text-crema">
-            <p className="font-campo text-2xl">Raíces andinas. Nuevas posibilidades.</p>
-            <p className="mt-1 text-xs tracking-widest text-crema/75 uppercase">Latacunga · Cotopaxi</p>
-          </div>
-        </div>
-      </main>
-
-      <footer className="mx-auto flex w-full max-w-6xl flex-col gap-3 border-t border-pino/15 px-6 py-6 text-xs leading-relaxed text-oliva sm:px-10 md:flex-row md:items-start md:justify-between">
-        <p>RotaAndes · Cuidamos lo que nos da la tierra.</p>
-        <p className="max-w-md">Herramienta de apoyo. No reemplaza la experiencia del agricultor ni el criterio de un técnico agrícola.</p>
-      </footer>
+          </svg></div>
     </div>
-  );
+    <section id="como-funciona" tabIndex={-1} className="destino-terreno mt-14 border-t border-pino/15 pt-9"><p className="etiqueta-seccion">A tu ritmo, paso a paso</p><h2 className="mt-3 font-campo text-3xl">Tu terreno es el punto de partida</h2>
+      <ol className="mt-7 grid gap-5 md:grid-cols-3">{pasos.map((paso, indice) => <li className="tarjeta p-6" key={paso.titulo}><span aria-hidden="true" className="flex size-11 items-center justify-center rounded-full bg-pino font-semibold text-white">{indice + 1}</span><h3 className="mt-4 font-campo text-2xl">{paso.titulo}</h3><p className="mt-3 leading-relaxed text-oliva">{paso.detalle}</p></li>)}</ol>
+    </section>
+    <section className="mt-10 grid gap-6 rounded-3xl border border-pino/15 bg-arena/55 p-6 sm:p-8 lg:grid-cols-2"><div><p className="etiqueta-seccion">Datos con una explicación</p><h2 className="mt-3 font-campo text-3xl">El clima de una zona, tu conocimiento del lote</h2><p className="mt-4 leading-relaxed text-oliva">NASA POWER ayuda a conocer condiciones históricas. MODIS y SMAP aportan imágenes regionales de vegetación y humedad del suelo mediante NASA GIBS. Open-Meteo aporta el pronóstico.</p><Link className="enlace-nav mt-3 underline" to="/fuentes">Consultar las fuentes de información</Link></div>
+      <div><h3 className="font-campo text-2xl">Orientación, sin promesas de cosecha</h3><p className="mt-4 leading-relaxed text-oliva">El calendario y las rotaciones combinan datos con reglas y un catálogo agrícola referencial. No garantizan rendimiento, ingresos ni ahorro de agua. Si falta información, se indica.</p><p className="mt-3 font-semibold leading-relaxed">RotaAndes no sustituye tu experiencia ni la evaluación de un técnico agrícola.</p><Link className="enlace-nav mt-3 underline" to="/glosario">¿Una palabra nueva? Abre el glosario</Link></div>
+    </section>
+    <section className="mt-10 border-t border-pino/15 pt-6" aria-label="Estado de conexión"><div role="status" aria-live="polite" aria-atomic="true"><h2 className="font-semibold">{consulta.isFetching ? 'Comprobando conexión…' : consulta.isError ? 'No pudimos conectar' : 'Conexión disponible'}</h2><p className="mt-2 text-sm text-oliva">{consulta.isError ? 'Puedes leer el glosario y las fuentes. Para ingresar o guardar tu terreno necesitamos recuperar la conexión.' : 'Para guardar y consultar datos de tu terreno necesitas conexión a Internet.'}</p></div><button className="boton-secundario mt-3" disabled={consulta.isFetching} onClick={() => { void consulta.refetch(); }}>{consulta.isFetching ? 'Comprobando…' : consulta.isError ? 'Reintentar conexión' : 'Volver a comprobar'}</button></section>
+  </Marco>;
 }

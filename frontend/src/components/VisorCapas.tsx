@@ -34,6 +34,7 @@ export function VisorCapas({ terrenos }: { terrenos: Terreno[] }) {
   const metadatos = datos?.metadatos;
   return <section aria-labelledby={`${id}-titulo`} className="min-w-0">
     <h2 id={`${id}-titulo`} className="font-campo text-2xl">Mapa y capas satelitales</h2>
+    <p className="mt-3 text-sm leading-relaxed text-oliva">NDVI es un indicador de vegetación. SMAP muestra humedad superficial de una zona amplia, no la humedad exacta de tu parcela. Puedes consultar ambas imágenes con sus fechas y leyendas.</p>
     <button type="button" className="boton-secundario my-4" aria-expanded={abierto} aria-controls={`${id}-controles`} onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Cerrar controles satelitales' : 'Explorar capas NASA'}</button>
     {abierto && <div id={`${id}-controles`} className="mb-5 rounded-2xl border border-pino/20 bg-arena/40 p-4 text-sm">
       <fieldset><legend className="font-semibold">Capa visible</legend><p className="mt-2 text-xs text-oliva">Una capa a la vez para no mezclar escalas. Puedes volver al mapa base.</p><div className="mt-3 grid gap-2">

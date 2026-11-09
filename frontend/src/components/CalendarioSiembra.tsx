@@ -4,6 +4,7 @@ import { obtenerCalendario } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import type { CeldaCalendario, EstadoCalendario, RespuestaCalendario } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
+import { ResumenCalendario } from './ResumenCalendario';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const ESTADOS: Record<EstadoCalendario, { etiqueta: string; simbolo: string; estilo: string }> = {
@@ -42,6 +43,7 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
       <EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} />
       {consulta.isError && <p className="mt-3 text-sm text-oliva">No pudimos calcular el calendario con información fiable. Reintenta la consulta; no se han inventado recomendaciones.</p>}
       {consulta.isSuccess && datos && <>
+        <ResumenCalendario datos={datos} />
         <div className="rounded-2xl border border-pino/20 bg-arena/50 p-5 text-sm leading-relaxed"><p className="font-semibold">Clima: <a className="underline" href="https://power.larc.nasa.gov/docs/" target="_blank" rel="noreferrer">NASA POWER</a> · {datos.clima.periodo.inicio}–{datos.clima.periodo.fin}</p>
           <p className="mt-2">Consulta del dato: <time dateTime={datos.clima.actualizado_en}>{new Date(datos.clima.actualizado_en).toLocaleDateString('es-EC')}</time>. Origen: {datos.clima.estado_datos === 'nasa' ? 'NASA reciente' : datos.clima.estado_datos === 'cache' ? 'caché' : datos.clima.estado_datos === 'respaldo' ? 'respaldo verificado' : 'dato anterior'}{datos.clima.desactualizado ? ' · Desactualizado: consultar con precaución.' : ''}</p>
           <p className="mt-2 text-oliva">{datos.clima.resolucion}</p><p className="mt-2 font-semibold">Umbrales y ventanas del catálogo: referenciales, pendientes de validación agronómica local.</p>
