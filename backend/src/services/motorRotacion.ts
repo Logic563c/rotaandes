@@ -42,6 +42,11 @@ export function sumarMesesRotacion(inicio: string, cantidad: number): string | n
   const anio = Math.floor(absoluto / 12);
   return anio > 9999 || anio < 1 ? null : `${String(anio).padStart(4, '0')}-${String(absoluto % 12 + 1).padStart(2, '0')}-01`;
 }
+export function obtenerInicioRotacion(ahora: Date, siembra: string | null, cosecha: string | null): string | null {
+  const hoy = new Date(ahora.getTime() - 5 * 3600000).toISOString().slice(0, 10);
+  const ultima = [hoy, siembra ?? '', cosecha ?? ''].sort().at(-1) ?? hoy;
+  return sumarMesesRotacion(`${ultima.slice(0, 7)}-01`, 1);
+}
 function coberturaAgua(cultivo: CultivoRotacion, clima: MesCalendario | undefined, riego: boolean | null): number | null {
   if (riego === true) return 1;
   if (cultivo.lluviaMinMensualMm === null) return null;

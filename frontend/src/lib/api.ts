@@ -30,6 +30,27 @@ function obtenerUrl(ruta: string): URL {
   }
   return new URL(`/api${ruta}`, urlBase);
 }
+export async function obtenerReportePdf(token: string, terrenoId: string, signal?: AbortSignal): Promise<{ archivo: Blob; nombre: string }> {
+  if (!z.uuid().safeParse(terrenoId).success) throw new ErrorApi('El identificador del terreno no es válido.');
+  const maximo = 4 * 1024 * 1024;
+  try {
+    const tiempo = AbortSignal.timeout(35000);
+    const respuesta = await fetch(obtenerUrl(`/terrenos/${terrenoId}/reporte.pdf`), { method: 'GET', credentials: 'omit', cache: 'no-store', headers: { Accept: 'application/pdf', Authorization: `Bearer ${token}` }, signal: signal ? AbortSignal.any([signal, tiempo]) : tiempo });
+    if (!respuesta.ok) {
+      if (respuesta.status === 401) throw new ErrorApi('Tu sesión no es válida o ha vencido.', 401);
+      if (respuesta.status === 403) throw new ErrorApi('No tienes permiso para descargar este informe.', 403);
+      if (respuesta.status === 404) throw new ErrorApi('Terreno no encontrado.', 404);
+      throw new ErrorApi(respuesta.status === 429 ? 'Hay otro informe en preparación o se alcanzó el límite. Reintenta en un momento.' : 'No se pudo preparar el informe. Reintenta más tarde.', respuesta.status);
+    }
+    if (respuesta.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'application/pdf' || !respuesta.body || Number(respuesta.headers.get('content-length') ?? 0) > maximo) { await respuesta.body?.cancel(); throw new ErrorApi('La respuesta no es un informe PDF válido.'); }
+    const lector = respuesta.body.getReader(); const partes: Uint8Array[] = []; let total = 0;
+    try { for (;;) { const parte = await lector.read(); if (parte.done) break; total += parte.value.byteLength; if (total > maximo) { await lector.cancel(); throw new ErrorApi('El informe supera el tamaño permitido.'); } partes.push(parte.value); } }
+    finally { lector.releaseLock(); }
+    const bytes = new Uint8Array(total); let posicion = 0; for (const parte of partes) { bytes.set(parte, posicion); posicion += parte.byteLength; }
+    if (new TextDecoder().decode(bytes.subarray(0, 5)) !== '%PDF-' || !new TextDecoder().decode(bytes.subarray(-1024)).includes('%%EOF')) throw new ErrorApi('La respuesta no es un informe PDF válido.');
+    return { archivo: new Blob([bytes], { type: 'application/pdf' }), nombre: `rotaandes-${terrenoId}.pdf` };
+  } catch (error: unknown) { if (error instanceof ErrorApi) throw error; throw new ErrorApi('No se pudo descargar el informe. Comprueba la conexión y reintenta.'); }
+}
 
 export async function obtenerEstadoServicio(senalExterna?: AbortSignal): Promise<RespuestaSalud> {
   try {

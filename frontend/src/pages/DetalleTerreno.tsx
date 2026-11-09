@@ -12,6 +12,7 @@ import { CalendarioSiembra } from '../components/CalendarioSiembra';
 import { ComparadorRotaciones } from '../components/ComparadorRotaciones';
 import { SimuladorEscenarios } from '../components/SimuladorEscenarios';
 import { TendenciaTerreno } from '../components/TendenciaTerreno';
+import { DescargarReporte } from '../components/DescargarReporte';
 import { obtenerTerreno, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 
@@ -45,6 +46,7 @@ export function DetalleTerreno() {
         <div><dt className="text-oliva">Altitud estimada</dt><dd className="mt-1 font-semibold">{terreno.altitud_m === null ? 'No disponible' : `${terreno.altitud_m.toLocaleString('es-EC')} m s. n. m.`}</dd></div>
         <div><dt className="text-oliva">Latitud</dt><dd className="mt-1 font-semibold">{terreno.latitud}</dd></div><div><dt className="text-oliva">Longitud</dt><dd className="mt-1 font-semibold">{terreno.longitud}</dd></div>
       </dl><p className="mt-7 text-xs leading-relaxed text-oliva">Fuente de altitud: <a href="https://open-meteo.com/en/docs/elevation-api" target="_blank" rel="noreferrer" className="underline">Open-Meteo</a> / Copernicus DEM GLO-90, resolución de 90 m. Es una estimación, no una medición exacta del terreno.{terreno.altitud_m === null && ' No hay una estimación disponible; no se ha sustituido por un dato inventado.'}</p></div><VisorCapas key={`capas:${sesion.usuario?.id}:${id}`} terrenos={[terreno]} /></div>
+      <DescargarReporte key={`reporte:${sesion.usuario?.id}:${id}`} terrenoId={id} />
       <ClimaTerreno key={`clima:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} />
       <PronosticoTerreno key={`pronostico:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} />
       <TendenciaTerreno key={`tendencia:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} />

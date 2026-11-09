@@ -32,6 +32,9 @@ import type { ServicioTendencia } from './services/tendencia.js';
 import { crearRutasTecnico } from './routes/tecnico.js';
 import { crearServicioPanelTecnico } from './services/panelTecnico.js';
 import type { ServicioPanelTecnico } from './services/panelTecnico.js';
+import { crearServicioReportes } from './services/reportes.js';
+import type { ServicioReportes } from './services/reportes.js';
+import { crearRutasReportes } from './routes/reportes.js';
 
 export function crearAplicacion(configuracion: ConfiguracionServidor, dependencias: {
   obtenerUsuarios?: ObtenerUsuarios; obtenerSecreto?: () => string;
@@ -41,6 +44,7 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   consultarCapas?: ServicioCapas;
   consultarTendencia?: ServicioTendencia;
   consultarPanelTecnico?: ServicioPanelTecnico;
+  generarReporte?: ServicioReportes;
 } = {}) {
   const aplicacion = express();
   aplicacion.disable('x-powered-by');
@@ -75,11 +79,14 @@ export function crearAplicacion(configuracion: ConfiguracionServidor, dependenci
   aplicacion.use('/api/auth', crearRutasAuth(obtenerUsuarios, obtenerSecreto));
   aplicacion.use('/api/perfil', crearRutasPerfil(obtenerUsuarios, obtenerSecreto));
   const obtenerBase = dependencias.obtenerBase ?? obtenerClientePrisma;
-  aplicacion.use('/api', crearRutasTecnico(autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarPanelTecnico ?? crearServicioPanelTecnico(obtenerBase, obtenerUsuarios, () => obtenerClientePrisma().climaCache)));
-  aplicacion.use('/api', crearRutasTendencia(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarTendencia ?? crearServicioTendencia(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache))));
-  aplicacion.use('/api/cultivos', crearRutasCultivos(obtenerBase));
-  aplicacion.use('/api', crearRutasPronostico(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarPronostico ?? crearServicioPronostico(dependencias.obtenerCachePronostico ?? (() => obtenerClientePrisma().climaCache))));
+  const consultarTendencia = dependencias.consultarTendencia ?? crearServicioTendencia(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache));
+  const consultarPronostico = dependencias.consultarPronostico ?? crearServicioPronostico(dependencias.obtenerCachePronostico ?? (() => obtenerClientePrisma().climaCache));
   const consultarClima = dependencias.consultarClima ?? crearServicioClima(dependencias.obtenerCacheClima ?? (() => obtenerClientePrisma().climaCache));
+  aplicacion.use('/api', crearRutasReportes(autenticar(obtenerUsuarios, obtenerSecreto), dependencias.generarReporte ?? crearServicioReportes(obtenerBase, consultarClima, consultarPronostico, consultarTendencia)));
+  aplicacion.use('/api', crearRutasTecnico(autenticar(obtenerUsuarios, obtenerSecreto), dependencias.consultarPanelTecnico ?? crearServicioPanelTecnico(obtenerBase, obtenerUsuarios, () => obtenerClientePrisma().climaCache)));
+  aplicacion.use('/api', crearRutasTendencia(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarTendencia));
+  aplicacion.use('/api/cultivos', crearRutasCultivos(obtenerBase));
+  aplicacion.use('/api', crearRutasPronostico(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarPronostico));
   aplicacion.use('/api', crearRutasCalendario(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarClima));
   aplicacion.use('/api', crearRutasRotaciones(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarClima));
   aplicacion.use('/api', crearRutasClima(obtenerBase, autenticar(obtenerUsuarios, obtenerSecreto), consultarClima));

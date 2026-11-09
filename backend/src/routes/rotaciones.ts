@@ -9,7 +9,7 @@ import type { ServicioClima } from '../services/clima.js';
 import { validarId } from '../services/validacionAgricola.js';
 import { ErrorClima } from '../services/nasaPower.js';
 import { validarConsultaCalendario, IDS_CULTIVOS_CALENDARIO } from '../services/calendario.js';
-import { compararRotaciones, ErrorRotaciones, sumarMesesRotacion } from '../services/motorRotacion.js';
+import { compararRotaciones, ErrorRotaciones, obtenerInicioRotacion } from '../services/motorRotacion.js';
 import { plantillasReferenciales } from '../data/catalogoPlantillas.js';
 
 export function crearRutasRotaciones(obtenerBase: ObtenerBaseAgricola, autenticar: RequestHandler, consultarClima: ServicioClima, reloj = () => new Date()): Router {
@@ -32,10 +32,7 @@ export function crearRutasRotaciones(obtenerBase: ObtenerBaseAgricola, autentica
       base.plantillaRotacion.findMany({ where: { id: { in: plantillasReferenciales.map((valor) => valor.id) } }, orderBy: { id: 'asc' } }),
       base.siembra.aggregate({ where: { terrenoId: id, terreno: filtroTerrenos(obtenerUsuarioActual(solicitud)) }, _max: { fechaSiembra: true, fechaCosecha: true } }),
     ]);
-    // Ecuador continental UTC−5, sin depender de la zona horaria del proceso.
-    const hoy = new Date(reloj().getTime() - 5 * 3600000).toISOString().slice(0, 10);
-    const ultimaFecha = [hoy, fechas._max.fechaSiembra?.toISOString().slice(0, 10) ?? '', fechas._max.fechaCosecha?.toISOString().slice(0, 10) ?? ''].sort().at(-1) ?? hoy;
-    const inicio = sumarMesesRotacion(`${ultimaFecha.slice(0, 7)}-01`, 1);
+    const inicio = obtenerInicioRotacion(reloj(), fechas._max.fechaSiembra?.toISOString().slice(0, 10) ?? null, fechas._max.fechaCosecha?.toISOString().slice(0, 10) ?? null);
     if (!inicio) throw new ErrorHttp(400, 'Las fechas registradas no permiten construir un horizonte mensual válido.');
     let clima: Awaited<ReturnType<ServicioClima>> | null = null;
     try { clima = await consultarClima(terreno.latitud, terreno.longitud, terreno.altitudM); }

@@ -2,13 +2,30 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
-Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/panel-tecnico` conserva el análisis histórico 2005–2024 y añade el panel de técnicos agrícolas; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico y los reportes siguen pendientes.
+Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/reportes-pdf` conserva el análisis histórico 2005–2024 y el panel de técnicos agrícolas, y añade informes PDF de terrenos; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico sigue pendiente.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).
 
 **Versión pública verificada:** [rotaandes.vercel.app](https://rotaandes.vercel.app), con [backend HTTPS y salud](https://backend-production-954a9.up.railway.app/api/health). El código está en el repositorio privado [Logic563c/rotaandes](https://github.com/Logic563c/rotaandes), rama `release/publicacion`; la revisión desplegada es `012d6be4ebd2df22dfb3062b8645dfe1c95ec017`, incluidos escenarios y visor NASA GIBS. El [informe de actualización](docs/INFORME_ACTUALIZACION_ESCENARIOS_CAPAS.md) registra el recorrido real de escritorio/celular, las 27 capturas, PostgreSQL y la reversión. [INFORME_DESPLIEGUE.md](docs/INFORME_DESPLIEGUE.md) conserva también la publicación inicial. Railway usa crédito Trial: esta publicación no garantiza alojamiento permanente ni autoriza contratar un plan.
 
 La auditoría del núcleo está en [INFORME_PRIMERA_ENTREGA.md](docs/INFORME_PRIMERA_ENTREGA.md), con un [guion para la demostración local](docs/DEMO_PRIMERA_ENTREGA.md). No acredita una publicación en Internet ni validación agronómica local. Los informes de [calendario](docs/INFORME_CALENDARIO_SIEMBRA.md), [pronóstico y heladas](docs/INFORME_PRONOSTICO_HELADAS.md), [clima NASA](docs/INFORME_CLIMA_NASA.md), [terrenos y siembras](docs/INFORME_TERRENOS_SIEMBRAS.md), [autenticación](docs/INFORME_AUTENTICACION.md) y [persistencia](docs/INFORME_PERSISTENCIA.md) conservan el cierre de las fases anteriores.
+
+## Informes PDF de terrenos (actualización local)
+
+En el detalle de un terreno, pulsar **Descargar informe PDF**. La descarga usa el cliente HTTP autenticado, sin colocar el JWT en la URL. Agricultores: solo terrenos propios. Técnicos: lectura autorizada, sin cambiar registros. El archivo se llama `rotaandes-<UUID>.pdf`.
+
+`GET /api/terrenos/:id/reporte.pdf` genera un documento A4 con portada, características e historial, climatología NASA POWER, pronóstico vigente y alertas, calendario con sus 120 motivos, comparación de tres estrategias y tendencias disponibles. Incluye fuentes, fechas, unidades y limitaciones. Siempre utiliza el **escenario original 0 % / 0 °C**, aunque se hayan movido los controles del simulador. No incluye datos de contacto, contraseñas ni notas privadas.
+
+Reutiliza los servicios y cachés existentes. Los fallos conocidos de proveedores permiten un informe parcial identificado; los datos ausentes no se convierten en cero. Un fallo interno o un exceso de límites devuelve un error JSON y no un PDF engañoso. Límites: 200 siembras sin truncamiento silencioso, 80 páginas, 4 MiB, un informe simultáneo por proceso y tres solicitudes por usuario/minuto. El plazo de preparación es 25 segundos; las operaciones SQL o de proveedor ya iniciadas pueden terminar después, conservando ocupado el cupo y descartando el resultado tardío.
+
+```powershell
+# Compilar y ejecutar descarga real en escritorio y celular, con PostgreSQL aislado
+npm.cmd run test:pdf
+# Validar un PDF local sin imprimir su texto ni datos personales (ruta relativa al backend)
+npm.cmd run pdf:verificar --workspace backend -- ../.tmp/evidencias-reportes-pdf/informe-ejemplo-controlado.pdf
+```
+
+El ejemplo anterior existe en esta computadora tras la verificación de la fase; los artefactos `.tmp/` no se incluyen en un clon. También se puede indicar la ruta absoluta de otro informe. El verificador comprueba estructura PDF, páginas A4 y texto extraíble. Las pruebas utilizan PDFKit real, PDF.js y datos controlados identificados; no acreditan una consulta meteorológica nueva. El ejemplo completo revisado tiene 37 páginas porque conserva todas las explicaciones. [INFORME_REPORTES_PDF.md](docs/INFORME_REPORTES_PDF.md) documenta arquitectura, evidencias, pruebas y límites. No se ha publicado este módulo.
 
 ## Panel de técnicos agrícolas (actualización local)
 
