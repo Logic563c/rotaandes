@@ -1,5 +1,13 @@
 # Decisiones técnicas de RotaAndes
 
+## Auditoría final: estabilización NASA POWER (9 de noviembre de 2026)
+
+- **Base y alcance:** rama `fix/estabilizacion-final` desde `d589f6364e3f6b6c9bbfa0114e388f90e952cbb1`. Sin cambios en `PROYECTO.md`, `AGENTS.md`, esquema, migraciones, catálogos, dependencias ni credenciales. Diagnóstico completo en `docs/DIAGNOSTICO_NASA_Y_RECUPERACION.md`.
+- **Coordenadas NASA:** POWER v2.10.1 redondea el punto devuelto a milésimas. Se acepta el redondeo a 2 o 3 decimales con tolerancia de media unidad del último decimal (≤0,0005° o ≤0,005°, decenas a cientos de metros, muy por debajo de la celda de ~50 km). Cualquier otra diferencia sigue rechazándose.
+- **Respaldo por celda nativa:** NASA POWER entrega el mismo valor a todos los puntos de una celda (verificado en vivo, 48/48). Se archivan 16 respuestas de climatología (celda MERRA-2 × celda solar) y 9 × 2 series de tendencias (celda MERRA-2) que cubren Cotopaxi, con URL, fecha, celda y SHA-256. Se usan solo tras caché, NASA en vivo y dato previo de la misma coordenada; se identifican como respaldo regional con su punto de referencia y nunca se guardan en caché como consulta nueva. Puntos sobre un borde o fuera de las celdas archivadas no reciben respaldo. Es la interpretación más simple y verificable del respaldo de la sección 6.1 de `PROYECTO.md`, que no detallaba cómo cubrir terrenos distintos de los cinco puntos.
+- **Estado `respaldo` en tendencias:** se añade este valor a `fuentes.mensual/diario.estado_datos` (campo de envoltorio definido en una fase previa, no de la sección 8). Climatología ya lo tenía.
+- **Código HTTP de proveedor no disponible:** clima, calendario, tendencia y pronóstico devuelven **503** cuando el proveedor externo falla y no hay dato fiable, siguiendo el precedente de `/api/capas/:tipo` (503) y de los límites (429). El cuerpo sigue siendo `{ "error": "mensaje" }`. Los fallos internos (catálogo incompleto, errores inesperados) siguen en 500. El frontend muestra el mensaje controlado del servidor en 503 y mantiene el texto genérico en 500.
+- **Cliente NASA:** 10 s por intento y un reintento con espera (750 ms) solo ante red, timeout, 429 o 5xx; sin reintento ante 4xx, contenido no JSON o estructura inválida. Máximo dos consultas activas y ocho en espera por proceso. El frontend espera 25 s en las consultas que dependen de NASA.
 ## Prompt 20: experiencia del agricultor e información pública
 
 - **Base y alcance:** `feat/experiencia-agricultor` desde `23995cc0d364d2ee3d03f068c84ac4e0f0cf18d4`, inicialmente limpio. Se conservan motores, contratos, dependencias, PDF completo y seguridad. Sin cambios en backend, esquema, migraciones, documentos rectores, credenciales, ramas protegidas o publicación.

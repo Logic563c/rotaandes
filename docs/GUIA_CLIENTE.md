@@ -42,6 +42,20 @@ y pronósticos de Open-Meteo cuando están disponibles.
 
 Las alertas de heladas son preventivas.
 
+Cada resultado indica de dónde viene el dato:
+
+- **Consulta reciente a NASA:** se acaba de pedir a NASA POWER.
+- **Caché verificada:** consulta NASA de los últimos 30 días.
+- **Datos anteriores:** NASA no respondió y se muestra la última consulta
+  guardada para ese mismo terreno, con su fecha.
+- **Respaldo verificado:** NASA no respondió y se usan datos NASA
+  descargados antes para la misma zona (misma celda de la cuadrícula
+  de NASA, unos 50 km). Son los mismos valores que NASA da para el terreno.
+- **No disponible:** no hay datos fiables. La plataforma no muestra
+  cifras inventadas; vuelva a intentarlo en unos minutos.
+
+Los datos de NASA POWER describen la zona, no el microclima exacto del lote.
+
 ## 5. Consultar el calendario
 
 Seleccionar "¿Qué puedo sembrar?" o acceder al calendario.
