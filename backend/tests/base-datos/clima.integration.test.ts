@@ -72,7 +72,7 @@ describe('Climatología con PostgreSQL real y proveedor simulado, aislada con ro
     await request(app).get(`/api/terrenos/${terreno.id}/clima`).auth(token, { type: 'bearer' }).expect(200);
     await tx.terreno.update({ where: { id: terreno.id }, data: { latitud: -0.95 } });
     nasa.mockRejectedValue(new ErrorClima());
-    await request(app).get(`/api/terrenos/${terreno.id}/clima`).auth(token, { type: 'bearer' }).expect(500).expect(({ body }) => { expect(Object.keys(body)).toEqual(['error']); });
+    await request(app).get(`/api/terrenos/${terreno.id}/clima`).auth(token, { type: 'bearer' }).expect(503).expect(({ body }) => { expect(Object.keys(body)).toEqual(['error']); });
     expect(nasa).toHaveBeenLastCalledWith(-0.95, -78.62);
   }));
   it('renueva caché vencida, conserva anterior en caída y no inventa si falta todo', async () => probar(async (tx) => {

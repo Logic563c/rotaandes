@@ -32,7 +32,7 @@ export function crearRutasCalendario(obtenerBase: ObtenerBaseAgricola, autentica
         terreno: { altitud_m: contexto.altitudM, tiene_riego: contexto.tieneRiego, area_ha: contexto.areaHa }, escenario: { lluvia_pct: escenario.lluviaPct, temp_delta: escenario.tempDelta },
         clima: { fuente: clima.fuente, resolucion: clima.resolucion, periodo: clima.periodo, actualizado_en: clima.actualizado_en, estado_datos: clima.estado_datos, desactualizado: clima.desactualizado, advertencias: clima.advertencias },
         aviso: 'Calendario orientativo con cultivos referenciales, sin validación agronómica local. No reemplaza el criterio del agricultor o del técnico. El área declarada no modifica estas reglas; no se calcula capacidad de riego ni volumen de agua. No es un pronóstico.' });
-    } catch (error: unknown) { if (error instanceof ErrorClima || error instanceof ErrorCalendario) throw new ErrorHttp(500, error.message); throw error; }
+    } catch (error: unknown) { if (error instanceof ErrorClima) throw new ErrorHttp(503, error.message); if (error instanceof ErrorCalendario) throw new ErrorHttp(500, error.message); throw error; }
   });
   return rutas;
 }

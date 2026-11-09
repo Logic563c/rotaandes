@@ -6,7 +6,7 @@ import { EstadoConsulta } from './EstadoConsulta';
 
 const Graficas = lazy(async () => ({ default: (await import('./GraficasClima')).GraficasClima }));
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-const ESTADOS = { nasa: 'Consulta reciente a NASA', cache: 'Caché verificada', desactualizado: 'Datos anteriores: NASA no disponible', respaldo: 'Respaldo verificado de esta ubicación' };
+const ESTADOS = { nasa: 'Consulta reciente a NASA', cache: 'Caché verificada', desactualizado: 'Datos anteriores: NASA no disponible', respaldo: 'Respaldo verificado: datos NASA archivados de la misma celda de cuadrícula (NASA no respondió)' };
 function mostrar(valor: number | null, unidad = '') { return valor === null ? 'Sin dato' : `${valor.toLocaleString('es-EC', { maximumFractionDigits: 3 })}${unidad}`; }
 
 export function ClimaTerreno({ terrenoId, latitud, longitud, altitudM }: { terrenoId: string; latitud: number; longitud: number; altitudM: number | null }) {
@@ -21,7 +21,7 @@ export function ClimaTerreno({ terrenoId, latitud, longitud, altitudM }: { terre
     <button className="boton-secundario mt-5" type="button" aria-expanded={abierto} aria-controls="contenido-clima" onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Ocultar climatología' : 'Ver climatología histórica'}</button>
     {abierto && <div id="contenido-clima" className="mt-6">
       <EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} />
-      {consulta.isError && <p className="mt-3 text-sm text-oliva">La climatología de esta ubicación no está disponible. No se muestran valores inventados para sustituir datos ausentes.</p>}
+      {consulta.isError && <p className="mt-3 text-sm text-oliva">No se muestran valores inventados para sustituir datos ausentes.</p>}
       {consulta.isSuccess && clima && <>
         <div className="rounded-2xl border border-pino/20 bg-arena/50 p-5 text-sm leading-relaxed">
           <p className="font-semibold">Fuente: <a href="https://power.larc.nasa.gov/docs/" target="_blank" rel="noreferrer" className="underline">NASA POWER</a> · Periodo {clima.periodo.inicio}–{clima.periodo.fin}</p>

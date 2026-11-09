@@ -23,7 +23,7 @@ async function preparar(tx: Prisma.TransactionClient) {
   const propio = await crear('agricultor'); const ajeno = await crear('agricultor'); const tecnico = await crear('tecnico');
   const terreno = await tx.terreno.create({ data: { usuarioId: propio.id, nombre: 'Parcela de prueba', latitud: -0.93, longitud: -78.62, areaHa: 1 } });
   const cliente = { mensual: vi.fn().mockResolvedValue(crearMensualPrueba()), diario: vi.fn().mockResolvedValue(crearDiarioPrueba()) };
-  const servicio = crearServicioTendencia(() => tx.climaCache, cliente, () => new Date('2030-01-02T00:00:00Z'));
+  const servicio = crearServicioTendencia(() => tx.climaCache, cliente, () => new Date('2030-01-02T00:00:00Z'), { mensual: () => null, diario: () => null });
   const app = crearAplicacion(obtenerConfiguracion({}), { obtenerUsuarios: () => tx.usuario, obtenerBase: () => tx, obtenerSecreto: () => secreto, consultarTendencia: servicio });
   return { app, terreno, cliente, token: firmarToken(propio.id, secreto), ajeno: firmarToken(ajeno.id, secreto), tecnico: firmarToken(tecnico.id, secreto) };
 }
@@ -57,6 +57,6 @@ describe('Tendencia HTTP, permisos y JSONB PostgreSQL aislado', () => {
     const parcial = await request(app).get(`/api/terrenos/${terreno.id}/tendencia`).auth(token, { type: 'bearer' }).expect(200);
     expect(parcial.body.anual.every((a: { dias_helada: null }) => a.dias_helada === null)).toBe(true);
     await tx.climaCache.deleteMany(); cliente.mensual.mockRejectedValue(new ErrorTendencia());
-    const fallo = await request(app).get(`/api/terrenos/${terreno.id}/tendencia`).auth(token, { type: 'bearer' }).expect(500); expect(Object.keys(fallo.body)).toEqual(['error']);
+    const fallo = await request(app).get(`/api/terrenos/${terreno.id}/tendencia`).auth(token, { type: 'bearer' }).expect(503); expect(Object.keys(fallo.body)).toEqual(['error']);
   }));
 });

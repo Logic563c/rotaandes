@@ -11,13 +11,20 @@ export const esquemaClimatologiaBase = z.object({
   parametros: z.record(z.enum(PARAMETROS_NASA), z.object({ unidad: z.string(), valores: z.array(numero.nullable()).length(12) })),
 });
 export type ClimatologiaBase = z.infer<typeof esquemaClimatologiaBase>;
+export type MotivoErrorClima = 'sin_dato' | 'limite_local' | 'tiempo_agotado' | 'red' | 'http_transitorio' | 'http_rechazo' | 'contenido' | 'tamano' | 'estructura';
 export class ErrorClima extends Error {
-  constructor() { super('No hay climatología fiable disponible para esta ubicación. Inténtalo más tarde.'); }
+  constructor(public readonly motivo: MotivoErrorClima = 'sin_dato', public readonly estadoHttp?: number) {
+    super('No hay climatología fiable disponible para este terreno: NASA POWER no respondió correctamente y no existe un respaldo NASA verificado para su celda. Inténtalo en unos minutos.');
+  }
 }
-// NASA puede devolver centésimas para un punto solicitado con mayor precisión.
+// NASA devuelve el punto solicitado redondeado: centésimas en versiones anteriores y milésimas en
+// POWER API v2.10.1 (verificado el 9-11-2026: -0.934512, -78.615873 → -0.935, -78.616).
+// Solo se admite ese redondeo (media unidad del último decimal), nunca una ubicación alternativa.
 export function coincideCoordenadaNasa(devuelta: number | undefined, solicitada: number): boolean {
-  return devuelta !== undefined && (devuelta === solicitada || (Math.abs(devuelta * 100 - Math.round(devuelta * 100)) <= 1e-9
-    && Math.abs(devuelta - solicitada) <= 0.005 + 1e-9));
+  if (devuelta === undefined || !Number.isFinite(devuelta) || !Number.isFinite(solicitada)) return false;
+  if (devuelta === solicitada) return true;
+  return [100, 1000].some((escala) => Math.abs(devuelta * escala - Math.round(devuelta * escala)) <= 1e-6
+    && Math.abs(devuelta - solicitada) <= 0.5 / escala + 1e-9);
 }
 const unidades: Record<ParametroNasa, string> = { T2M: 'C', T2M_MIN: 'C', T2M_MAX: 'C', PRECTOTCORR: 'mm/day', RH2M: '%', GWETTOP: '1', GWETROOT: '1', ALLSKY_SFC_SW_DWN: 'MJ/m^2/day' };
 const limites: Record<ParametroNasa, [number, number]> = { T2M: [-100, 70], T2M_MIN: [-100, 70], T2M_MAX: [-100, 70], PRECTOTCORR: [0, 2000], RH2M: [0, 100], GWETTOP: [0, 1], GWETROOT: [0, 1], ALLSKY_SFC_SW_DWN: [0, 60] };
@@ -119,29 +126,63 @@ export function construirMensual(base: ClimatologiaBase, altitudM: number | null
   });
 }
 
-export function crearClienteNasa(solicitar: typeof fetch = fetch, reloj: () => Date = () => new Date()) {
-  let activas = 0; let ventana = 0; let cantidad = 0;
+export interface OpcionesClienteNasa { tiempoEsperaMs: number; intentos: number; esperaReintentoMs: number; maximoEnEspera: number }
+// NASA tardó hasta ~5 s en respuestas en frío el 9-11-2026; 10 s por intento y un reintento caben
+// dentro de los 25 s que espera el frontend.
+export const OPCIONES_CLIENTE_NASA: OpcionesClienteNasa = { tiempoEsperaMs: 10000, intentos: 2, esperaReintentoMs: 750, maximoEnEspera: 8 };
+const esperar = (milisegundos: number) => new Promise<void>((resolver) => { setTimeout(resolver, milisegundos); });
+
+export function crearClienteNasa(solicitar: typeof fetch = fetch, reloj: () => Date = () => new Date(), opciones: Partial<OpcionesClienteNasa> = {}) {
+  const { tiempoEsperaMs, intentos, esperaReintentoMs, maximoEnEspera } = { ...OPCIONES_CLIENTE_NASA, ...opciones };
+  let activas = 0; let ventana = 0; let cantidad = 0; const enEspera: (() => void)[] = [];
+  // Máximo dos consultas simultáneas; las siguientes esperan su turno en lugar de fallar al instante.
+  async function obtenerTurno(): Promise<void> {
+    if (activas < 2) { activas++; return; }
+    if (enEspera.length >= maximoEnEspera) throw new ErrorClima('limite_local');
+    await new Promise<void>((resolver) => { enEspera.push(resolver); });
+  }
+  function liberarTurno(): void { const siguiente = enEspera.shift(); if (siguiente) siguiente(); else activas--; }
+  async function intentar(latitud: number, longitud: number): Promise<ClimatologiaBase> {
+    let respuesta: Response;
+    try { respuesta = await solicitar(obtenerUrlNasa(latitud, longitud), { signal: AbortSignal.timeout(tiempoEsperaMs), redirect: 'error', headers: { Accept: 'application/json' } }); }
+    catch (error: unknown) { throw new ErrorClima(error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError') ? 'tiempo_agotado' : 'red'); }
+    if (!respuesta.ok) { await respuesta.body?.cancel(); throw new ErrorClima(respuesta.status === 429 || respuesta.status >= 500 ? 'http_transitorio' : 'http_rechazo', respuesta.status); }
+    if (!respuesta.headers.get('content-type')?.toLowerCase().startsWith('application/json')) { await respuesta.body?.cancel(); throw new ErrorClima('contenido', respuesta.status); }
+    if (!respuesta.body) throw new ErrorClima('contenido', respuesta.status);
+    const lector = respuesta.body.getReader(); const partes: Uint8Array[] = []; let total = 0;
+    try {
+      while (true) {
+        const parte = await lector.read(); if (parte.done) break;
+        total += parte.value.byteLength;
+        if (total > 262144) { await lector.cancel(); throw new ErrorClima('tamano'); }
+        partes.push(parte.value);
+      }
+    } catch (error: unknown) { throw error instanceof ErrorClima ? error : new ErrorClima('tiempo_agotado'); }
+    finally { lector.releaseLock(); }
+    let datos: unknown;
+    try { datos = JSON.parse(Buffer.concat(partes).toString('utf8')); } catch { throw new ErrorClima('estructura'); }
+    try { return procesarRespuestaNasa(datos, latitud, longitud, reloj().toISOString()); } catch { throw new ErrorClima('estructura'); }
+  }
   return async (latitud: number, longitud: number): Promise<ClimatologiaBase> => {
     const ahora = reloj().getTime();
     if (ahora - ventana >= 60000) { ventana = ahora; cantidad = 0; }
-    if (activas >= 2 || cantidad >= 20) throw new ErrorClima();
-    activas++; cantidad++;
+    if (cantidad >= 20) throw new ErrorClima('limite_local');
+    cantidad++;
+    await obtenerTurno();
     try {
-      const respuesta = await solicitar(obtenerUrlNasa(latitud, longitud), { signal: AbortSignal.timeout(6000), redirect: 'error', headers: { Accept: 'application/json' } });
-      if (!respuesta.ok) { await respuesta.body?.cancel(); throw new ErrorClima(); }
-      if (!respuesta.body) throw new ErrorClima();
-      const lector = respuesta.body.getReader(); const partes: Uint8Array[] = []; let total = 0;
-      try {
-        while (true) {
-          const parte = await lector.read(); if (parte.done) break;
-          total += parte.value.byteLength;
-          if (total > 262144) { await lector.cancel(); throw new ErrorClima(); }
-          partes.push(parte.value);
+      for (let intento = 1; ; intento++) {
+        try { return await intentar(latitud, longitud); }
+        catch (error: unknown) {
+          const fallo = error instanceof ErrorClima ? error : new ErrorClima('red');
+          const transitorio = fallo.motivo === 'tiempo_agotado' || fallo.motivo === 'red' || fallo.motivo === 'http_transitorio';
+          if (!transitorio || intento >= intentos) {
+            // Diagnóstico sin coordenadas ni datos personales.
+            console.warn(`NASA POWER climatología no disponible: motivo=${fallo.motivo}${fallo.estadoHttp ? ` http=${fallo.estadoHttp}` : ''} intentos=${intento}`);
+            throw fallo;
+          }
+          await esperar(esperaReintentoMs * intento);
         }
-      } finally { lector.releaseLock(); }
-      const datos: unknown = JSON.parse(Buffer.concat(partes).toString('utf8'));
-      return procesarRespuestaNasa(datos, latitud, longitud, reloj().toISOString());
-    } catch { throw new ErrorClima(); }
-    finally { activas--; }
+      }
+    } finally { liberarTurno(); }
   };
 }

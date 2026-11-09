@@ -1,0 +1,236 @@
+[
+  {
+    "tipo": "mensual",
+    "latitud": -0.5,
+    "longitud": -79.375,
+    "archivo": "mensual_m0.5_m79.375.json",
+    "consultado_en": "2026-11-09T23:11:54.103Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-0.5&longitude=-79.375&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 179,
+      "columna": 161
+    },
+    "sha256": "f60f4448e354264c696ff8694248853a7073ab8eb64049ae0c7d910bb1b1feda"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -0.5,
+    "longitud": -79.375,
+    "archivo": "diario_m0.5_m79.375.json",
+    "consultado_en": "2026-11-09T23:11:55.092Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-0.5&longitude=-79.375&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 179,
+      "columna": 161
+    },
+    "sha256": "53cee40eb98373d7b07e0520b8fece0878942efde3378f3f7a88649ea0d8a242"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -0.5,
+    "longitud": -78.75,
+    "archivo": "mensual_m0.5_m78.75.json",
+    "consultado_en": "2026-11-09T23:11:55.725Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-0.5&longitude=-78.75&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 179,
+      "columna": 162
+    },
+    "sha256": "4e9cec02f6576f60a12f8918a9474744baeb21070f8e90ae810caa5d2db2b498"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -0.5,
+    "longitud": -78.75,
+    "archivo": "diario_m0.5_m78.75.json",
+    "consultado_en": "2026-11-09T23:11:56.379Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-0.5&longitude=-78.75&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 179,
+      "columna": 162
+    },
+    "sha256": "b0e8ce59b60ca434d191bcf0ca3e02e6b64afc762b0ca5af2ae84c9c06dcde21"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -0.5,
+    "longitud": -78.125,
+    "archivo": "mensual_m0.5_m78.125.json",
+    "consultado_en": "2026-11-09T23:11:57.029Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-0.5&longitude=-78.125&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 179,
+      "columna": 163
+    },
+    "sha256": "6d7d184a7c9fc362f86d78fd72424ed96998752509dddf47eb22e84bcb12bb3a"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -0.5,
+    "longitud": -78.125,
+    "archivo": "diario_m0.5_m78.125.json",
+    "consultado_en": "2026-11-09T23:11:57.872Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-0.5&longitude=-78.125&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 179,
+      "columna": 163
+    },
+    "sha256": "d203acd7168cdeefa28d100aa6c42457cf6101bed9d34380f3614853e884c020"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -1,
+    "longitud": -79.375,
+    "archivo": "mensual_m1_m79.375.json",
+    "consultado_en": "2026-11-09T23:11:58.735Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-1&longitude=-79.375&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 178,
+      "columna": 161
+    },
+    "sha256": "795de53af5668d8609f7f26367574a824b1a4af9e316c7ccd73ac550594f2f65"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -1,
+    "longitud": -79.375,
+    "archivo": "diario_m1_m79.375.json",
+    "consultado_en": "2026-11-09T23:11:59.529Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-1&longitude=-79.375&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 178,
+      "columna": 161
+    },
+    "sha256": "36046ddf1ed10e97209bacc9b5e951f671e862cd45c2645e7cfd7a6dcda53172"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -1,
+    "longitud": -78.75,
+    "archivo": "mensual_m1_m78.75.json",
+    "consultado_en": "2026-11-09T23:12:00.026Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-1&longitude=-78.75&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 178,
+      "columna": 162
+    },
+    "sha256": "54ec90dcf93075bfb607020ae1c93a87f080634c392ba62f5e46a5cfbdcc2e50"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -1,
+    "longitud": -78.75,
+    "archivo": "diario_m1_m78.75.json",
+    "consultado_en": "2026-11-09T23:12:00.821Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-1&longitude=-78.75&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 178,
+      "columna": 162
+    },
+    "sha256": "a9b6235ac3a05b8bebab3d2c1335fe416118e91d59143b4bfb9c181fdb279c4a"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -1,
+    "longitud": -78.125,
+    "archivo": "mensual_m1_m78.125.json",
+    "consultado_en": "2026-11-09T23:12:01.485Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-1&longitude=-78.125&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 178,
+      "columna": 163
+    },
+    "sha256": "8c25b0ac4e75592d52bb0ee3257eb5a8842e6abd086887d8a2239649b6700097"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -1,
+    "longitud": -78.125,
+    "archivo": "diario_m1_m78.125.json",
+    "consultado_en": "2026-11-09T23:12:02.289Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-1&longitude=-78.125&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 178,
+      "columna": 163
+    },
+    "sha256": "6099a1279bae98fb095030e94932a2cf0cf2999704bbac01a385c50a1023fe0f"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -1.5,
+    "longitud": -79.375,
+    "archivo": "mensual_m1.5_m79.375.json",
+    "consultado_en": "2026-11-09T23:12:02.754Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-1.5&longitude=-79.375&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 177,
+      "columna": 161
+    },
+    "sha256": "e0c53ba8c37c57866bf22511fcb9392f29fa6da72c3ef97606f8045f177ab12e"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -1.5,
+    "longitud": -79.375,
+    "archivo": "diario_m1.5_m79.375.json",
+    "consultado_en": "2026-11-09T23:12:03.069Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-1.5&longitude=-79.375&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 177,
+      "columna": 161
+    },
+    "sha256": "18c06adda441c1f261bf8c371fd7cd2b38007759c26f23859f8b73b0fa9c8f62"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -1.5,
+    "longitud": -78.75,
+    "archivo": "mensual_m1.5_m78.75.json",
+    "consultado_en": "2026-11-09T23:12:03.506Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-1.5&longitude=-78.75&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 177,
+      "columna": 162
+    },
+    "sha256": "ebdebc058d8c5e4887f3ae15bd676b98f5f693e33ba4a03e88bf2a89d7d8c814"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -1.5,
+    "longitud": -78.75,
+    "archivo": "diario_m1.5_m78.75.json",
+    "consultado_en": "2026-11-09T23:12:03.921Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-1.5&longitude=-78.75&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 177,
+      "columna": 162
+    },
+    "sha256": "22d203393e006d6bc5ac7fb5ec743ca1f721231fbf612dcffd5ea8b2a3361317"
+  },
+  {
+    "tipo": "mensual",
+    "latitud": -1.5,
+    "longitud": -78.125,
+    "archivo": "mensual_m1.5_m78.125.json",
+    "consultado_en": "2026-11-09T23:12:04.337Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR%2CT2M_MIN%2CGWETTOP&community=AG&latitude=-1.5&longitude=-78.125&start=2005&end=2024&format=JSON",
+    "celda": {
+      "fila": 177,
+      "columna": 163
+    },
+    "sha256": "d1863649ca149c346b01ce7d170c3f9ae00919367cfbfec91f45146b7253a340"
+  },
+  {
+    "tipo": "diario",
+    "latitud": -1.5,
+    "longitud": -78.125,
+    "archivo": "diario_m1.5_m78.125.json",
+    "consultado_en": "2026-11-09T23:12:04.652Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN&community=AG&latitude=-1.5&longitude=-78.125&start=20050101&end=20241231&format=JSON&time-standard=LST",
+    "celda": {
+      "fila": 177,
+      "columna": 163
+    },
+    "sha256": "cb0994f6da45d412ce43086b68a9f8e450cf353c5337ea450888c505f82a5dd0"
+  }
+]

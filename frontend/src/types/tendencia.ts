@@ -13,7 +13,7 @@ export interface EstadisticaTendencia {
   direccion: 'ascendente' | 'descendente' | 'sin_cambio' | 'no_determinada'; metodo: string;
 }
 export interface FuenteTendencia {
-  estado_datos: 'nasa' | 'cache' | 'desactualizado' | 'no_disponible'; actualizado_en: string | null;
+  estado_datos: 'nasa' | 'cache' | 'desactualizado' | 'respaldo' | 'no_disponible'; actualizado_en: string | null;
   desactualizado: boolean; version_api: string | null; fuentes: string[];
   periodo_declarado: { inicio: string; fin: string } | null; url: string;
 }

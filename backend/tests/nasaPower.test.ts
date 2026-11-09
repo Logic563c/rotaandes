@@ -24,7 +24,8 @@ describe('NASA POWER: procesamiento científico y procedencia', () => {
     expect(procesarRespuestaNasa(datos, -0.934999, -78.624999, '2030-01-01T00:00:00.000Z').latitud).toBe(-0.934999);
     expect(() => procesarRespuestaNasa(datos, -0.935001, -78.62, '2030-01-01T00:00:00.000Z')).toThrow();
     expect(() => procesarRespuestaNasa(datos, -0.93, -78.625001, '2030-01-01T00:00:00.000Z')).toThrow();
-    expect(buscarRespaldoClima(-0.934999, -78.624999)).toBeNull();
+    // Un punto cercano solo recibe el respaldo de su misma celda NASA, nunca el respaldo exacto de otro punto.
+    expect(buscarRespaldoClima(-0.934999, -78.624999)?.advertencias[0]).toContain('misma celda meteorológica');
   });
   it('conserva las ocho unidades y procesa doce meses de una respuesta real archivada', () => {
     const base = crearBasePrueba(); const meses = construirMensual(base, 3000);
@@ -41,7 +42,7 @@ describe('NASA POWER: procesamiento científico y procedencia', () => {
       expect(createHash('sha256').update(texto).digest('hex')).toBe(registro.sha256);
       expect(buscarRespaldoClima(registro.latitud, registro.longitud)?.consultado_en).toBe(registro.consultado_en);
     }
-    expect(buscarRespaldoClima(-0.930001, -78.62)).toBeNull();
+    expect(buscarRespaldoClima(-0.930001, -78.62)?.consultado_en).not.toBe(procedencia[0]?.consultado_en);
   });
   it.each([null, -999, '3.9', Number.NaN, Infinity, -110])('preserva como nulo un valor ausente/inválido (%#)', (valor) => {
     const datos = crearRespuestaPrueba(); cambiarValor(datos, 'T2M_MIN', 'JAN', valor);
@@ -82,10 +83,10 @@ describe('NASA POWER: procesamiento científico y procedencia', () => {
     const solicitar: typeof fetch = async (_url, opciones) => new Promise((_resolver, rechazar) => {
       opciones?.signal?.addEventListener('abort', () => rechazar(new DOMException('Tiempo', 'AbortError')), { once: true });
     });
-    await expect(crearClienteNasa(solicitar)(-0.93, -78.62)).rejects.toThrow();
+    await expect(crearClienteNasa(solicitar, undefined, { tiempoEsperaMs: 200, esperaReintentoMs: 10 })(-0.93, -78.62)).rejects.toMatchObject({ motivo: 'tiempo_agotado' });
   }, 8000);
   it('construye solo la URL NASA permitida y valida respuesta real simulada', async () => {
-    const solicitar = vi.fn<typeof fetch>().mockImplementation(async () => new Response(JSON.stringify(crearRespuestaPrueba())));
+    const solicitar = vi.fn<typeof fetch>().mockImplementation(async () => new Response(JSON.stringify(crearRespuestaPrueba()), { headers: { 'content-type': 'application/json;charset=utf-8' } }));
     await crearClienteNasa(solicitar, () => new Date('2030-01-01T00:00:00Z'))(-0.93, -78.62);
     expect(solicitar).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ redirect: 'error' }));
     const url = solicitar.mock.calls[0]?.[0]; expect(String(url)).toContain('community=AG');

@@ -1,0 +1,290 @@
+[
+  {
+    "latitud": -0.5,
+    "longitud": -79.206,
+    "archivo": "celda_m0.5_m79.206.json",
+    "consultado_en": "2026-11-09T22:59:36.435Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.5&longitude=-79.206&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 179,
+        "columna": 161
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -80
+      }
+    },
+    "sha256": "c396d46152e3a0f9336c9e550ff927789369e4ce39db18b258ae4c4d3ecef66b"
+  },
+  {
+    "latitud": -0.5,
+    "longitud": -79.031,
+    "archivo": "celda_m0.5_m79.031.json",
+    "consultado_en": "2026-11-09T22:59:37.413Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.5&longitude=-79.031&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 179,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -80
+      }
+    },
+    "sha256": "765fe03cdeb83f58559c148a00d26de406b91ad766e471571dd55d2a662dba03"
+  },
+  {
+    "latitud": -0.5,
+    "longitud": -78.719,
+    "archivo": "celda_m0.5_m78.719.json",
+    "consultado_en": "2026-11-09T22:59:38.141Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.5&longitude=-78.719&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 179,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -79
+      }
+    },
+    "sha256": "600d19e69b45a3f60ad87b26ae5df978026d1f36a296746471db930a210d51fd"
+  },
+  {
+    "latitud": -0.5,
+    "longitud": -78.369,
+    "archivo": "celda_m0.5_m78.369.json",
+    "consultado_en": "2026-11-09T22:59:38.898Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.5&longitude=-78.369&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 179,
+        "columna": 163
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -79
+      }
+    },
+    "sha256": "232b713d2236fcdd2605d4de83a56609cc8e49d34c0296b50f0a2733ec6847f0"
+  },
+  {
+    "latitud": -0.875,
+    "longitud": -79.206,
+    "archivo": "celda_m0.875_m79.206.json",
+    "consultado_en": "2026-11-09T22:59:39.645Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.875&longitude=-79.206&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 161
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -80
+      }
+    },
+    "sha256": "dbb9b020ef05df90f2b1c3255063a9f8d814b773c7bc3eeae01e5cacfc237f43"
+  },
+  {
+    "latitud": -0.875,
+    "longitud": -79.031,
+    "archivo": "celda_m0.875_m79.031.json",
+    "consultado_en": "2026-11-09T22:59:40.182Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.875&longitude=-79.031&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -80
+      }
+    },
+    "sha256": "d3a68879e834d8729ddaf0d171bc09f5d9e7fcda2b1a559e08e95faa022acdeb"
+  },
+  {
+    "latitud": -0.875,
+    "longitud": -78.719,
+    "archivo": "celda_m0.875_m78.719.json",
+    "consultado_en": "2026-11-09T22:59:40.996Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.875&longitude=-78.719&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -79
+      }
+    },
+    "sha256": "b2d3dc9e4ab0df0aa2148a10200f2827734bb94a2a7c5b67657201c9b8d56d58"
+  },
+  {
+    "latitud": -0.875,
+    "longitud": -78.369,
+    "archivo": "celda_m0.875_m78.369.json",
+    "consultado_en": "2026-11-09T22:59:41.576Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-0.875&longitude=-78.369&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 163
+      },
+      "solar": {
+        "fila": -1,
+        "columna": -79
+      }
+    },
+    "sha256": "cae50f5dbccb73f1edb078df03c57525e27df1ace31b2ae284fad43a1eb83f5f"
+  },
+  {
+    "latitud": -1.125,
+    "longitud": -79.206,
+    "archivo": "celda_m1.125_m79.206.json",
+    "consultado_en": "2026-11-09T22:59:42.312Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.125&longitude=-79.206&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 161
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -80
+      }
+    },
+    "sha256": "52825c38eee49a6bfb69d8485ef77ae9c8bc461b1a64c85259578767816338be"
+  },
+  {
+    "latitud": -1.125,
+    "longitud": -79.031,
+    "archivo": "celda_m1.125_m79.031.json",
+    "consultado_en": "2026-11-09T22:59:43.058Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.125&longitude=-79.031&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -80
+      }
+    },
+    "sha256": "75b25b42a3424e6fe6e021b05afc5b4de112d5a702228fa3e474ed41ca8d2fc7"
+  },
+  {
+    "latitud": -1.125,
+    "longitud": -78.719,
+    "archivo": "celda_m1.125_m78.719.json",
+    "consultado_en": "2026-11-09T22:59:43.575Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.125&longitude=-78.719&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -79
+      }
+    },
+    "sha256": "ea4f39feac1c775641f4e07c57bab245c8b2d1724415772807d43fe1090c8d71"
+  },
+  {
+    "latitud": -1.125,
+    "longitud": -78.369,
+    "archivo": "celda_m1.125_m78.369.json",
+    "consultado_en": "2026-11-09T22:59:44.303Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.125&longitude=-78.369&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 178,
+        "columna": 163
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -79
+      }
+    },
+    "sha256": "0e34cd00ee1c61127a2014408929815cc5a04295cf1b07f85ee19be0ed5f6ae3"
+  },
+  {
+    "latitud": -1.35,
+    "longitud": -79.206,
+    "archivo": "celda_m1.35_m79.206.json",
+    "consultado_en": "2026-11-09T22:59:44.908Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.35&longitude=-79.206&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 177,
+        "columna": 161
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -80
+      }
+    },
+    "sha256": "b6bbe8acdd9b664f541ae7ee951a67254153a3aab0b13e75d3d9f194d327e6cf"
+  },
+  {
+    "latitud": -1.35,
+    "longitud": -79.031,
+    "archivo": "celda_m1.35_m79.031.json",
+    "consultado_en": "2026-11-09T22:59:45.620Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.35&longitude=-79.031&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 177,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -80
+      }
+    },
+    "sha256": "d9cd3b598bff92f679ac3f81dfe2102c35a25543c56744e8a6264d4f1f8c794b"
+  },
+  {
+    "latitud": -1.35,
+    "longitud": -78.719,
+    "archivo": "celda_m1.35_m78.719.json",
+    "consultado_en": "2026-11-09T22:59:46.436Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.35&longitude=-78.719&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 177,
+        "columna": 162
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -79
+      }
+    },
+    "sha256": "f6920a82671d5231d2c359f103a70be23153aa381077868128b1e7eb5ab77674"
+  },
+  {
+    "latitud": -1.35,
+    "longitud": -78.369,
+    "archivo": "celda_m1.35_m78.369.json",
+    "consultado_en": "2026-11-09T22:59:47.166Z",
+    "url": "https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CPRECTOTCORR%2CRH2M%2CGWETTOP%2CGWETROOT%2CALLSKY_SFC_SW_DWN&community=AG&latitude=-1.35&longitude=-78.369&format=JSON",
+    "celda": {
+      "meteorologia": {
+        "fila": 177,
+        "columna": 163
+      },
+      "solar": {
+        "fila": -2,
+        "columna": -79
+      }
+    },
+    "sha256": "787cc405425f213f5cfbf07136d18831851bc4396a0de3911f8c615e86f51b9c"
+  }
+]

@@ -46,6 +46,19 @@ describe('Climatología histórica: estados honestos y accesibilidad', () => {
     await screen.findByRole('table'); expect(screen.getByText(/Desactualizado: más de 30 días/)).toBeInTheDocument();
     expect(screen.getByText(estado === 'respaldo' ? /Respaldo verificado/ : /NASA no disponible/)).toBeInTheDocument();
   });
+  it('ante 503 muestra la explicación del servidor, no un error genérico, y un 500 sigue siendo genérico', async () => {
+    const explicacion = 'No hay climatología fiable disponible para este terreno: NASA POWER no respondió correctamente.';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ error: explicacion }), { status: 503 })).mockResolvedValueOnce(new Response(JSON.stringify({ error: 'detalle interno' }), { status: 500 })));
+    mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver climatología histórica' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(explicacion); expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo completar la solicitud'); expect(screen.queryByText('detalle interno')).not.toBeInTheDocument();
+  });
+  it('distingue una consulta demorada de una falta de conexión', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('Tiempo', 'TimeoutError')));
+    mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver climatología histórica' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('tardó demasiado');
+  });
   it('rechaza respuesta fuera del contrato y no muestra tabla', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"mensual":[]}')));
     mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver climatología histórica' }));

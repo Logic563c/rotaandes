@@ -96,6 +96,9 @@ function validarUsuario(datos: unknown): UsuarioPublico {
     prioridad_ingresos: typeof datos.prioridad_ingresos === 'number' ? datos.prioridad_ingresos : null };
 }
 
+// Consultas que dependen de NASA POWER: el backend admite dos intentos de 10 s más la espera entre ellos.
+const TIEMPO_ESPERA_NASA_MS = 25000;
+
 async function solicitar(ruta: string, metodo: 'GET' | 'POST' | 'PUT' | 'DELETE', token?: string, cuerpo?: unknown, signal?: AbortSignal, tiempoEsperaMs = 8000): Promise<unknown> {
   try {
     const respuesta = await fetch(obtenerUrl(ruta), { method: metodo, cache: 'no-store', credentials: 'omit',
@@ -103,11 +106,15 @@ async function solicitar(ruta: string, metodo: 'GET' | 'POST' | 'PUT' | 'DELETE'
       ...(cuerpo !== undefined && { body: JSON.stringify(cuerpo) }),
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(tiempoEsperaMs)]) : AbortSignal.timeout(tiempoEsperaMs) });
     if (respuesta.status === 204) return undefined;
-    const datos: unknown = await respuesta.json();
-    if (!respuesta.ok) throw new ErrorApi(respuesta.status < 500 && esObjeto(datos) && typeof datos.error === 'string' ? datos.error : 'No se pudo completar la solicitud. Inténtalo de nuevo.', respuesta.status);
+    // Un proxy intermedio (502/504) puede responder HTML: no se interpreta como fallo de conexión.
+    let datos: unknown = null;
+    try { datos = await respuesta.json(); } catch (error: unknown) { if (respuesta.ok || error instanceof DOMException) throw error; }
+    // 503: el servidor explica qué proveedor externo falta; 500 sigue siendo un fallo interno genérico.
+    if (!respuesta.ok) throw new ErrorApi((respuesta.status < 500 || respuesta.status === 503) && esObjeto(datos) && typeof datos.error === 'string' ? datos.error : 'No se pudo completar la solicitud. Inténtalo de nuevo.', respuesta.status);
     return datos;
   } catch (error: unknown) {
     if (error instanceof ErrorApi) throw error;
+    if (error instanceof DOMException && error.name === 'TimeoutError') throw new ErrorApi('La consulta tardó demasiado. Los datos de la NASA pueden demorar; vuelve a intentarlo en un momento.', 408);
     throw new ErrorApi('No pudimos conectar con RotaAndes. Comprueba tu conexión y vuelve a intentarlo.');
   }
 }
@@ -153,10 +160,10 @@ const esquemaClima = z.object({
   advertencias: z.array(z.string()), metodologia: z.string(), parametros: z.record(z.string(), z.object({ unidad: z.string(), valores: z.array(numero.nullable()).length(12) })),
 });
 export async function obtenerClima(token: string, terrenoId: string, signal?: AbortSignal): Promise<RespuestaClima> {
-  return comprobarRespuesta(esquemaClima, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/clima`, 'GET', token, undefined, signal));
+  return comprobarRespuesta(esquemaClima, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/clima`, 'GET', token, undefined, signal, TIEMPO_ESPERA_NASA_MS));
 }
 export async function obtenerTendencia(token: string, terrenoId: string, ubicacion: { latitud: number; longitud: number }, signal?: AbortSignal): Promise<RespuestaTendencia> {
-  const datos = comprobarRespuesta(esquemaTendencia, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/tendencia`, 'GET', token, undefined, signal, 25000));
+  const datos = comprobarRespuesta(esquemaTendencia, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/tendencia`, 'GET', token, undefined, signal, TIEMPO_ESPERA_NASA_MS));
   if (datos.coordenadas.latitud !== ubicacion.latitud || datos.coordenadas.longitud !== ubicacion.longitud) throw new ErrorApi('La serie histórica no corresponde a la ubicación actual. Reintenta la consulta.');
   return datos;
 }
@@ -203,7 +210,7 @@ const esquemaCalendario = z.object({
 export async function obtenerCalendario(token: string, terrenoId: string, escenario: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 }, signal?: AbortSignal): Promise<RespuestaCalendario> {
   if (!esquemaEscenarioCalendario.safeParse(escenario).success) throw new ErrorApi('Parámetros de escenario inválidos.');
   const consulta = new URLSearchParams({ lluvia_pct: String(escenario.lluvia_pct), temp_delta: String(escenario.temp_delta) });
-  return comprobarRespuesta(esquemaCalendario, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/calendario?${consulta}`, 'GET', token, undefined, signal));
+  return comprobarRespuesta(esquemaCalendario, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/calendario?${consulta}`, 'GET', token, undefined, signal, TIEMPO_ESPERA_NASA_MS));
 }
 
 const estadoRotacion = z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']);
@@ -229,7 +236,7 @@ const esquemaRotaciones = z.object({
 export async function obtenerRotaciones(token: string, terrenoId: string, escenario: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 }, signal?: AbortSignal): Promise<RespuestaRotaciones> {
   if (!esquemaEscenarioCalendario.safeParse(escenario).success) throw new ErrorApi('Parámetros de escenario inválidos.');
   const consulta = new URLSearchParams({ lluvia_pct: String(escenario.lluvia_pct), temp_delta: String(escenario.temp_delta) });
-  return comprobarRespuesta(esquemaRotaciones, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/rotaciones?${consulta}`, 'GET', token, undefined, signal));
+  return comprobarRespuesta(esquemaRotaciones, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/rotaciones?${consulta}`, 'GET', token, undefined, signal, TIEMPO_ESPERA_NASA_MS));
 }
 
 export async function obtenerResultadosEscenario(token: string, terrenoId: string, escenario: EscenarioCalendario, signal?: AbortSignal): Promise<{ calendario: RespuestaCalendario; rotaciones: RespuestaRotaciones }> {

@@ -1,10 +1,11 @@
 import type { ObtenerCacheClima } from './clima.js';
 import { crearClienteHistoricoNasa, ErrorTendencia, esquemaBaseMensual, esquemaBaseDiaria, esMensualCoherente, esDiarioCoherente, obtenerUrlHistorico } from './nasaHistorico.js';
 import type { BaseMensual, BaseDiaria, TipoHistorico, MetadatosHistoricos } from './nasaHistorico.js';
+import { buscarRespaldoDiario, buscarRespaldoMensual } from '../data/respaldosTendencia.js';
 import { construirAnual, calcularTendencia, describirCoberturaDiaria } from './analisisTendencia.js';
 
 export const VIGENCIA_TENDENCIA_MS = 30 * 86400000;
-type EstadoHistorico = 'nasa' | 'cache' | 'desactualizado';
+type EstadoHistorico = 'nasa' | 'cache' | 'desactualizado' | 'respaldo';
 interface ResultadoHistorico<T> { base: T; estado: EstadoHistorico }
 export function claveTendencia(tipo: TipoHistorico, latitud: number, longitud: number): string {
   obtenerUrlHistorico(tipo, latitud, longitud);
@@ -22,7 +23,8 @@ export function validarDiarioGuardado(entrada: unknown, latitud: number, longitu
   return resultado.success && coincideBase(resultado.data, latitud, longitud, ahora) && esDiarioCoherente(resultado.data) ? resultado.data : null;
 }
 function crearResolver<T extends MetadatosHistoricos>(tipo: TipoHistorico, obtenerCache: ObtenerCacheClima,
-  consultar: (lat: number, lon: number) => Promise<T>, validar: (entrada: unknown, lat: number, lon: number, ahora: number) => T | null, reloj: () => Date) {
+  consultar: (lat: number, lon: number) => Promise<T>, validar: (entrada: unknown, lat: number, lon: number, ahora: number) => T | null, reloj: () => Date,
+  buscarRespaldo: (lat: number, lon: number) => T | null) {
   const pendientes = new Map<string, Promise<ResultadoHistorico<T>>>(); const fallos = new Map<string, number>();
   return (latitud: number, longitud: number): Promise<ResultadoHistorico<T>> => {
     const clave = claveTendencia(tipo, latitud, longitud); const pendiente = pendientes.get(clave); if (pendiente) return pendiente;
@@ -47,6 +49,10 @@ function crearResolver<T extends MetadatosHistoricos>(tipo: TipoHistorico, obten
           if (fallos.size >= 128) { const primero = fallos.keys().next().value; if (primero) fallos.delete(primero); }
           fallos.set(clave, reloj().getTime() + 60000);
           if (anterior) return { base: anterior, estado: 'desactualizado' };
+          // Respaldo NASA archivado de la misma celda MERRA-2; no se guarda como consulta nueva.
+          const respaldo = buscarRespaldo(latitud, longitud);
+          const verificado = respaldo ? validar(respaldo, latitud, longitud, reloj().getTime()) : null;
+          if (verificado) return { base: verificado, estado: 'respaldo' };
           throw error;
         }
       } finally { pendientes.delete(clave); }
@@ -54,9 +60,10 @@ function crearResolver<T extends MetadatosHistoricos>(tipo: TipoHistorico, obten
     pendientes.set(clave, accion); return accion;
   };
 }
-export function crearServicioTendencia(obtenerCache: ObtenerCacheClima, cliente = crearClienteHistoricoNasa(), reloj: () => Date = () => new Date()) {
-  const mensual = crearResolver('mensual', obtenerCache, cliente.mensual, validarMensualGuardado, reloj);
-  const diario = crearResolver('diario', obtenerCache, cliente.diario, validarDiarioGuardado, reloj);
+export function crearServicioTendencia(obtenerCache: ObtenerCacheClima, cliente = crearClienteHistoricoNasa(), reloj: () => Date = () => new Date(),
+  respaldos: { mensual: (lat: number, lon: number) => BaseMensual | null; diario: (lat: number, lon: number) => BaseDiaria | null } = { mensual: buscarRespaldoMensual, diario: buscarRespaldoDiario }) {
+  const mensual = crearResolver('mensual', obtenerCache, cliente.mensual, validarMensualGuardado, reloj, respaldos.mensual);
+  const diario = crearResolver('diario', obtenerCache, cliente.diario, validarDiarioGuardado, reloj, respaldos.diario);
   return async (latitud: number, longitud: number) => {
     const resultados = await Promise.allSettled([mensual(latitud, longitud), diario(latitud, longitud)]);
     for (const resultado of resultados) if (resultado.status === 'rejected' && !(resultado.reason instanceof ErrorTendencia)) throw resultado.reason;

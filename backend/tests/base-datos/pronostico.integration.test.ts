@@ -63,9 +63,9 @@ describe('Pronóstico HTTP y PostgreSQL real con proveedor controlado, rollback 
     const vencida = crearBasePronostico('2030-01-01T11:30:00.000Z');
     await tx.climaCache.create({ data: { clave: obtenerClavePronostico(-0.93, -78.62), datos: vencida, actualizadoEn: new Date(vencida.consultado_en) } });
     proveedor.mockRejectedValue(new ErrorPronostico());
-    const fallo = await request(app).get(`/api/terrenos/${terreno.id}/pronostico`).auth(token, { type: 'bearer' }).expect(500); expect(Object.keys(fallo.body)).toEqual(['error']);
+    const fallo = await request(app).get(`/api/terrenos/${terreno.id}/pronostico`).auth(token, { type: 'bearer' }).expect(503); expect(Object.keys(fallo.body)).toEqual(['error']);
     await tx.terreno.update({ where: { id: terreno.id }, data: { latitud: -0.94 } });
-    await request(app).get(`/api/terrenos/${terreno.id}/pronostico`).auth(token, { type: 'bearer' }).expect(500);
+    await request(app).get(`/api/terrenos/${terreno.id}/pronostico`).auth(token, { type: 'bearer' }).expect(503);
     expect(proveedor).toHaveBeenLastCalledWith(-0.94, -78.62);
   }));
   it('aplica límite de consultas autenticadas sin repetir consultas externas', async () => probar(async (tx) => {

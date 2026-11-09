@@ -6,7 +6,7 @@ import { EstadoConsulta } from './EstadoConsulta';
 import type { EstadisticaTendencia } from '../types/tendencia';
 
 const Graficas = lazy(async () => ({ default: (await import('./GraficasTendencia')).GraficasTendencia }));
-const ESTADOS = { nasa: 'Consulta reciente a NASA', cache: 'Caché verificada', desactualizado: 'Datos anteriores: NASA no disponible', no_disponible: 'No disponible' };
+const ESTADOS = { nasa: 'Consulta reciente a NASA', cache: 'Caché verificada', desactualizado: 'Datos anteriores: NASA no disponible', respaldo: 'Respaldo verificado: serie NASA archivada de la misma celda (NASA no respondió)', no_disponible: 'No disponible' };
 const mostrar = (valor: number | null, decimales = 3) => valor === null ? 'No disponible' : valor.toLocaleString('es-EC', { maximumFractionDigits: decimales });
 function ResumenVariable({ titulo, unidad, resumen }: { titulo: string; unidad: string; resumen: EstadisticaTendencia }) {
   const direccion = { ascendente: 'Ascendente', descendente: 'Descendente', sin_cambio: 'Sin cambio apreciable con la precisión publicada', no_determinada: 'No determinada: menos de 15 años completos' };

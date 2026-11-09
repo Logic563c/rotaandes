@@ -6,7 +6,7 @@ const estadistica = z.object({ anios_validos: z.array(anio).max(20), anios_exclu
   inicio: anio.nullable(), fin: anio.nullable(), pendiente_anual: numero.nullable(), pendiente_decada: numero.nullable(), diferencia_2005_2024: numero.nullable(),
   direccion: z.enum(['ascendente', 'descendente', 'sin_cambio', 'no_determinada']), metodo: z.string().min(1),
 });
-const fuente = z.object({ estado_datos: z.enum(['nasa', 'cache', 'desactualizado', 'no_disponible']), actualizado_en: z.iso.datetime().nullable(),
+const fuente = z.object({ estado_datos: z.enum(['nasa', 'cache', 'desactualizado', 'respaldo', 'no_disponible']), actualizado_en: z.iso.datetime().nullable(),
   desactualizado: z.boolean(), version_api: z.string().nullable(), fuentes: z.array(z.string()), periodo_declarado: z.object({ inicio: z.iso.date(), fin: z.iso.date() }).nullable(),
   url: z.url().refine((valor) => { const url = new URL(valor); return url.origin === 'https://power.larc.nasa.gov' && !url.username && !url.password && ['/api/temporal/monthly/point', '/api/temporal/daily/point'].includes(url.pathname); }),
 }).refine((valor) => valor.estado_datos === 'no_disponible' ? valor.actualizado_en === null && valor.periodo_declarado === null : valor.actualizado_en !== null && valor.periodo_declarado !== null);

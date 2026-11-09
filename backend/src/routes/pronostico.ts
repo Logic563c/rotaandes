@@ -18,7 +18,7 @@ export function crearRutasPronostico(obtenerBase: ObtenerBaseAgricola, autentica
     const terreno = await obtenerBase().terreno.findFirst({ where: { id, ...filtroTerrenos(obtenerUsuarioActual(solicitud)) }, select: { latitud: true, longitud: true } });
     if (!terreno) throw new ErrorHttp(404, 'Terreno no encontrado.');
     try { respuesta.json(await consultar(terreno.latitud, terreno.longitud)); }
-    catch (error: unknown) { if (error instanceof ErrorPronostico) throw new ErrorHttp(500, error.message); throw error; }
+    catch (error: unknown) { if (error instanceof ErrorPronostico) throw new ErrorHttp(503, error.message); throw error; }
   });
   return rutas;
 }

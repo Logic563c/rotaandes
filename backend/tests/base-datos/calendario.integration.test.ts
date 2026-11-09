@@ -61,7 +61,7 @@ describe('Calendario HTTP con catálogo PostgreSQL y clima controlado, rollback 
   it('maneja fallo NASA y catálogo incompleto con errores controlados, sin sembrar automáticamente', async () => probar(async (tx) => {
     const { app, proveedor, terreno, token } = await preparar(tx);
     proveedor.mockRejectedValue(new ErrorClima());
-    const fallo = await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(500); expect(Object.keys(fallo.body)).toEqual(['error']);
+    const fallo = await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(503); expect(Object.keys(fallo.body)).toEqual(['error']);
     await tx.cultivo.delete({ where: { id: 'papa' } });
     await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(500);
     expect(await tx.cultivo.count()).toBe(9); expect(proveedor).toHaveBeenCalledOnce();

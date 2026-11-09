@@ -57,7 +57,8 @@ describe('Interfaz de terrenos y siembras', () => {
     let fallo = true;
     simular((url) => url.pathname === '/api/terrenos' ? (fallo ? respuesta({ error: 'Servicio temporalmente no disponible.' }, 503) : respuesta([terreno])) : undefined);
     mostrar('/terrenos');
-    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo completar');
+    // 503 indica un servicio no disponible: se muestra el mensaje controlado del servidor.
+    expect(await screen.findByRole('alert')).toHaveTextContent('Servicio temporalmente no disponible.');
     fallo = false; await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByRole('heading', { name: terreno.nombre })).toBeInTheDocument();
   });
