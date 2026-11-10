@@ -47,9 +47,14 @@ Pruebas reales separadas de las automatizadas: NASA en vivo (48 puntos de verifi
 
 ## 4. PostgreSQL de producción y respaldo
 
-- PostgreSQL de producción: en línea; **no se ha leído ni escrito** en esta auditoría. Logs y despliegues de Railway consultados solo en lectura.
-- **Respaldo manual: no realizado.** El túnel `railway connect postgres --tunnel-only` agota el tiempo porque la clave `~/.ssh/id_ed25519` (registrada en Railway como «Laptop RotaAndes», huella `SHA256:xZMm…Z7k`) está protegida con frase de paso y el servicio `ssh-agent` de Windows está **deshabilitado**. En modo no interactivo `ssh` no puede desbloquear la clave y Railway responde `no_ssh_key`. Resolverlo exige que el propietario introduzca la frase de paso (o autorice otra clave). No se expuso PostgreSQL, no se cambiaron credenciales ni se registraron claves nuevas.
-- Esta rama no contiene migraciones nuevas ni cambios de esquema o catálogo. El pre-deploy solo ejecutaría `migrate deploy` (sin pendientes) y el upsert idempotente de 10 cultivos y 8 plantillas.
+- **Causa del timeout del túnel:** la clave `~/.ssh/id_ed25519` (registrada en Railway como «Laptop RotaAndes», huella `SHA256:xZMm…Z7k`) tiene frase de paso y el servicio `ssh-agent` de Windows estaba deshabilitado. En modo no interactivo `ssh` no podía desbloquearla y Railway respondía `no_ssh_key`. El propietario habilitó `ssh-agent` (inicio manual) y cargó la clave con `ssh-add`. No se expuso PostgreSQL, no se cambiaron credenciales ni se registraron claves nuevas.
+- **Respaldo realizado el 2026-11-10T01:26:37Z:** `pg_dump` 18.6 en formato custom (`-Fc -Z 6`), ejecutado dentro del contenedor `postgres` mediante `railway ssh` por socket local (sin manejar contraseñas en el equipo), transmitido en base64 y decodificado localmente. Código de salida 0.
+  - Archivo: `C:\Users\DELL\Documents\RESPALDOS_ROTAANDES\rotaandes_prod_20261110T012634Z.dump`, fuera del repositorio, 14.811 bytes, SHA-256 `BFF180BBF7FD4BBE4D35E71641BBA7DD8BD68338744576FFBDADEA5249A3577D`.
+  - `pg_restore -l`: base `rotaandes_prod`, formato CUSTOM, 7 tablas con datos, 8 claves primarias/únicas y 3 claves foráneas.
+  - **Restauración de prueba:** el rol local no tiene `CREATEDB`, así que se restauró con `psql -1 -v ON_ERROR_STOP=1` en un esquema desechable de la base local de pruebas. Resultado idéntico a producción: usuarios 5, terrenos 5, siembras 4, cultivos 10, plantillas 8, clima_cache 9, migraciones 1; 55 restricciones; checksum de migración `2aec5b49…6edfb`. El esquema y el SQL temporal se eliminaron.
+- No se escribió en PostgreSQL de producción; solo se leyó (conteos y volcado).
+- Esta rama no contiene migraciones nuevas ni cambios de esquema o catálogo. El pre-deploy solo ejecutaría `migrate deploy` (sin pendientes; comprobado que la diferencia LF/CRLF no lo hace fallar) y el upsert idempotente de 10 cultivos y 8 plantillas.
+- **Restaurar (solo ante un desastre y con autorización expresa):** `pg_restore --clean --if-exists --no-owner -d <URL privada de rotaandes_prod> <archivo.dump>` a través de `railway connect postgres --tunnel-only`.
 
 ## 5. Publicación
 
@@ -63,7 +68,7 @@ Pruebas reales separadas de las automatizadas: NASA en vivo (48 puntos de verifi
 | Severidad | Incidencia | Estado |
 | --- | --- | --- |
 | Crítica | Producción sigue devolviendo 500 en clima/calendario y rotaciones sin ranking | Corregido en la rama; **requiere desplegar** |
-| Importante | Sin respaldo manual verificable de PostgreSQL de producción | Bloqueado por la frase de paso de la clave SSH; requiere decisión del propietario |
+| Resuelto | Respaldo manual verificable de PostgreSQL de producción | Hecho y restaurado de prueba (sección 4) |
 | Importante | Recorrido real en las URL públicas tras el despliegue | Pendiente del despliegue |
 | Menor | El cliente Open-Meteo rechaza al instante una tercera consulta simultánea (no espera turno) | Sin cambio; riesgo bajo con caché de 30 min |
 | Menor | Chunk JS principal de 514 kB | Aviso conocido, no bloqueante |
