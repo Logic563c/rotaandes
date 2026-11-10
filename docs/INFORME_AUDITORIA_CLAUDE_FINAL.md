@@ -102,8 +102,8 @@ Pruebas reales separadas de las automatizadas: NASA en vivo (48 puntos de verifi
 | Resuelto | Producción devolvía 500 en clima/calendario y rotaciones sin ranking | Desplegado y verificado en las URL públicas |
 | Resuelto | Respaldo manual verificable de PostgreSQL de producción | Hecho y restaurado de prueba (sección 4) |
 | Resuelto | Recorrido real en las URL públicas | Aprobado (sección 5) |
-| Menor | Cuentas temporales de las pruebas siguen en producción (sin terrenos, salvo quizá dos intentos interrumpidos) | Borrarlas requiere SQL remoto; pendiente de autorización |
-| Menor | Panel técnico no recorrido en producción | Cubierto por pruebas locales; requiere cuenta técnica |
+| Resuelto | Cuentas temporales de las pruebas | 6 cuentas (y sus 2 terrenos de intentos interrumpidos) y 4 entradas de caché eliminadas por correo/clave exactos en una transacción. Producción quedó igual que en el respaldo previo: usuarios 5, terrenos 5, siembras 4, clima_cache 9 |
+| Menor | Panel técnico no recorrido en producción | Elevar una cuenta temporal a `tecnico` requiere un `UPDATE` remoto que el control de permisos de la sesión bloqueó. Cubierto por E2E y PostgreSQL locales; el rechazo al agricultor sí se verificó en producción. Script listo: `.tmp/recorridoTecnicoProduccion.mjs` |
 | Menor | El cliente Open-Meteo rechaza al instante una tercera consulta simultánea (no espera turno) | Sin cambio; riesgo bajo con caché de 30 min |
 | Menor | Chunk JS principal de 514 kB | Aviso conocido, no bloqueante |
 | Mejora futura | GeoJSON analítico de NDVI/SMAP (hoy solo imágenes GIBS) | No implementado; se informa con 503 |
