@@ -56,20 +56,54 @@ Pruebas reales separadas de las automatizadas: NASA en vivo (48 puntos de verifi
 - Esta rama no contiene migraciones nuevas ni cambios de esquema o catálogo. El pre-deploy solo ejecutaría `migrate deploy` (sin pendientes; comprobado que la diferencia LF/CRLF no lo hace fallar) y el upsert idempotente de 10 cultivos y 8 plantillas.
 - **Restaurar (solo ante un desastre y con autorización expresa):** `pg_restore --clean --if-exists --no-owner -d <URL privada de rotaandes_prod> <archivo.dump>` a través de `railway connect postgres --tunnel-only`.
 
-## 5. Publicación
+## 5. Publicación (autorizada el 9-11-2026)
 
-- GitHub: `release/publicacion` = `d589f63`. Los commits de esta rama son locales y se incorporan por fast-forward. **No se ha hecho push.**
-- Railway: sigue en el despliegue `022133e1-d1e1-4d86-9c40-595f8e300cd8` (código `012d6be`), con el defecto de coordenadas. **No se ha desplegado.**
-- Vercel: sin cambios. **No se ha desplegado.**
-- El despliegue queda pendiente de autorización expresa (ver la solicitud entregada al propietario).
+- **GitHub:** `release/publicacion` avanzó por fast-forward `d589f63..f9bb124` (confirmado en el remoto). Sin force push.
+- **Railway:** despliegue `d2d9a468-b397-4599-aba2-0f356fd384b4`, estado SUCCESS, desde una exportación limpia de `f9bb124` (318 archivos versionados, sin secretos; la migración exportada conserva el checksum `2aec5b…` de producción). Pre-deploy: «Migraciones aplicadas y catálogo autorizado verificado», 10 cultivos, 8 plantillas, 0 usuarios creados. `/api/health` → 200. Despliegue anterior para reversión: `022133e1-d1e1-4d86-9c40-595f8e300cd8`.
+- **Vercel:** despliegue `dpl_C3PxdnCqtNnBqPRcjF16RFWek3Vp` (READY), creado sin dominio y promovido a `https://rotaandes.vercel.app` tras verificar el backend. El bundle público contiene la corrección y apunta a `backend-production-954a9.up.railway.app`. Rutas SPA `/`, `/login`, `/registro`, `/glosario`, `/fuentes` y `/terrenos` → 200.
+
+### Pruebas reales de producción
+
+**API (sin navegador)**, terreno temporal en Latacunga (−0,934512; −78,615873):
+- Clima 200 en 644 ms, `estado_datos: nasa`. Antes del despliegue la misma ruta daba 500.
+- Calendario: 120 celdas.
+- Rotaciones: actual 58,59; Papa → Vicia + avena → Papa 62,15; la segunda sugerida queda no determinada.
+- Escenarios: 200. Con `lluvia_pct=31` → 400.
+- Tendencias, pronóstico y PDF (75.827 bytes): 200.
+- Desde otra cuenta: 404 en las 8 rutas del terreno. Sin token: 401.
+
+**Navegador Edge en las URL públicas, sin interceptar solicitudes**, con NASA, Open-Meteo y GIBS reales:
+- Recorrido completo:
+  1. Portada.
+  2. Registro, cierre de sesión y login.
+  3. Perfil.
+  4. Terreno con coordenadas de 6 decimales y dos siembras.
+  5. Climatología NASA.
+  6. Calendario de 120 celdas.
+  7. Tres rotaciones.
+  8. Pronóstico.
+  9. Simulador a −30 % y +2 °C.
+  10. Tendencias.
+  11. MODIS NDVI y SMAP con leyenda.
+  12. Descarga del PDF (76.085 bytes).
+  13. Glosario y fuentes.
+  14. El agricultor no puede entrar al panel técnico.
+  15. Persistencia tras un nuevo login.
+  16. Cierre de sesión.
+- Celular a 390 y 320 px: clima, calendario y rotaciones sin desbordamiento horizontal.
+- **0 errores de consola y 0 respuestas HTTP ≥400 inesperadas.**
+- Capturas de escritorio y celular en `.tmp/evidencias-auditoria-final/`, carpeta ignorada por Git.
+- **Panel técnico:** no se probó en producción, porque crear una cuenta técnica exige SQL remoto y no se autorizó en esta sesión. Está cubierto por las pruebas E2E locales y de PostgreSQL. El rechazo al agricultor sí se verificó en producción.
 
 ## 6. Incidencias pendientes
 
 | Severidad | Incidencia | Estado |
 | --- | --- | --- |
-| Crítica | Producción sigue devolviendo 500 en clima/calendario y rotaciones sin ranking | Corregido en la rama; **requiere desplegar** |
+| Resuelto | Producción devolvía 500 en clima/calendario y rotaciones sin ranking | Desplegado y verificado en las URL públicas |
 | Resuelto | Respaldo manual verificable de PostgreSQL de producción | Hecho y restaurado de prueba (sección 4) |
-| Importante | Recorrido real en las URL públicas tras el despliegue | Pendiente del despliegue |
+| Resuelto | Recorrido real en las URL públicas | Aprobado (sección 5) |
+| Menor | Cuentas temporales de las pruebas siguen en producción (sin terrenos, salvo quizá dos intentos interrumpidos) | Borrarlas requiere SQL remoto; pendiente de autorización |
+| Menor | Panel técnico no recorrido en producción | Cubierto por pruebas locales; requiere cuenta técnica |
 | Menor | El cliente Open-Meteo rechaza al instante una tercera consulta simultánea (no espera turno) | Sin cambio; riesgo bajo con caché de 30 min |
 | Menor | Chunk JS principal de 514 kB | Aviso conocido, no bloqueante |
 | Mejora futura | GeoJSON analítico de NDVI/SMAP (hoy solo imágenes GIBS) | No implementado; se informa con 503 |

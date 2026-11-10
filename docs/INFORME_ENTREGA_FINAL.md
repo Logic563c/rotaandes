@@ -1,7 +1,7 @@
-﻿# INFORME DE ENTREGA FINAL - ROTAANDES
+# INFORME DE ENTREGA FINAL - ROTAANDES
 
 Fecha: 9 de noviembre de 2026
-Estado: desarrollo funcional validado localmente; publicación final pendiente.
+Estado: publicado y verificado en producción (9 de noviembre de 2026).
 
 ## 1. Descripción
 
@@ -86,21 +86,19 @@ cualquier migración futura.
 
 ## 7. Estado de publicación
 
-Frontend:
-https://rotaandes.vercel.app/
+Actualizado el 9 de noviembre de 2026.
 
-Backend:
-https://backend-production-954a9.up.railway.app/
+- Commit publicado: f9bb124 (rama release/publicacion).
+- Backend Railway: despliegue d2d9a468-b397-4599-aba2-0f356fd384b4.
+- Frontend Vercel: dpl_C3PxdnCqtNnBqPRcjF16RFWek3Vp, en https://rotaandes.vercel.app/.
+- Corrige los errores de climatología, calendario, simulador y rotaciones.
+  La causa fue un cambio en el redondeo de coordenadas de NASA POWER.
+  Ver docs/DIAGNOSTICO_NASA_Y_RECUPERACION.md.
+- Respaldo verificado de PostgreSQL tomado antes del despliegue.
+- Recorrido real aprobado en las URL públicas, en escritorio y celular.
+- Validación local: 739 pruebas aprobadas.
 
-La versión pública anterior permanece separada de la rama
-release/candidata-final.
-
-La publicación final exige revisar los cambios, verificar
-la configuración de Railway y Vercel, autorizar el despliegue
-y ejecutar pruebas sobre las URLs públicas.
-
-No considerar publicada la versión candidata hasta
-confirmar estas operaciones.
+Detalle completo: docs/INFORME_AUDITORIA_CLAUDE_FINAL.md.
 
 ## 8. Seguridad y entrega
 
