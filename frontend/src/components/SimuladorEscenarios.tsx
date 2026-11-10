@@ -7,6 +7,7 @@ import type { ResultadosEscenario } from '../lib/compararEscenarios';
 import type { CeldaCalendario, EscenarioCalendario } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
 import { TarjetaEstrategia } from './ComparadorRotaciones';
+import { CabeceraModulo } from './Iconos';
 
 const ESCENARIO_ORIGINAL: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 };
 
@@ -98,8 +99,8 @@ export function SimuladorEscenarios({ terrenoId, contexto }: { terrenoId: string
     if (!Number.isFinite(valor) || (campo === 'lluvia_pct' ? valor < -30 || valor > 30 : valor < -2 || valor > 2)) return;
     establecerSeleccionado((anterior) => ({ ...anterior, [campo]: valor }));
   }
-  return <section aria-labelledby="titulo-escenarios" className="mt-12 min-w-0 border-t border-pino/15 pt-9">
-    <p className="etiqueta-seccion">Explorar sin modificar tu parcela</p><h2 id="titulo-escenarios" className="mt-3 font-campo text-3xl sm:text-4xl">Simulador de escenarios climáticos</h2>
+  return <section aria-labelledby="titulo-escenarios" className="modulo modulo--maiz">
+    <CabeceraModulo icono="deslizador" etiqueta="Explorar sin modificar tu parcela"><h2 id="titulo-escenarios" className="mt-1 break-words font-campo text-2xl sm:text-4xl">Simulador de escenarios climáticos</h2></CabeceraModulo>
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">¿Qué cambiaría con más o menos lluvia y otra temperatura? Compara el calendario y las tres rotaciones con las mismas condiciones de referencia. Es una simulación hipotética, no una predicción verificada.</p>
     <button type="button" className="boton-secundario mt-5" aria-expanded={abierto} aria-controls={contenido} onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Ocultar simulador' : 'Abrir simulador de escenarios'}</button>
     {abierto && <div id={contenido} className="mt-6 min-w-0">
@@ -118,10 +119,10 @@ export function SimuladorEscenarios({ terrenoId, contexto }: { terrenoId: string
           {(original.data.calendario.clima.desactualizado || nuevo.data.calendario.clima.desactualizado) && <p className="mt-3 font-semibold">Dato climático desactualizado: interpretar con precaución.</p>}
           <p className="mt-3 text-sm">Inicio común de rotaciones: {original.data.rotaciones.inicio_comun}. Indicadores 0–100 de la heurística referencial; no son mediciones ni ingresos monetarios.</p>
         </div>
-        {[...new Set([...original.data.calendario.clima.advertencias, ...nuevo.data.calendario.clima.advertencias, ...original.data.rotaciones.advertencias, ...nuevo.data.rotaciones.advertencias])].map((aviso) => <p key={aviso} className="mt-4 rounded-xl border border-arcilla/30 bg-white p-4 text-sm">{aviso}</p>)}
+        {[...new Set([...original.data.calendario.clima.advertencias, ...nuevo.data.calendario.clima.advertencias, ...original.data.rotaciones.advertencias, ...nuevo.data.rotaciones.advertencias])].map((aviso) => <p key={aviso} className="panel-aviso mt-4 text-sm">{aviso}</p>)}
         <MatrizEscenarios key={`${seleccionado.lluvia_pct}:${seleccionado.temp_delta}`} original={original.data} modificado={nuevo.data} />
         <ComparacionRotaciones original={original.data} modificado={nuevo.data} />
-        <p className="mt-7 rounded-2xl border border-pino/20 bg-arena/40 p-5 text-sm leading-relaxed">Se conservan las restricciones y los resultados no determinados cuando falta información. El clima es regional; el catálogo y las fórmulas requieren validación agronómica local. La simulación no reemplaza la experiencia del agricultor ni el criterio del técnico y no garantiza cosechas, ahorro de agua o ingresos.</p>
+        <p className="panel-fuente mt-7 text-sm leading-relaxed">Se conservan las restricciones y los resultados no determinados cuando falta información. El clima es regional; el catálogo y las fórmulas requieren validación agronómica local. La simulación no reemplaza la experiencia del agricultor ni el criterio del técnico y no garantiza cosechas, ahorro de agua o ingresos.</p>
       </div>}
     </div>}
   </section>;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { obtenerReportePdf } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
+import { Icono } from './Iconos';
 
 export function DescargarReporte({ terrenoId }: { terrenoId: string }) {
   const sesion = useAgricultura(); const [preparando, establecerPreparando] = useState(false); const [error, establecerError] = useState<string | null>(null); const [descargado, establecerDescargado] = useState(false);
@@ -17,7 +18,7 @@ export function DescargarReporte({ terrenoId }: { terrenoId: string }) {
     } catch (fallo: unknown) { if (!actual.signal.aborted && sesion.sigueActiva()) establecerError(fallo instanceof Error ? fallo.message : 'No se pudo descargar el informe.'); }
     finally { if (control.current === actual) control.current = null; if (!actual.signal.aborted && sesion.sigueActiva()) establecerPreparando(false); }
   }
-  return <section aria-label="Informe PDF del terreno" className="tarjeta mt-7 p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-4"><div className="max-w-xl"><h2 className="font-campo text-2xl">Un informe para revisar y compartir</h2><p className="mt-2 text-sm leading-relaxed text-oliva">Datos del terreno, historial y resultados disponibles en el escenario original. Las secciones sin información se indican; no incluye cambios hipotéticos del simulador.</p></div><button className="boton-primario" type="button" disabled={preparando} onClick={() => { void descargar(); }}>{preparando ? 'Preparando informe…' : 'Descargar informe PDF'}</button></div>
+  return <section aria-label="Informe PDF del terreno" className="tarjeta mt-7 bg-gradient-to-r from-maiz-claro/80 to-white p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-4"><div className="flex max-w-xl gap-4"><span aria-hidden="true" className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-white text-arcilla shadow-sm"><Icono nombre="documento" className="size-7" /></span><div><h2 className="font-campo text-2xl">Un informe para revisar y compartir</h2><p className="mt-2 text-sm leading-relaxed text-oliva">Datos del terreno, historial y resultados disponibles en el escenario original. Las secciones sin información se indican; no incluye cambios hipotéticos del simulador.</p></div></div><button className="boton-primario" type="button" disabled={preparando} onClick={() => { void descargar(); }}>{preparando ? 'Preparando informe…' : 'Descargar informe PDF'}</button></div>
     {preparando && <p role="status" className="mt-3 text-sm">Preparando el documento. Puede tardar unos segundos al comprobar las fuentes.</p>}{error && <p role="alert" className="aviso-error mt-4">{error}</p>}{descargado && <p role="status" className="mt-3 text-sm">La descarga del informe PDF está preparada. Revisa las descargas de tu navegador.</p>}
   </section>;
 }

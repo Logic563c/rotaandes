@@ -6,6 +6,7 @@ import { useAgricultura } from '../lib/useAgricultura';
 import type { DatosSiembra, Siembra } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
 import { ConfirmarEliminacion } from './ConfirmarEliminacion';
+import { CabeceraModulo } from './Iconos';
 
 export function SiembrasTerreno({ terrenoId }: { terrenoId: string }) {
   const sesion = useAgricultura();
@@ -47,8 +48,8 @@ export function SiembrasTerreno({ terrenoId }: { terrenoId: string }) {
     guardar.mutate({ datos: { cultivo_id: String(formulario.get('cultivo_id') ?? ''), fecha_siembra: siembra, fecha_cosecha: cosecha, notas: String(formulario.get('notas') ?? '').trim() || null }, ...(editando && { id: editando.id }) });
   }
   const nombreCultivo = (id: string) => catalogo.data?.find((cultivo) => cultivo.id === id)?.nombre ?? id;
-  return <section aria-labelledby="titulo-siembras" className="mt-12 border-t border-pino/15 pt-9">
-    <p className="etiqueta-seccion">La memoria de tu tierra</p><h2 id="titulo-siembras" className="mt-3 font-campo text-3xl sm:text-4xl">Mis siembras</h2>
+  return <section aria-labelledby="titulo-siembras" className="modulo modulo--bosque">
+    <CabeceraModulo icono="brote" etiqueta="La memoria de tu tierra"><h2 id="titulo-siembras" className="mt-1 break-words font-campo text-2xl sm:text-4xl">Mis siembras</h2></CabeceraModulo>
     <p className="mt-4 text-sm leading-relaxed text-oliva">Catálogo referencial de Cotopaxi, pendiente de validación agronómica local. Los meses de siembra del catálogo no constituyen una recomendación para tu terreno.</p>
     {mensaje && <p role="status" className="mt-5 rounded-xl border border-pino/20 bg-white p-4">{mensaje}</p>}
     <div className="mt-7 grid items-start gap-7 lg:grid-cols-2">

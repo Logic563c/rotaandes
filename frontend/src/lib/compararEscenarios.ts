@@ -3,9 +3,9 @@ import type { RespuestaCalendario, RespuestaRotaciones, EstrategiaRotacion, Esta
 export interface ResultadosEscenario { calendario: RespuestaCalendario; rotaciones: RespuestaRotaciones }
 export const MESES_ESCENARIO = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 export const ESTADOS_ESCENARIO: Record<EstadoCalendario, { texto: string; simbolo: string; estilo: string }> = {
-  recomendado: { texto: 'Recomendado', simbolo: '✓', estilo: 'border-pino/40 bg-pino/10 text-pino' },
-  posible_con_cuidado: { texto: 'Posible con cuidado', simbolo: '!', estilo: 'border-yellow-700/40 bg-yellow-100 text-yellow-950' },
-  no_recomendado: { texto: 'No recomendado', simbolo: '×', estilo: 'border-arcilla/40 bg-arcilla/10 text-arcilla' },
+  recomendado: { texto: 'Recomendado', simbolo: '✓', estilo: 'border-cultivo/50 bg-cultivo-claro text-[#1f5a2f]' },
+  posible_con_cuidado: { texto: 'Posible con cuidado', simbolo: '!', estilo: 'border-maiz bg-maiz-claro text-maiz-oscuro' },
+  no_recomendado: { texto: 'No recomendado', simbolo: '×', estilo: 'border-arcilla/40 bg-arcilla-claro text-[#85391f]' },
   no_determinado: { texto: 'No determinado', simbolo: '?', estilo: 'border-stone-400 bg-stone-100 text-stone-700' },
 };
 export const INDICADORES_ESCENARIO = [{ clave: 'agua', nombre: 'Agua' }, { clave: 'suelo', nombre: 'Suelo' }, { clave: 'riesgo', nombre: 'Compatibilidad climática' }, { clave: 'ingresos', nombre: 'Valor de mercado referencial' }, { clave: 'total', nombre: 'Total ponderado' }] as const;

@@ -11,6 +11,17 @@ describe('PDF auténtico, contenido, español y diseño', () => {
     expect(leido.texto.includes(datos.rotaciones?.estrategias[0]?.puntajes.total?.toLocaleString('es-EC') ?? 'Sin dato')).toBe(true);
     for (const [i, pagina] of leido.paginas.entries()) { expect(pagina.ancho).toBeCloseTo(595.28, 1); expect(pagina.alto).toBeCloseTo(841.89, 1); expect(pagina.texto).toContain(`Página ${i + 1} de ${leido.paginas.length}`); expect(pagina.posiciones.every((p) => p.x >= 40 && p.x <= 550 && p.y >= 25 && p.y <= 820)).toBe(true); }
   }, 15000);
+  it('abre con un resumen para el agricultor derivado solo de los datos del informe', async () => {
+    const datos = reportePrueba(); const { paginas } = await leerPdf(await generarPdfTerreno(datos));
+    const resumen = paginas.slice(1, 4).map((p) => p.texto).join(' ');
+    for (const texto of ['Resumen para el agricultor', 'Meses más lluviosos', 'Riesgo de helada alto', '¿Qué sembrar en los próximos meses?', 'Rotaciones en una mirada', 'Antes de decidir']) expect(resumen.toLocaleLowerCase('es')).toContain(texto.toLocaleLowerCase('es'));
+    const lluviosos = [...(datos.clima?.mensual ?? [])].filter((m) => m.lluvia_mm !== null).sort((a, b) => (b.lluvia_mm ?? 0) - (a.lluvia_mm ?? 0))[0];
+    expect(resumen.toLowerCase()).toContain(['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][(lluviosos?.mes ?? 1) - 1]);
+    const vacio = reportePrueba(); vacio.clima = null; vacio.pronostico = null; vacio.calendario = null; vacio.rotaciones = null; vacio.tendencia = null;
+    const texto = (await leerPdf(await generarPdfTerreno(vacio))).texto;
+    for (const aviso of ['Climatología NASA POWER no disponible', 'Pronóstico vigente no disponible', 'Calendario no disponible', 'no evaluable', 'Series históricas no disponibles']) expect(texto).toContain(aviso);
+    expect(texto.toLocaleLowerCase('es')).not.toContain('meses más lluviosos'); expect(texto).not.toContain('NaN');
+  });
   it('es repetible con datos y fecha fijos, sin modificar la entrada', async () => {
     const datos = reportePrueba(); const original = structuredClone(datos); const a = await generarPdfTerreno(datos); const b = await generarPdfTerreno(datos); expect(a.equals(b)).toBe(true); expect(datos).toEqual(original);
   });

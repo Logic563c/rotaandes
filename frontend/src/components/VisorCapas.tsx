@@ -5,6 +5,8 @@ import { useAgricultura } from '../lib/useAgricultura';
 import type { ConsultaCapaVisual, Terreno, TipoCapa } from '../types/api';
 import { MapaDiferido } from './MapaDiferido';
 import { EstadoConsulta } from './EstadoConsulta';
+import type { CSSProperties } from 'react';
+import { Icono } from './Iconos';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const LIMITES = [-79.45, -1.3, -78.3, -0.3] as const;
@@ -32,11 +34,11 @@ export function VisorCapas({ terrenos }: { terrenos: Terreno[] }) {
   const url = useImagenSatelital(datos?.imagen);
   const imagenSatelital = useMemo(() => abierto && tipo ? { limites: LIMITES, nombre: tipo === 'ndvi' ? 'Vegetación NDVI' : 'Humedad superficial SMAP', ...(url ? { url } : {}) } : undefined, [abierto, tipo, url]);
   const metadatos = datos?.metadatos;
-  return <section aria-labelledby={`${id}-titulo`} className="min-w-0">
-    <h2 id={`${id}-titulo`} className="font-campo text-2xl">Mapa y capas satelitales</h2>
+  return <section aria-labelledby={`${id}-titulo`} className="tarjeta tarjeta--acento min-w-0 p-5 sm:p-6" style={{ '--acento': '#1f6391' } as CSSProperties}>
+    <div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-cielo-claro text-cielo"><Icono nombre="satelite" className="size-6" /></span><h2 id={`${id}-titulo`} className="font-campo text-2xl">Mapa y capas satelitales</h2></div>
     <p className="mt-3 text-sm leading-relaxed text-oliva">NDVI es un indicador de vegetación. SMAP muestra humedad superficial de una zona amplia, no la humedad exacta de tu parcela. Puedes consultar ambas imágenes con sus fechas y leyendas.</p>
     <button type="button" className="boton-secundario my-4" aria-expanded={abierto} aria-controls={`${id}-controles`} onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Cerrar controles satelitales' : 'Explorar capas NASA'}</button>
-    {abierto && <div id={`${id}-controles`} className="mb-5 rounded-2xl border border-pino/20 bg-arena/40 p-4 text-sm">
+    {abierto && <div id={`${id}-controles`} className="panel-fuente mb-5 text-sm">
       <fieldset><legend className="font-semibold">Capa visible</legend><p className="mt-2 text-xs text-oliva">Una capa a la vez para no mezclar escalas. Puedes volver al mapa base.</p><div className="mt-3 grid gap-2">
         {([{ valor: null, nombre: 'Solo mapa base' }, { valor: 'ndvi', nombre: 'Vegetación NDVI (MODIS)' }, { valor: 'humedad_suelo', nombre: 'Humedad superficial (SMAP)' }] as const).map(({ valor, nombre }) => <label key={nombre} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-pino/15 bg-white px-3 py-2"><input type="radio" name={`${id}-tipo`} checked={tipo === valor} className="h-4 w-4 accent-pino" onChange={() => { establecerTipo(valor); establecerSeleccion((anterior) => ({ anio: anterior.anio, mes: anterior.mes })); }} />{nombre}</label>)}
       </div></fieldset>
@@ -49,7 +51,7 @@ export function VisorCapas({ terrenos }: { terrenos: Terreno[] }) {
       <p className="mt-4 text-xs leading-relaxed text-oliva">Visualización oficial NASA GIBS. Las imágenes no son GeoJSON analítico ni promedios mensuales. No se calculan valores por parcela o conclusiones agrícolas a partir de sus colores.</p>
     </div>}
     <MapaDiferido terrenos={terrenos} mostrarMapaBase={tipo === null || !abierto || mapaBase} {...(imagenSatelital && { imagenSatelital })} />
-    {metadatos && <div className="mt-4 rounded-2xl border border-pino/20 bg-white/80 p-4 text-sm leading-relaxed">
+    {metadatos && <div className="panel-fuente mt-4 text-sm leading-relaxed">
       <p className="font-semibold">{metadatos.nombre} · NASA GIBS</p><p className="mt-2">{metadatos.frecuencia}: {mostrarFecha(metadatos.fecha)}{metadatos.fin_composicion !== metadatos.fecha ? ` a ${mostrarFecha(metadatos.fin_composicion)}` : ''}. No es un promedio de {MESES[metadatos.mes - 1]?.toLowerCase()}.</p>
       <p className="mt-2">Producto <a className="underline" href={metadatos.fuente} target="_blank" rel="noreferrer">{metadatos.producto}</a>, versión del catálogo {metadatos.version_catalogo}. Resolución de referencia: {metadatos.resolucion_m.toLocaleString('es-EC')} m. Unidad de la leyenda: {metadatos.unidad}.</p>
       <p className="mt-2">Recorte rectangular: Cotopaxi y alrededores, no un límite provincial. Zoom adicional no mejora la resolución del satélite.</p>

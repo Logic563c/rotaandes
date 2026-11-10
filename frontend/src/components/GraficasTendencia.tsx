@@ -3,9 +3,9 @@ import type { AnioTendencia } from '../types/tendencia';
 
 export function GraficasTendencia({ anual }: { anual: AnioTendencia[] }) {
   return <div className="mt-7 grid min-w-0 gap-6 xl:grid-cols-2">
-    {([{ campo: 'lluvia_mm', titulo: 'Precipitación anual', unidad: ' mm', color: '#446957', barras: true },
-      { campo: 't_min', titulo: 'Menor mínima mensual del año', unidad: ' °C', color: '#436b94', barras: false },
-      { campo: 'dias_helada', titulo: 'Días de helada modelados', unidad: ' días', color: '#985535', barras: true }] as const).map((grafica) => <figure key={grafica.campo} aria-label={`Gráfica: ${grafica.titulo}`} className="tarjeta min-w-0 p-4 sm:p-6">
+    {([{ campo: 'lluvia_mm', titulo: 'Precipitación anual', unidad: ' mm', color: '#1f6391', barras: true },
+      { campo: 't_min', titulo: 'Menor mínima mensual del año', unidad: ' °C', color: '#1d4636', barras: false },
+      { campo: 'dias_helada', titulo: 'Días de helada modelados', unidad: ' días', color: '#a3492a', barras: true }] as const).map((grafica) => <figure key={grafica.campo} aria-label={`Gráfica: ${grafica.titulo}`} className="tarjeta min-w-0 p-4 sm:p-6">
       <figcaption className="mb-4"><h3 className="font-semibold">{grafica.titulo}</h3><p className="mt-2 text-xs text-oliva">2005–2024 · {grafica.unidad.trim()}. Los años incompletos se muestran como huecos, nunca como cero.</p></figcaption>
       {anual.some((fila) => fila[grafica.campo] !== null) ? <ResponsiveContainer width="100%" height={250} minWidth={0} initialDimension={{ width: 500, height: 250 }}>
         {grafica.barras ? <BarChart data={anual} accessibilityLayer margin={{ top: 8, right: 8, left: 0, bottom: 10 }}>

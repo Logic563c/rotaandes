@@ -1,11 +1,21 @@
 @import "tailwindcss";
 
+/* Guía visual RotaAndes: identidad agrícola andina. Ver docs/INFORME_PULIDO_VISUAL.md.
+   Colores de texto con contraste ≥ 4,5:1 sobre crema y blanco. El amarillo andino solo se usa como fondo o acento. */
 @theme {
-  --color-pino: #23483c;
-  --color-oliva: #526451;
-  --color-arcilla: #985535;
-  --color-crema: #f7f5ed;
-  --color-arena: #e9e4d6;
+  --color-pino: #1d4636;        /* verde bosque: texto principal y acciones */
+  --color-oliva: #4b5d49;       /* texto secundario */
+  --color-arcilla: #a3492a;     /* terracota */
+  --color-crema: #f8f6ef;
+  --color-arena: #ece5d3;
+  --color-cultivo: #2f7d43;     /* verde cultivo */
+  --color-cultivo-claro: #e3f1e1;
+  --color-cielo: #1f6391;       /* azul climático */
+  --color-cielo-claro: #e2eff8;
+  --color-maiz: #e6b33c;        /* amarillo andino */
+  --color-maiz-claro: #fbf0d0;
+  --color-maiz-oscuro: #7a5410;
+  --color-arcilla-claro: #f8e6dc;
   --font-sans: "Segoe UI", system-ui, sans-serif;
   --font-campo: Georgia, "Times New Roman", serif;
 }
@@ -14,33 +24,79 @@
   body { margin: 0; min-width: 320px; }
   button { font: inherit; }
   a, button, input, select, textarea, summary { outline-offset: 4px; }
-  input:not([type="range"]):not([type="checkbox"]), select, textarea { width: 100%; min-height: 48px; border: 1px solid #52645180; border-radius: 0.75rem; background: #fff; padding: 0.7rem 0.9rem; color: #23483c; font-size: 1rem; }
-  input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid #23483c; }
-  input[type="range"] { min-height: 44px; cursor: pointer; }
+  input:not([type="range"]):not([type="checkbox"]), select, textarea { width: 100%; min-height: 48px; border: 1px solid #4b5d4980; border-radius: 0.75rem; background: #fff; padding: 0.7rem 0.9rem; color: #1d4636; font-size: 1rem; }
+  input:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 3px solid #1f6391; }
+  input[type="range"] { min-height: 44px; cursor: pointer; accent-color: #2f7d43; }
   summary { min-height: 44px; cursor: pointer; }
-  ::selection { background: #d9e3ce; color: #23483c; }
+  ::selection { background: #fbf0d0; color: #1d4636; }
 }
 
 @layer components {
-  .tarjeta { border: 1px solid #23483c26; border-radius: 1.5rem; background: #ffffffb3; box-shadow: 0 4px 20px #23483c06; }
+  /* Franja de cuatro colores inspirada en los tejidos andinos (CSS propio, sin imágenes). */
+  .franja-andina { height: 6px; background: linear-gradient(90deg, #2f7d43 0 25%, #e6b33c 25% 50%, #a3492a 50% 75%, #1f6391 75% 100%); }
+  .fondo-campo { background: radial-gradient(120% 90% at 100% 0%, #e2eff8 0%, transparent 55%), radial-gradient(90% 80% at 0% 100%, #e3f1e1 0%, transparent 60%), #f8f6ef; }
+
+  .tarjeta { border: 1px solid #1d463622; border-radius: 1.5rem; background: #ffffffd9; box-shadow: 0 1px 2px #1d463610, 0 10px 30px -12px #1d463626; }
+  .tarjeta--acento { border-top: 5px solid var(--acento, #2f7d43); }
   .campo { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; }
-  .boton-primario { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 0.75rem; background: #23483c; color: white; padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-  .boton-primario:hover { background: #345c4e; }
-  .boton-primario:disabled { opacity: 0.6; cursor: wait; }
+  .boton-primario { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; border-radius: 0.85rem; background: linear-gradient(180deg, #24573f, #1d4636); color: white; padding: 0.75rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px -8px #1d4636aa; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .boton-primario:hover { background: #2a6248; transform: translateY(-1px); box-shadow: 0 10px 20px -10px #1d4636cc; }
+  .boton-primario:disabled { opacity: 0.6; cursor: wait; transform: none; }
+  .boton-claro { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; border-radius: 0.85rem; background: #fff; color: #1d4636; padding: 0.75rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
   .enlace-nav { display: inline-flex; align-items: center; min-height: 44px; border-radius: 0.65rem; padding: 0.5rem 0.7rem; cursor: pointer; }
-  .enlace-nav:hover, .enlace-nav[aria-current="page"] { background: #e9e4d6; }
-  .etiqueta-seccion { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #526451; }
-  .aviso-error { padding: 1rem; border: 1px solid #98553560; border-radius: 0.75rem; background: #fff5ef; color: #7d391f; font-size: 0.875rem; line-height: 1.5; }
-  .boton-secundario { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid #23483c55; border-radius: 0.75rem; padding: 0.7rem 1rem; background: white; color: #23483c; font-weight: 600; font-size: 0.875rem; cursor: pointer; }
-  .boton-peligro { min-height: 48px; border-radius: 0.75rem; padding: 0.7rem 1rem; background: #985535; color: white; font-weight: 600; cursor: pointer; }
+  .enlace-nav:hover, .enlace-nav[aria-current="page"] { background: #ece5d3; }
+  .etiqueta-seccion { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #4b5d49; }
+  .aviso-error { padding: 1rem; border: 1px solid #a3492a66; border-left-width: 5px; border-radius: 0.75rem; background: #fff4ee; color: #7a3115; font-size: 0.875rem; line-height: 1.5; }
+  .boton-secundario { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; border: 1px solid #1d463655; border-radius: 0.85rem; padding: 0.7rem 1rem; background: white; color: #1d4636; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+  .boton-secundario:hover { border-color: #2f7d43; background: #f3f9f2; }
+  .boton-peligro { min-height: 48px; border-radius: 0.75rem; padding: 0.7rem 1rem; background: #a3492a; color: white; font-weight: 600; cursor: pointer; }
   .boton-secundario:disabled, .boton-peligro:disabled { opacity: 0.6; cursor: wait; }
-  .casilla-riego { width: 1.2rem; height: 1.2rem; accent-color: #23483c; }
+  .casilla-riego { width: 1.2rem; height: 1.2rem; accent-color: #2f7d43; }
+
+  /* Chips e insignias de estado: siempre con texto, nunca solo color. */
+  .chip { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.3rem 0.75rem; font-size: 0.78rem; font-weight: 700; line-height: 1.2; }
+  .chip--cultivo { background: #e3f1e1; color: #1f5a2f; }
+  .chip--cielo { background: #e2eff8; color: #174d73; }
+  .chip--maiz { background: #fbf0d0; color: #6b4a0e; }
+  .chip--arcilla { background: #f8e6dc; color: #85391f; }
+  .chip--gris { background: #eeece6; color: #4a4a44; }
+
+  /* Módulos del detalle del terreno: tarjeta con color e icono propios. */
+  .modulo { --acento: #2f7d43; --acento-claro: #e3f1e1; margin-top: 2rem; min-width: 0; border: 1px solid #1d463620; border-top: 6px solid var(--acento); border-radius: 1.75rem; background: #fffffff0; padding: 1.5rem 1.25rem; box-shadow: 0 10px 30px -18px #1d463640; }
+  @media (min-width: 640px) { .modulo { padding: 2rem 2.25rem; } }
+  .modulo--cielo { --acento: #1f6391; --acento-claro: #e2eff8; }
+  .modulo--maiz { --acento: #c8921f; --acento-claro: #fbf0d0; }
+  .modulo--arcilla { --acento: #a3492a; --acento-claro: #f8e6dc; }
+  .modulo--bosque { --acento: #1d4636; --acento-claro: #ece5d3; }
+  .modulo__icono { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 3rem; height: 3rem; border-radius: 1rem; background: var(--acento-claro); color: var(--acento); }
+  .modulo__icono svg { width: 1.6rem; height: 1.6rem; }
+  .modulo__cabecera { display: flex; align-items: center; gap: 0.9rem; }
+
+  /* Mosaico de accesos rápidos con icono. */
+  .acceso-rapido { display: flex; align-items: center; gap: 0.85rem; min-height: 64px; border: 1px solid #1d463622; border-radius: 1.1rem; background: #fff; padding: 0.75rem 1rem; color: #1d4636; font-weight: 650; text-align: left; transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+  .acceso-rapido:hover { border-color: var(--acento, #2f7d43); transform: translateY(-1px); box-shadow: 0 8px 18px -12px #1d463666; }
+  .acceso-rapido__icono { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 2.6rem; height: 2.6rem; border-radius: 0.85rem; background: var(--acento-claro, #e3f1e1); color: var(--acento, #2f7d43); }
+  .acceso-rapido__icono svg { width: 1.4rem; height: 1.4rem; }
+
+  /* Fichas de datos (área, riego, altitud…). */
+  .dato-ficha { display: flex; gap: 0.75rem; align-items: flex-start; border-radius: 1rem; background: #f8f6ef; padding: 0.85rem; }
+  .dato-ficha svg { flex: none; width: 1.35rem; height: 1.35rem; margin-top: 0.1rem; color: #2f7d43; }
+
+  .panel-fuente { border: 1px solid #1f639133; border-left: 5px solid #1f6391; border-radius: 1rem; background: #f3f8fc; padding: 1.1rem 1.25rem; }
+  .panel-aviso { border: 1px solid #a3492a40; border-left: 5px solid #a3492a; border-radius: 1rem; background: #fffaf6; padding: 1rem 1.2rem; }
+
+  .estado-cargando { display: flex; align-items: center; gap: 0.85rem; }
+  .estado-cargando::before { content: ""; flex: none; width: 1.4rem; height: 1.4rem; border-radius: 999px; border: 3px solid #e3f1e1; border-top-color: #2f7d43; animation: girar-carga 0.9s linear infinite; }
+  @keyframes girar-carga { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .estado-cargando::before { animation: none; } .boton-primario, .acceso-rapido { transition: none; } }
+
   .mapa-terrenos { height: 370px; width: 100%; z-index: 0; }
   .mapa-terrenos .leaflet-control-zoom.leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
-  .marcador-terreno { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; background: #23483c; color: white; font: 700 14px "Segoe UI", sans-serif; box-shadow: 0 2px 6px #0005; }
-  .marcador-terreno--seleccionado { background: #985535; font-size: 23px; }
+  .marcador-terreno { display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 3px solid white; background: #2f7d43; color: white; font: 700 14px "Segoe UI", sans-serif; box-shadow: 0 3px 8px #0006; }
+  .marcador-terreno--seleccionado { background: #a3492a; font-size: 23px; }
   .contenido-marcador-terreno { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
   .destino-terreno { min-width: 0; scroll-margin-top: 1.5rem; }
-  .dialogo-confirmacion { max-width: min(480px, calc(100vw - 32px)); margin: auto; border: 1px solid #23483c33; border-radius: 1.5rem; padding: 1.75rem; background: #f7f5ed; color: #23483c; }
-  .dialogo-confirmacion::backdrop { background: #142d25aa; }
+  @media (min-width: 640px) { .destino-terreno, #contenido { scroll-margin-top: 6.5rem; } }
+  .dialogo-confirmacion { max-width: min(520px, calc(100vw - 32px)); margin: auto; border: 1px solid #1d463633; border-top: 6px solid #2f7d43; border-radius: 1.5rem; padding: 1.75rem; background: #f8f6ef; color: #1d4636; }
+  .dialogo-confirmacion::backdrop { background: #10291fb3; }
 }
