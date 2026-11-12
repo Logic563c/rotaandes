@@ -34,7 +34,7 @@ test('historia climática: PostgreSQL, veinte años, gráficos, errores, permiso
     await page.getByRole('button', { name: 'Ver tendencias 2005–2024' }).click();
     expect(z.object({ anual: z.array(z.unknown()) }).parse(await (await respuesta).json()).anual).toEqual(esperado);
     const region = page.getByRole('region', { name: '¿Cómo ha cambiado el clima?', exact: true }); const tabla = region.getByRole('table');
-    await expect(tabla.getByRole('row')).toHaveCount(21); await expect(region.getByRole('figure')).toHaveCount(3); await expect(region.locator('.recharts-surface')).toHaveCount(3);
+    await expect(tabla.getByRole('row')).toHaveCount(21); await expect(region.getByRole('figure')).toHaveCount(4); await expect(region.locator('.recharts-surface')).toHaveCount(4);
     await expect(tabla.getByRole('row', { name: /^2005 / })).toContainText('No disponible'); await expect(region.getByText(/7304 de 7305/)).toBeVisible();
     await expect(region.getByText(/Dato diario retirado deliberadamente/)).toBeVisible();
     const regionTabla = region.getByRole('region', { name: 'Tabla anual de tendencias' }); await regionTabla.focus(); await expect(regionTabla).toBeFocused();

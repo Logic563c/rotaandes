@@ -31,8 +31,24 @@ test('climatología con caché simulada, gráficas accesibles e indisponibilidad
     await expect(region.getByText(/Caché verificada/)).toBeVisible();
     await expect(region.getByText(/Periodo 2001–2025/)).toBeVisible();
     await expect(region.getByRole('table').getByRole('row')).toHaveCount(13);
-    await expect(region.locator('.recharts-wrapper')).toHaveCount(2);
+    await expect(region.locator('.recharts-wrapper')).toHaveCount(3);
     await expect(region.locator('.recharts-line')).toHaveCount(3);
+    // Gráficas comprensibles: ejes con unidades, leyenda, tipo de dato, valor exacto al señalar y ayuda de interpretación.
+    const lluvia = region.getByRole('figure', { name: 'Gráfica: Lluvia de cada mes' });
+    await expect(lluvia.getByText('Lluvia en milímetros (mm) por mes')).toBeVisible();
+    await expect(lluvia.getByText('Dato histórico')).toBeVisible();
+    await expect(lluvia.getByRole('list', { name: 'Leyenda de la gráfica' })).toContainText('Lluvia promedio del mes (mm)');
+    await expect(lluvia.locator('.resumen-grafica')).toContainText(/el mes más lluvioso es .+ \(.+ mm\)/);
+    const barra = lluvia.locator('.recharts-bar-rectangle').nth(6);
+    if (informacion.project.name.startsWith('celular')) await barra.tap(); else await barra.hover();
+    await expect(lluvia.locator('.tooltip-grafica')).toContainText(/Julio\s*Lluvia: [\d.,]+ mm/);
+    await lluvia.getByText('¿Cómo interpretar esta gráfica?').click();
+    await expect(lluvia.getByText('Eje vertical (de abajo hacia arriba)')).toBeVisible();
+    await expect(lluvia.getByText(/1 mm equivale a 1 litro/)).toBeVisible();
+    const temperatura = region.getByRole('figure', { name: 'Gráfica: Temperaturas de cada mes' });
+    await expect(temperatura.getByRole('list', { name: 'Leyenda de la gráfica' })).toContainText('Límite de riesgo alto de helada: 2 °C');
+    await expect(region.getByRole('figure', { name: 'Gráfica: Humedad del suelo de cada mes' }).getByText(/0 \(seco\) a 1/)).toBeVisible();
+    await lluvia.screenshot({ path: informacion.outputPath('grafica-lluvia-ayuda.png'), animations: 'disabled' });
     await expect(region.getByText(/caché simulada/)).toBeVisible();
     await expect(region.getByRole('row', { name: /Enero/ })).toContainText('Alto');
     const tabla = region.getByRole('region', { name: 'Tabla mensual de clima' });

@@ -95,7 +95,7 @@ describe('Esquema físico de PROYECTO.md', () => {
       prioridad_ingresos: 'smallint?', creado_en: 'timestamp with time zone?' },
     terrenos: { id: 'uuid!', usuario_id: 'uuid!', nombre: 'text!', latitud: 'double precision!',
       longitud: 'double precision!', altitud_m: 'integer?', area_ha: 'numeric(8,2)?', tiene_riego: 'boolean?',
-      tipo_suelo: 'text?', creado_en: 'timestamp with time zone?' },
+      tipo_suelo: 'text?', creado_en: 'timestamp with time zone?', poligono: 'jsonb?' },
     cultivos: { id: 'text!', nombre: 'text!', familia: 'text!', altitud_min: 'integer!', altitud_max: 'integer!',
       ciclo_meses: 'smallint!', meses_siembra: 'smallint[]!', lluvia_min_mensual_mm: 'integer!', demanda_agua: 'smallint!',
       tolerancia_helada: 'smallint!', tolerancia_sequia: 'smallint!', fija_nitrogeno: 'boolean!',

@@ -8,6 +8,8 @@ import type { CeldaCalendario, EscenarioCalendario } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
 import { TarjetaEstrategia } from './ComparadorRotaciones';
 import { CabeceraModulo } from './Iconos';
+import { AyudaGrafica, LeyendaGrafica, TipoDato } from './AyudaGrafica';
+import { COLORES_VARIABLE } from '../lib/graficas';
 
 const ESCENARIO_ORIGINAL: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 };
 
@@ -31,7 +33,7 @@ function MatrizEscenarios({ original, modificado }: { original: ResultadosEscena
   const clave = seleccion ? `${seleccion.cultivo}:${seleccion.mes}` : '';
   const base = bases.get(clave); const nueva = nuevas.get(clave);
   return <>
-    <h3 className="mt-8 font-campo text-2xl">Calendario: original frente a simulado</h3>
+    <div className="mt-8 flex flex-wrap items-center gap-3"><h3 className="font-campo text-2xl">Calendario: original frente a simulado</h3><TipoDato tipo="hipotetico" /></div>
     <ul aria-label="Leyenda del simulador" className="mt-4 flex flex-wrap gap-3 text-xs">{Object.values(ESTADOS_ESCENARIO).map((estado) => <li key={estado.texto} className={`rounded-lg border px-3 py-2 font-semibold ${estado.estilo}`}>{estado.simbolo} {estado.texto}</li>)}</ul>
     <p className="mt-4 text-sm text-oliva">Cada celda muestra ambos estados; selecciona una para leer los dos motivos. Se incluyen todos los cultivos evaluados, también los incompatibles. Desliza la tabla para ver diciembre; con teclado usa Tab y Enter.</p>
     <div role="region" aria-label="Calendario comparado de escenarios" tabIndex={0} className="mt-5 max-h-[34rem] max-w-full overflow-auto rounded-2xl border border-pino/20">
@@ -54,15 +56,26 @@ function MatrizEscenarios({ original, modificado }: { original: ResultadosEscena
 function ComparacionRotaciones({ original, modificado }: { original: ResultadosEscenario; modificado: ResultadosEscenario }) {
   const comparacion = compararPuntajes(original.rotaciones.estrategias, modificado.rotaciones.estrategias);
   return <>
-    <h3 className="mt-9 font-campo text-2xl">Variación de las puntuaciones</h3>
+    <div className="mt-9 flex flex-wrap items-center gap-3"><h3 className="font-campo text-2xl">Variación de las puntuaciones</h3><TipoDato tipo="hipotetico" /></div>
+    <LeyendaGrafica elementos={[{ color: COLORES_VARIABLE.original, texto: 'Original: clima histórico sin cambios', trazo: 'barra' }, { color: COLORES_VARIABLE.simulado, texto: 'Simulado: escenario hipotético', trazo: 'barra' }]} />
     <p className="mt-3 text-sm leading-relaxed text-oliva">Se compara la misma estrategia por su identificador, aunque cambie de posición. Si entra o sale del grupo de tres, sus indicadores completos del otro escenario no están disponibles: no se resta el puntaje de otra rotación. Los cambios se expresan en puntos del índice, no en porcentajes ni dinero.</p>
     <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-2">{comparacion.map((estrategia) => <div key={estrategia.id} className="tarjeta min-w-0 p-4 sm:p-5">
       <h4 className="break-words font-semibold">{estrategia.nombre}</h4>
       {(!estrategia.original || !estrategia.modificado) && <p className="mt-3 text-sm text-oliva">{estrategia.original ? 'Sale del grupo de tres en la simulación.' : 'Entra al grupo de tres en la simulación.'} Sin comparación completa para la misma estrategia.</p>}
+      <div aria-hidden="true" className="mt-4 space-y-2">{estrategia.indicadores.map((indicador) => <div key={indicador.clave} className="grid grid-cols-[6.5rem_1fr] items-center gap-2 text-[11px]"><span className="break-words font-semibold leading-tight">{indicador.nombre}</span><div className="space-y-1">
+        {([['original', COLORES_VARIABLE.original], ['modificado', COLORES_VARIABLE.simulado]] as const).map(([clave, color]) => { const valor = indicador[clave]; return <div key={clave} className={`h-2.5 overflow-hidden rounded-full ${valor === null ? 'border border-dashed border-stone-400' : 'bg-arena'}`}>{valor !== null && <div className="h-full rounded-full" style={{ width: `${valor}%`, background: clave === 'modificado' ? `repeating-linear-gradient(135deg, ${color} 0 6px, #c99a2e 6px 9px)` : color }} />}</div>; })}
+      </div></div>)}<div className="grid grid-cols-[6.5rem_1fr] gap-2 text-[11px] text-oliva"><span /><span className="flex justify-between"><span>0</span><span>50</span><span>100</span></span></div></div>
       <table className="mt-4 w-full table-fixed text-left text-xs"><caption className="sr-only">Indicadores comparados de {estrategia.nombre}, escala de 0 a 100</caption><thead><tr><th scope="col" className="w-[34%] pb-3">Índice</th><th scope="col" className="pb-3">Original</th><th scope="col" className="pb-3">Simulado</th><th scope="col" className="pb-3">Cambio</th></tr></thead>
         <tbody>{estrategia.indicadores.map((indicador) => <tr key={indicador.clave} className="border-t border-pino/10"><th scope="row" className="break-words py-3 pr-2 font-medium">{indicador.nombre}</th><td>{indicador.original === null ? 'No determinado' : indicador.original.toLocaleString('es-EC')}</td><td>{indicador.modificado === null ? 'No determinado' : indicador.modificado.toLocaleString('es-EC')}</td><td className="font-semibold">{indicador.diferencia === null ? 'No comparable' : mostrarVariacion(indicador.diferencia, ' pt')}</td></tr>)}</tbody>
       </table>
     </div>)}</div>
+    <AyudaGrafica queMuestra="Para cada rotación, dos barras por índice: la gris es el resultado con el clima histórico original y la amarilla rayada el resultado con las condiciones hipotéticas que elegiste en los deslizadores. La tabla debajo de las barras muestra los valores exactos."
+      ejeHorizontal="Longitud de la barra: índice de 0 (izquierda) a 100 (derecha)."
+      ejeVertical="No hay eje vertical: cada par de barras es un índice (agua, suelo, compatibilidad climática, valor de mercado y total)."
+      colores={[{ color: COLORES_VARIABLE.original, texto: 'Original (clima histórico)', trazo: 'barra' }, { color: COLORES_VARIABLE.simulado, texto: 'Simulado (hipotético)', trazo: 'barra' }]}
+      lectura="Si la barra amarilla es más corta que la gris, ese índice empeora en el escenario simulado; si es más larga, mejora. La columna «Cambio» de la tabla indica la diferencia exacta en puntos."
+      precauciones={['Es una simulación: aplica el porcentaje de lluvia y los grados elegidos a la climatología; no es un pronóstico.', 'Los cambios se expresan en puntos del índice, no en porcentaje, kilos ni dinero.', 'Si una rotación entra o sale del grupo de tres, no hay comparación completa y la barra aparece vacía con borde punteado (no determinado).']}
+      ejemplo="Con «−20 % de lluvia», una barra de Agua amarilla más corta que la gris indica que, en el modelo, esa rotación queda más expuesta a la falta de lluvia." />
     <p className="mt-5 text-sm text-oliva">La lluvia y la temperatura pueden alterar ventanas elegibles, esperas, cobertura de agua, riesgo y ranking. Suelo o valor de mercado pueden variar si cambia la secuencia elegida; no son mejoras medidas en el terreno. Revisa la planificación y los motivos de cada propuesta.</p>
     <details className="mt-5 rounded-2xl border border-pino/20 bg-white/70 p-4"><summary className="cursor-pointer py-2 font-semibold">Ver las tres estrategias originales y sus motivos</summary>
       <div className="mt-4 grid min-w-0 items-start gap-5 xl:grid-cols-3">{original.rotaciones.estrategias.map((estrategia, indice) => <TarjetaEstrategia key={estrategia.id ?? indice} estrategia={estrategia} posicion={indice} />)}</div>

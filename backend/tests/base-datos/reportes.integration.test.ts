@@ -55,6 +55,16 @@ describe('Informe PDF HTTP con datos y motores PostgreSQL reales aislados', () =
     for (const privado of ['Nombre privado', '0999999999', 'Nota confidencial', 'password_hash', token]) expect(documento.texto.includes(privado)).toBe(false);
     expect(documento.texto.includes('2005')).toBe(true); expect(clima).toHaveBeenCalledOnce(); expect(pronostico).toHaveBeenCalledOnce(); expect(await tx.terreno.findUniqueOrThrow({ where: { id: terreno.id } })).toEqual(antes); expect(await tx.siembra.count()).toBe(1);
   }));
+  it('incluye la delimitación guardada en el PDF y lo sigue generando sin ella', async () => probar(async (tx) => {
+    const { app, terreno, token } = await preparar(tx); const ruta = `/api/terrenos/${terreno.id}/reporte.pdf`;
+    const sin = await leerPdf((await request(app).get(ruta).auth(token, { type: 'bearer' }).expect(200)).body);
+    expect(sin.texto).toContain('Sin delimitación guardada');
+    const zona = { type: 'Polygon', coordinates: [[[-78.6205, -0.9305], [-78.6195, -0.9305], [-78.6195, -0.9295], [-78.6205, -0.9295], [-78.6205, -0.9305]]] };
+    await request(app).put(`/api/terrenos/${terreno.id}/delimitacion`).auth(token, { type: 'bearer' }).send({ poligono: zona }).expect(200);
+    const con = await leerPdf((await request(app).get(ruta).auth(token, { type: 'bearer' }).expect(200)).body);
+    for (const texto of ['Delimitación de la zona de cultivo', '4 vértices', 'no es una medición catastral']) expect(con.texto).toContain(texto);
+    expect(con.paginas.length).toBe(sin.paginas.length);
+  }));
   it('permite lectura al técnico y mantiene prohibición de escritura', async () => probar(async (tx) => {
     const { app, terreno, tecnico } = await preparar(tx); await request(app).get(`/api/terrenos/${terreno.id}/reporte.pdf`).auth(tecnico, { type: 'bearer' }).expect(200);
     await request(app).delete(`/api/terrenos/${terreno.id}`).auth(tecnico, { type: 'bearer' }).expect(403);

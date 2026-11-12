@@ -229,3 +229,38 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - **Errores sin credenciales:** la validación de URLs del backend descarta el error nativo que podría incluir su entrada. La prueba de contraseña incorrecta compara únicamente el estado de conexión y SQLSTATE, para que el reporter nunca reciba el cliente de pg ni su configuración si el servidor permite una conexión inesperada.
 - **Comparación de timestamps:** el catálogo PostgreSQL puede mostrar `timestamp(6) with time zone` al declarar explícitamente la precisión con Prisma. Las pruebas normalizan únicamente esa precisión de microsegundos a `timestamp with time zone`; no aceptan una precisión inferior ni cambian la migración aplicada.
 - **Auditoría de conexión previa al commit:** se verificó con el parser de pg instalado, sin conectar, que parámetros de consulta como `host`, `port` y `user` pueden sobrescribir la autoridad de la URL. La validación local ahora solo permite un `schema=public` opcional y rechaza fragmentos y duplicados. No cambia las URLs configuradas ni el modelo de datos; impide que un destino aparentemente local termine interpretándose como otro servidor o rol. Los casos de regresión cubren desarrollo y pruebas.
+
+## Gráficas comprensibles y delimitación de la zona de cultivo (12-11-2026)
+
+- **Gráficas:** se mantiene Recharts. Un marco común (`AyudaGrafica.tsx`) añade a cada gráfica:
+  - tipo de dato: histórico, pronóstico, escenario hipotético o índice del modelo;
+  - fuente y periodo;
+  - ejes en texto con su unidad y leyenda HTML;
+  - resumen derivado de los datos (`lib/graficas.ts`);
+  - cuadro emergente con el valor exacto y «Sin dato» para los ausentes;
+  - el desplegable «¿Cómo interpretar esta gráfica?».
+
+  Los colores son fijos por variable (`COLORES_VARIABLE`). Las barras empiezan en 0 y la humedad usa la escala completa de 0 a 1. No se mezclan unidades en un eje. Se añadieron gráficas con datos que ya se recibían y no se graficaban: humedad del suelo (climatología y tendencia) y pronóstico de 7 días. Los cálculos y los datos no cambian.
+- **Persistencia:** columna opcional `terrenos.poligono JSONB` con un GeoJSON `Polygon` (RFC 7946, WGS84, [longitud, latitud], un contorno, antihorario, 7 decimales). Se descartó PostGIS porque exige una extensión en el PostgreSQL de Railway y no hacen falta consultas espaciales. La migración `20261112000100_delimitacion_terreno` solo hace `ADD COLUMN`, sin valor predeterminado. Los terrenos existentes quedan con `NULL`.
+- **Contrato:**
+  - Rutas dedicadas `PUT /api/terrenos/:id/delimitacion` (`{ poligono }`) y `DELETE /api/terrenos/:id/delimitacion`. Solo las usa el agricultor propietario; otro agricultor recibe 404 y el técnico 403.
+  - Las respuestas de terreno añaden `poligono` y `area_poligono_m2`, ambos derivados y de solo lectura. El `PUT /api/terrenos/:id` no los admite.
+  - Se eligieron rutas separadas para no mezclar la validación geométrica con la edición del terreno.
+  - El frontend acepta respuestas sin estos campos, que serían las de un servidor anterior.
+- **Validación (servidor y navegador):**
+  - de 3 a 100 vértices, sin repetidos;
+  - contorno cerrado y sin autointersecciones;
+  - coordenadas en rango;
+  - todos los vértices a 10 km o menos del punto del terreno;
+  - superficie entre 10 m² y 10 000 ha.
+
+  Mover el terreno a más de 10 km de su zona se rechaza: primero hay que eliminar la delimitación. Al guardar, se comprueba que la ubicación no cambió mientras tanto.
+- **Superficie:** área esférica de Chamberlain y Duquette (2007) con R = 6 378 137 m, el mismo método que las herramientas GeoJSON habituales. Para parcelas pequeñas difiere menos del 0,5 % del elipsoide WGS84. Se presenta como aproximada y no reemplaza `area_ha`.
+- **Editor:** propio, sobre Leaflet y React Leaflet, ya instalados. Se evaluaron dos alternativas y no se añadieron dependencias:
+  - Leaflet.draw: sin mantenimiento activo desde 2018 y con problemas táctiles conocidos;
+  - Leaflet-Geoman: más peso e interfaz en inglés.
+
+  El editor admite clic, toque, arrastre de vértices y puntos intermedios. Para el teclado ofrece «Añadir punto en el centro» con una mira y la lista editable de coordenadas.
+- **PDF:** la sección 1 incluye un croquis vectorial con PDFKit, la superficie, los vértices, la comparación con el área declarada y una advertencia. El resumen añade una línea. Sin delimitación, el PDF lo indica y no añade páginas.
+- **Producción:** la migración no se aplicó en producción. Requiere autorización expresa y un respaldo verificado antes de desplegar el backend que la usa.
+

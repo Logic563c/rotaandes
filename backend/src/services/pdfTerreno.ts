@@ -157,6 +157,46 @@ class Compositor {
   }
 }
 
+type Delimitacion = NonNullable<DatosReporte['terreno']['delimitacion']>;
+const superficie = (d: Delimitacion) => `${numero(d.areaHa, 2)} ha (${numero(d.areaM2, 0)} m²)`;
+// Delimitación dibujada por el agricultor: croquis vectorial a escala propia, superficie aproximada y advertencias.
+function seccionDelimitacion(c: Compositor, t: DatosReporte['terreno']) {
+  c.subtitulo('Delimitación de la zona de cultivo', CULTIVO);
+  const d = t.delimitacion ?? null;
+  if (!d) { c.p('Sin delimitación guardada: el terreno se representa solo con un punto en el mapa. La delimitación es opcional.', 9.5, false, GRIS); return; }
+  const lado = 150; c.reservar(lado + 70);
+  const doc = c.doc; const y0 = c.y; const anillo = d.poligono.coordinates[0] ?? [];
+  const latMedia = anillo.reduce((suma, p) => suma + p[1], 0) / Math.max(1, anillo.length); const factor = Math.cos((latMedia * Math.PI) / 180);
+  const xs = anillo.map((p) => p[0] * factor); const ys = anillo.map((p) => p[1]);
+  const minX = Math.min(...xs); const maxX = Math.max(...xs); const minY = Math.min(...ys); const maxY = Math.max(...ys);
+  const escala = (lado - 30) / Math.max(maxX - minX, maxY - minY, 1e-9);
+  const desX = X + 15 + ((lado - 30) - (maxX - minX) * escala) / 2; const desY = y0 + 15 + ((lado - 30) - (maxY - minY) * escala) / 2;
+  const puntos = anillo.map((p): [number, number] => [desX + (p[0] * factor - minX) * escala, desY + (maxY - p[1]) * escala]);
+  doc.roundedRect(X, y0, lado, lado, 8).fill('#eef3ea');
+  doc.polygon(...puntos).fillOpacity(0.45).fill(CULTIVO).fillOpacity(1);
+  doc.polygon(...puntos).lineWidth(1.6).strokeColor(BOSQUE).stroke();
+  for (const [px, py] of puntos.slice(0, -1)) doc.circle(px, py, 2.6).fill(BOSQUE);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(BOSQUE).text('N', X + lado - 16, y0 + 6, { lineBreak: false });
+  doc.moveTo(X + lado - 13, y0 + 26).lineTo(X + lado - 13, y0 + 16).strokeColor(BOSQUE).lineWidth(1).stroke();
+  doc.font('Helvetica').fontSize(7).fillColor(GRIS).text('Croquis sin escala de mapa', X + 8, y0 + lado - 12, { lineBreak: false });
+  const textoX = X + lado + 16; const anchoTexto = c.ancho - lado - 16;
+  const filas = [
+    ['Superficie aproximada', superficie(d)],
+    ['Vértices', `${d.vertices} vértices`],
+    ['Área declarada', t.areaHa === null ? 'Sin indicar: no hay comparación' : `${numero(t.areaHa)} ha`],
+    ['Diferencia dibujada - declarada', d.diferenciaHa === null ? 'No aplica' : `${d.diferenciaHa > 0 ? '+' : ''}${numero(d.diferenciaHa, 2)} ha${d.diferenciaPct === null ? '' : ` (${d.diferenciaPct > 0 ? '+' : ''}${numero(d.diferenciaPct, 1)} %)`}`],
+    ['Primer vértice (lat, lon)', `${anillo[0]?.[1] ?? 'Sin dato'}, ${anillo[0]?.[0] ?? 'Sin dato'}`],
+  ];
+  let y = y0 + 2;
+  for (const [titulo, valor] of filas) {
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(GRIS).text(textoSeguroPdf((titulo ?? '').toUpperCase()), textoX, y, { lineBreak: false }); y += 11;
+    for (const linea of c.lineas(valor ?? '', anchoTexto, 10.5, 'Helvetica-Bold')) { doc.font('Helvetica-Bold').fontSize(10.5).fillColor(BOSQUE).text(linea, textoX, y, { lineBreak: false }); y += 14; }
+    y += 3;
+  }
+  c.y = Math.max(y0 + lado, y) + 10;
+  c.recuadro('Delimitación dibujada por el usuario sobre un mapa. La superficie es una estimación geodésica (esfera de radio 6.378.137 m); no es una medición catastral certificada ni un levantamiento topográfico, y no reemplaza el área declarada. Los datos climáticos NASA POWER son regionales (celdas de unos 50 km) y no corresponden exactamente al interior de esta zona.', CLAROS.maiz, MAIZ, 8.5);
+}
+
 function mesEcuador(fechaIso: string): number {
   return Number(new Intl.DateTimeFormat('en', { month: 'numeric', timeZone: 'America/Guayaquil' }).format(new Date(fechaIso)));
 }
@@ -174,6 +214,7 @@ function resumenAgricultor(c: Compositor, datos: DatosReporte) {
     { titulo: 'Riego declarado', valor: t.tieneRiego === null ? 'Sin indicar' : t.tieneRiego ? 'Sí' : 'No', fondo: CLAROS.cielo, acento: CIELO },
     { titulo: 'Tipo de suelo', valor: SUELOS[t.tipoSuelo ?? ''] ?? 'Sin indicar', fondo: CLAROS.terracota, acento: TERRACOTA },
   ], 4);
+  c.p(t.delimitacion ? `Zona de cultivo dibujada en el mapa: aprox. ${superficie(t.delimitacion)}. Es una estimación, no una medición catastral.` : 'Zona de cultivo: sin delimitación dibujada; el terreno se representa con un punto.', 9.5, false, GRIS);
 
   c.subtitulo('El clima de su zona en breve (NASA POWER)', CIELO);
   const clima = datos.clima;
@@ -298,7 +339,8 @@ export async function generarPdfTerreno(datos: DatosReporte): Promise<Buffer> {
 
       c.titulo('1. El terreno y su historial'); c.p('Fuente: PostgreSQL de RotaAndes. Son datos declarados, salvo la altitud estimada obtenida al guardar la ubicación.');
       c.tabla(['Característica', 'Valor registrado'], [ ['Nombre', t.nombre], ['Ubicación', `${t.latitud}, ${t.longitud}`], ['Altitud estimada', `${numero(t.altitudM)}${t.altitudM === null ? '' : ' m'}`], ['Área declarada', `${numero(t.areaHa)}${t.areaHa === null ? '' : ' ha'}`], ['Riego declarado', t.tieneRiego === null ? 'Sin indicar' : t.tieneRiego ? 'Sí' : 'No'], ['Tipo de suelo', SUELOS[t.tipoSuelo ?? ''] ?? 'Sin indicar'] ], [165, 334.28]);
-      c.fuente('Altitud: Open-Meteo / Copernicus DEM GLO-90, resolución 90 m; estimación, no medición exacta del lote. Área sin cálculo automático de superficie. No se incluyen datos de contacto ni notas privadas.');
+      c.fuente('Altitud: Open-Meteo / Copernicus DEM GLO-90, resolución 90 m; estimación, no medición exacta del lote. El área declarada es la que indicó el agricultor y no se reemplaza por la superficie dibujada. No se incluyen datos de contacto ni notas privadas.');
+      seccionDelimitacion(c, t);
       c.subtitulo('Historial de siembras', CULTIVO);
       if (datos.historial.length) c.tabla(['Cultivo', 'Siembra (fecha)', 'Cosecha registrada'], datos.historial.map((s) => [s.cultivo, s.fechaSiembra, s.fechaCosecha ?? 'Sin registrar']), [199.28, 150, 150], { color: CULTIVO }); else c.p('Sin siembras registradas. No se presupone un cultivo actual.');
 

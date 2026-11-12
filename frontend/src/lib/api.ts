@@ -1,7 +1,7 @@
 import type { RespuestaSalud } from '../types/api';
 import type { Credenciales, DatosRegistro, DatosPerfil, RespuestaAutenticacion, UsuarioPublico } from '../types/api';
 import { z } from 'zod';
-import type { Terreno, DatosTerreno, Siembra, DatosSiembra, Cultivo } from '../types/api';
+import type { Terreno, DatosTerreno, Siembra, DatosSiembra, Cultivo, PoligonoGeoJson } from '../types/api';
 import type { RespuestaClima } from '../types/api';
 import type { RespuestaPronostico } from '../types/api';
 import type { EscenarioCalendario, RespuestaCalendario } from '../types/api';
@@ -132,6 +132,9 @@ const numero = z.number().finite();
 const esquemaTerreno = z.object({
   id: z.uuid(), usuario_id: z.uuid(), nombre: z.string(), latitud: numero.min(-90).max(90), longitud: numero.min(-180).max(180),
   altitud_m: numero.int().nullable(), area_ha: numero.nullable(), tiene_riego: z.boolean().nullable(), tipo_suelo: z.string().nullable(), creado_en: z.string().nullable(),
+  // Campos opcionales: un servidor anterior a la delimitación no los envía y el terreno se trata como un punto.
+  poligono: z.object({ type: z.literal('Polygon'), coordinates: z.array(z.array(z.tuple([numero.min(-180).max(180), numero.min(-90).max(90)])).min(4).max(101)).length(1) }).nullable().optional().transform((valor) => valor ?? null),
+  area_poligono_m2: numero.nonnegative().nullable().optional().transform((valor) => valor ?? null),
 });
 const esquemaSiembra = z.object({ id: z.uuid(), terreno_id: z.uuid(), cultivo_id: z.string(), fecha_siembra: z.iso.date(), fecha_cosecha: z.iso.date().nullable(), notas: z.string().nullable(), creado_en: z.string().nullable() });
 const esquemaCultivo = z.object({ id: z.string(), nombre: z.string(), familia: z.string(), altitud_min: numero.int(), altitud_max: numero.int(),
@@ -146,6 +149,8 @@ function comprobarRespuesta<T>(esquema: z.ZodType<T>, datos: unknown): T {
 export async function listarTerrenos(token: string, signal?: AbortSignal): Promise<Terreno[]> { return comprobarRespuesta(z.array(esquemaTerreno), await solicitar('/terrenos', 'GET', token, undefined, signal)); }
 export async function obtenerTerreno(token: string, id: string, signal?: AbortSignal): Promise<Terreno> { return comprobarRespuesta(esquemaTerreno, await solicitar(`/terrenos/${encodeURIComponent(id)}`, 'GET', token, undefined, signal)); }
 export async function guardarTerreno(token: string, datos: DatosTerreno, id?: string): Promise<Terreno> { return comprobarRespuesta(esquemaTerreno, await solicitar(id ? `/terrenos/${encodeURIComponent(id)}` : '/terrenos', id ? 'PUT' : 'POST', token, datos)); }
+export async function guardarDelimitacion(token: string, id: string, poligono: PoligonoGeoJson): Promise<Terreno> { return comprobarRespuesta(esquemaTerreno, await solicitar(`/terrenos/${encodeURIComponent(id)}/delimitacion`, 'PUT', token, { poligono })); }
+export async function eliminarDelimitacion(token: string, id: string): Promise<Terreno> { return comprobarRespuesta(esquemaTerreno, await solicitar(`/terrenos/${encodeURIComponent(id)}/delimitacion`, 'DELETE', token)); }
 export async function eliminarTerreno(token: string, id: string): Promise<void> { await solicitar(`/terrenos/${encodeURIComponent(id)}`, 'DELETE', token); }
 export async function listarCultivos(signal?: AbortSignal): Promise<Cultivo[]> { return comprobarRespuesta(z.array(esquemaCultivo), await solicitar('/cultivos', 'GET', undefined, undefined, signal)); }
 export async function listarSiembras(token: string, terrenoId: string, signal?: AbortSignal): Promise<Siembra[]> { return comprobarRespuesta(z.array(esquemaSiembra), await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/siembras`, 'GET', token, undefined, signal)); }

@@ -15,6 +15,7 @@ import { SimuladorEscenarios } from '../components/SimuladorEscenarios';
 import { TendenciaTerreno } from '../components/TendenciaTerreno';
 import { DescargarReporte } from '../components/DescargarReporte';
 import { NavegacionTerreno } from '../components/NavegacionTerreno';
+import { DelimitacionTerreno } from '../components/DelimitacionTerreno';
 import { obtenerTerreno, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import { Icono } from '../components/Iconos';
@@ -59,6 +60,7 @@ export function DetalleTerreno() {
         <Dato icono="altitud" titulo="Altitud estimada">{terreno.altitud_m === null ? 'No disponible' : `${terreno.altitud_m.toLocaleString('es-EC')} m s. n. m.`}</Dato>
         <Dato icono="mapa" titulo="Latitud">{terreno.latitud}</Dato><Dato icono="mapa" titulo="Longitud">{terreno.longitud}</Dato>
       </dl><p className="mt-7 text-xs leading-relaxed text-oliva">Fuente de altitud: <a href="https://open-meteo.com/en/docs/elevation-api" target="_blank" rel="noreferrer" className="underline">Open-Meteo</a> / Copernicus DEM GLO-90, resolución de 90 m. Es una estimación, no una medición exacta del terreno.{terreno.altitud_m === null && ' No hay una estimación disponible; no se ha sustituido por un dato inventado.'}</p></div><VisorCapas key={`capas:${sesion.usuario?.id}:${id}`} terrenos={[terreno]} /></div>
+      <div id="delimitacion" tabIndex={-1} className="destino-terreno"><DelimitacionTerreno key={`delimitacion:${sesion.usuario?.id}:${id}`} terreno={terreno} /></div>
       <div id="informe" tabIndex={-1} className="destino-terreno"><DescargarReporte key={`reporte:${sesion.usuario?.id}:${id}`} terrenoId={id} /><p className="mt-3 text-sm leading-relaxed text-oliva">El PDF incluye todas las explicaciones y puede tener muchas páginas. Para una lectura breve, abre «¿Qué puedo sembrar?» y consulta el resumen del calendario; las explicaciones completas siguen disponibles.</p></div>
       <Grupo texto="El clima de tu zona" />
       <ClimaTerreno key={`clima:${sesion.usuario?.id}:${id}`} terrenoId={id} latitud={terreno.latitud} longitud={terreno.longitud} altitudM={terreno.altitud_m} />

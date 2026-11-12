@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generarPdfTerreno, textoSeguroPdf, MAX_BYTES_PDF } from '../src/services/pdfTerreno.js';
 import { reportePrueba } from './fixtures/reportePruebas.js';
 import { leerPdf } from './fixtures/leerPdf.js';
+import { describirDelimitacion, validarPoligono } from '../src/services/geometriaTerreno.js';
 
 describe('PDF auténtico, contenido, español y diseño', () => {
   it('genera A4 con páginas numeradas, todas las secciones, acentos y valores del motor', async () => {
@@ -22,6 +23,21 @@ describe('PDF auténtico, contenido, español y diseño', () => {
     for (const aviso of ['Climatología NASA POWER no disponible', 'Pronóstico vigente no disponible', 'Calendario no disponible', 'no evaluable', 'Series históricas no disponibles']) expect(texto).toContain(aviso);
     expect(texto.toLocaleLowerCase('es')).not.toContain('meses más lluviosos'); expect(texto).not.toContain('NaN');
   });
+  it('incluye la delimitación con croquis, superficie, comparación y advertencia sin añadir páginas', async () => {
+    const sin = reportePrueba(); const leidoSin = await leerPdf(await generarPdfTerreno(sin));
+    expect(leidoSin.texto).toContain('Sin delimitación guardada'); expect(leidoSin.texto).toContain('sin delimitación dibujada');
+    const con = reportePrueba();
+    // Geometría sintética de prueba (aprox. 1,24 ha), no es una parcela real.
+    const poligono = validarPoligono({ type: 'Polygon', coordinates: [[[-78.6205, -0.9305], [-78.6195, -0.9305], [-78.6195, -0.9295], [-78.6205, -0.9295], [-78.6205, -0.9305]]] }, { latitud: -0.93, longitud: -78.62 });
+    const descripcion = describirDelimitacion(poligono, con.terreno.areaHa);
+    if (!descripcion) throw new Error('Delimitación de prueba inválida');
+    con.terreno.delimitacion = { poligono, ...descripcion };
+    const leido = await leerPdf(await generarPdfTerreno(con));
+    for (const texto of ['Delimitación de la zona de cultivo', '4 vértices', 'Zona de cultivo dibujada en el mapa: aprox. 1,24 ha', 'no es una medición catastral', 'no corresponden exactamente al interior', 'Croquis sin escala']) expect(leido.texto).toContain(texto);
+    expect(leido.texto).toContain(`+${(descripcion.diferenciaHa ?? 0).toLocaleString('es-EC', { maximumFractionDigits: 2 })} ha`);
+    expect(leido.paginas.length).toBe(leidoSin.paginas.length);
+    for (const pagina of leido.paginas) expect(pagina.posiciones.every((p) => p.x >= 40 && p.x <= 550 && p.y >= 25 && p.y <= 820)).toBe(true);
+   }, 30000);
   it('es repetible con datos y fecha fijos, sin modificar la entrada', async () => {
     const datos = reportePrueba(); const original = structuredClone(datos); const a = await generarPdfTerreno(datos); const b = await generarPdfTerreno(datos); expect(a.equals(b)).toBe(true); expect(datos).toEqual(original);
   });

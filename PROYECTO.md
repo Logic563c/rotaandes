@@ -179,7 +179,8 @@ create table terrenos (
   area_ha numeric(8,2),
   tiene_riego boolean default false,
   tipo_suelo text,                  -- 'franco', 'arenoso', 'arcilloso', 'no_se'
-  creado_en timestamptz default now()
+  creado_en timestamptz default now(),
+  poligono jsonb                    -- opcional: zona de cultivo, GeoJSON Polygon WGS84 [longitud, latitud] (ver docs/DECISIONES.md)
 );
 
 create table cultivos (              -- catálogo (seed)
@@ -353,7 +354,8 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 | PUT | `/api/perfil` | Actualiza nombre, parroquia, teléfono y prioridades |
 | GET | `/api/cultivos` | Catálogo de cultivos |
 | GET / POST | `/api/terrenos` | Listar / crear (calcula `altitud_m` automáticamente) |
-| GET / PUT / DELETE | `/api/terrenos/:id` | Detalle / editar / borrar |
+| GET / PUT / DELETE | `/api/terrenos/:id` | Detalle / editar / borrar. Las respuestas de terreno incluyen `poligono` (GeoJSON o `null`) y `area_poligono_m2` (derivado, solo lectura) |
+| PUT / DELETE | `/api/terrenos/:id/delimitacion` | Solo el agricultor propietario: guarda `{ poligono }` (GeoJSON Polygon validado) / elimina la delimitación |
 | GET / POST | `/api/terrenos/:id/siembras` | Historial / agregar siembra |
 | PUT / DELETE | `/api/siembras/:id` | Editar / borrar |
 | GET | `/api/terrenos/:id/clima` | Climatología mensual: `[{ mes, t_min, t_max, t_med, lluvia_mm, humedad_suelo, riesgo_helada }]`, `fuente`, `resolucion` |

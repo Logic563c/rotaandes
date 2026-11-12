@@ -1,5 +1,6 @@
 import type { Cultivo, Terreno, Siembra, PrismaClient } from '../generated/prisma/client.js';
 import type { UsuarioPublico } from './autenticacion.js';
+import { areaPoligonoM2, leerPoligonoGuardado } from './geometriaTerreno.js';
 
 export type BaseAgricola = Pick<PrismaClient, 'terreno' | 'siembra' | 'cultivo' | 'plantillaRotacion'>;
 export type ObtenerBaseAgricola = () => BaseAgricola;
@@ -11,7 +12,13 @@ export function filtroTerrenos(usuario: UsuarioPublico) {
 export function publicarTerreno(terreno: Terreno) {
   return { id: terreno.id, usuario_id: terreno.usuarioId, nombre: terreno.nombre, latitud: terreno.latitud,
     longitud: terreno.longitud, altitud_m: terreno.altitudM, area_ha: terreno.areaHa?.toNumber() ?? null,
-    tiene_riego: terreno.tieneRiego, tipo_suelo: terreno.tipoSuelo, creado_en: terreno.creadoEn?.toISOString() ?? null };
+    tiene_riego: terreno.tieneRiego, tipo_suelo: terreno.tipoSuelo, creado_en: terreno.creadoEn?.toISOString() ?? null,
+    ...publicarDelimitacion(terreno.poligono) };
+}
+/** Delimitación opcional: geometría GeoJSON y superficie aproximada derivada (solo lectura, no reemplaza area_ha). */
+export function publicarDelimitacion(valor: unknown) {
+  const poligono = leerPoligonoGuardado(valor);
+  return { poligono, area_poligono_m2: poligono ? Math.round(areaPoligonoM2(poligono.coordinates[0] ?? []) * 10) / 10 : null };
 }
 export function publicarSiembra(siembra: Siembra) {
   return { id: siembra.id, terreno_id: siembra.terrenoId, cultivo_id: siembra.cultivoId,

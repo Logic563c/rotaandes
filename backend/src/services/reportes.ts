@@ -13,10 +13,14 @@ import { compararRotaciones, obtenerInicioRotacion, ErrorRotaciones } from './mo
 import { plantillasReferenciales } from '../data/catalogoPlantillas.js';
 import { ErrorHttp } from '../middleware/errores.js';
 import { generarPdfTerreno } from './pdfTerreno.js';
+import { describirDelimitacion, leerPoligonoGuardado } from './geometriaTerreno.js';
+import type { PoligonoGeoJson } from './geometriaTerreno.js';
 
 export interface DatosReporte {
   generadoEn: string;
-  terreno: { id: string; nombre: string; latitud: number; longitud: number; altitudM: number | null; areaHa: number | null; tieneRiego: boolean | null; tipoSuelo: string | null };
+  terreno: { id: string; nombre: string; latitud: number; longitud: number; altitudM: number | null; areaHa: number | null; tieneRiego: boolean | null; tipoSuelo: string | null;
+    /** Delimitación opcional dibujada por el agricultor; ausente o null en terrenos que solo tienen un punto. */
+    delimitacion?: { poligono: PoligonoGeoJson; areaM2: number; areaHa: number; vertices: number; diferenciaHa: number | null; diferenciaPct: number | null } | null };
   historial: { cultivo: string; fechaSiembra: string; fechaCosecha: string | null }[];
   clima: Awaited<ReturnType<ServicioClima>> | null;
   pronostico: Awaited<ReturnType<ServicioPronostico>> | null;
@@ -26,13 +30,17 @@ export interface DatosReporte {
   rotaciones: ReturnType<typeof compararRotaciones> | null;
   avisos: string[];
 }
+function delimitacionReporte(valor: unknown, areaDeclaradaHa: number | null): NonNullable<DatosReporte['terreno']['delimitacion']> | null {
+  const poligono = leerPoligonoGuardado(valor); const descripcion = describirDelimitacion(poligono, areaDeclaradaHa);
+  return poligono && descripcion ? { poligono, ...descripcion } : null;
+}
 export function crearServicioReportes(obtenerBase: ObtenerBaseAgricola, consultarClima: ServicioClima, consultarPronostico: ServicioPronostico,
   consultarTendencia: ServicioTendencia, reloj = () => new Date(), renderizar = generarPdfTerreno, plazoMs = 25000) {
   if (!Number.isFinite(plazoMs) || plazoMs < 1 || plazoMs > 25000) throw new Error('El plazo interno del informe no es válido.');
   let ocupado = false;
   return async (id: string, usuario: UsuarioPublico, signal?: AbortSignal): Promise<Buffer> => {
     const base = obtenerBase();
-    const terreno = await base.terreno.findFirst({ where: { id, ...filtroTerrenos(usuario) }, select: { id: true, nombre: true, latitud: true, longitud: true, altitudM: true, areaHa: true, tieneRiego: true, tipoSuelo: true,
+    const terreno = await base.terreno.findFirst({ where: { id, ...filtroTerrenos(usuario) }, select: { id: true, nombre: true, latitud: true, longitud: true, altitudM: true, areaHa: true, tieneRiego: true, tipoSuelo: true, poligono: true,
       usuario: { select: { prioridadAgua: true, prioridadSuelo: true, prioridadIngresos: true } },
       siembras: { take: 201, orderBy: [{ fechaSiembra: 'desc' }, { id: 'desc' }], select: { id: true, cultivoId: true, fechaSiembra: true, fechaCosecha: true, cultivo: { select: { nombre: true } } } } } });
     if (!terreno) throw new ErrorHttp(404, 'Terreno no encontrado.');
@@ -69,7 +77,7 @@ export function crearServicioReportes(obtenerBase: ObtenerBaseAgricola, consulta
         catch (error: unknown) { if (!(error instanceof ErrorRotaciones)) throw error; avisos.push('Rotaciones no evaluables: datos o catálogo insuficientes.'); }
       } else avisos.push('Las fechas registradas no permiten construir un horizonte válido de rotación.');
       if (vencido || signal?.aborted) throw new ErrorHttp(400, 'La descarga fue cancelada o excedió su plazo.');
-      return renderizar({ generadoEn: ahora.toISOString(), terreno: { id: terreno.id, nombre: terreno.nombre, latitud: terreno.latitud, longitud: terreno.longitud, ...contexto, tipoSuelo: terreno.tipoSuelo },
+      return renderizar({ generadoEn: ahora.toISOString(), terreno: { id: terreno.id, nombre: terreno.nombre, latitud: terreno.latitud, longitud: terreno.longitud, ...contexto, tipoSuelo: terreno.tipoSuelo, delimitacion: delimitacionReporte(terreno.poligono, contexto.areaHa) },
         historial: terreno.siembras.map((s) => ({ cultivo: s.cultivo.nombre, fechaSiembra: s.fechaSiembra.toISOString().slice(0, 10), fechaCosecha: s.fechaCosecha?.toISOString().slice(0, 10) ?? null })), clima: historico, pronostico, tendencia, calendario, cultivos: cultivos.map((c) => ({ id: c.id, nombre: c.nombre })), rotaciones, avisos });
     })().finally(() => { ocupado = false; });
     let temporizador: ReturnType<typeof setTimeout> | undefined;

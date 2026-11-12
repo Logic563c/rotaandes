@@ -6,6 +6,7 @@ import type { CeldaCalendario, EstadoCalendario, RespuestaCalendario } from '../
 import { EstadoConsulta } from './EstadoConsulta';
 import { ResumenCalendario } from './ResumenCalendario';
 import { CabeceraModulo } from './Iconos';
+import { AyudaGrafica } from './AyudaGrafica';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const ESTADOS: Record<EstadoCalendario, { etiqueta: string; simbolo: string; estilo: string }> = {
@@ -54,6 +55,12 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
         {datos.clima.advertencias.length > 0 && <ul className="panel-aviso mt-5 list-disc space-y-2 pl-10 text-sm">{datos.clima.advertencias.map((aviso, indice) => <li key={indice}>{aviso}</li>)}</ul>}
         {altitudEvaluada === null && <p role="status" className="mt-5 rounded-xl border border-stone-400 bg-stone-100 p-4 text-sm">Altitud desconocida: no se confirma compatibilidad y no se generan recomendaciones verdes.</p>}
         <ul aria-label="Leyenda del calendario" className="mt-6 flex flex-wrap gap-3 text-xs">{Object.entries(ESTADOS).map(([estado, detalle]) => <li key={estado} className={`rounded-lg border px-3 py-2 font-semibold ${detalle.estilo}`}>{detalle.simbolo} {detalle.etiqueta}</li>)}</ul>
+        <AyudaGrafica queMuestra="Una tabla de colores: cada fila es un cultivo y cada columna un mes. El color y el símbolo de cada casilla indican si ese mes es adecuado para sembrar ese cultivo según las reglas de RotaAndes."
+          ejeHorizontal="Columnas: meses del año, de enero a diciembre (mes de siembra)." ejeVertical="Filas: cultivos del catálogo aptos para la altitud de tu terreno."
+          colores={[{ color: '#2f7d43', texto: '✓ Verde: recomendado según la regla referencial', trazo: 'barra' }, { color: '#e6b33c', texto: '! Amarillo: posible con cuidado (cumple solo parte de las condiciones)', trazo: 'barra' }, { color: '#a3492a', texto: '× Rojo: no recomendado (fuera de la ventana o con helada alta para un cultivo sensible)', trazo: 'barra' }, { color: '#a8a29e', texto: '? Gris: no determinado por falta de datos', trazo: 'barra' }]}
+          lectura="Busca las casillas verdes de un cultivo: son los meses en los que se cumplen la ventana de siembra, la lluvia (o el riego) y el riesgo de helada. Las amarillas indican que falta alguna condición; ábrelas para saber cuál."
+          precauciones={['Se basa en promedios históricos de la zona, no en el pronóstico de este año.', 'Los meses y umbrales del catálogo son referenciales y deben validarse localmente.', 'El color nunca se usa solo: cada casilla lleva símbolo y texto.']}
+          ejemplo="Toca una casilla para leer su motivo, por ejemplo cuánta lluvia promedio tiene ese mes frente a la que necesita el cultivo." />
         <p className="mt-4 text-sm text-oliva">Desliza la matriz para ver los doce meses. Con teclado, usa Tab para seleccionar una celda y Enter para abrir su explicación.</p>
         {cultivos.length === 0 ? <p role="status" className="tarjeta mt-5 p-5">No hay cultivos del catálogo aptos o evaluables con la altitud disponible.</p> : <div className="mt-5 max-h-[34rem] max-w-full overflow-auto rounded-2xl border border-pino/20" role="region" aria-label="Matriz mensual de siembra" tabIndex={0}>
           <table className="w-full min-w-[1150px] table-fixed sm:min-w-[1280px] border-collapse text-left text-xs"><caption className="sr-only">Calendario orientativo por cultivo y mes. Cada celda abre la explicación de sus criterios.</caption><thead><tr><th scope="col" className="sticky left-0 top-0 z-20 w-28 border-b border-pino/15 bg-arena p-2 sm:w-44 sm:p-3">Cultivo referencial</th>{MESES.map((mes) => <th scope="col" key={mes} className="sticky top-0 z-10 border-b border-pino/15 bg-arena px-2 py-3">{mes}</th>)}</tr></thead>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ImageOverlay, MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { ImageOverlay, MapContainer, Marker, Polygon, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { divIcon, latLngBounds } from 'leaflet';
 import { Link } from 'react-router-dom';
 import type { Terreno } from '../types/api';
@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 
 export interface PuntoTerreno { latitud: number; longitud: number }
 export interface MapaTerrenosProps {
-  terrenos: Pick<Terreno, 'id' | 'nombre' | 'latitud' | 'longitud' | 'area_ha'>[];
+  terrenos: (Pick<Terreno, 'id' | 'nombre' | 'latitud' | 'longitud' | 'area_ha'> & Partial<Pick<Terreno, 'poligono'>>)[];
   punto?: PuntoTerreno | null;
   alSeleccionar?: (punto: PuntoTerreno) => void;
   imagenSatelital?: { url?: string; limites: readonly [number, number, number, number]; nombre: string };
@@ -42,6 +42,7 @@ export function MapaTerrenos({ terrenos, punto, alSeleccionar, imagenSatelital, 
           eventHandlers={{ loading: () => establecerCarga(true), load: () => establecerCarga(false), tileerror: () => { establecerError(true); establecerCarga(false); } }} />}
         {imagenSatelital?.url && <ImageOverlay key={imagenSatelital.url} url={imagenSatelital.url} bounds={[[imagenSatelital.limites[1], imagenSatelital.limites[0]], [imagenSatelital.limites[3], imagenSatelital.limites[2]]]} alt={imagenSatelital.nombre} attribution='&copy; NASA GIBS / EOSDIS' eventHandlers={{ load: () => establecerErrorImagen(false), error: () => establecerErrorImagen(true) }} />}
         <InteraccionesMapa terrenos={terrenos} {...(punto !== undefined && { punto })} {...(alSeleccionar && { alSeleccionar })} {...(imagenSatelital && { imagenSatelital })} />
+        {terrenos.flatMap((terreno) => terreno.poligono ? [<Polygon key={`zona-${terreno.id}`} positions={(terreno.poligono.coordinates[0] ?? []).map(([longitud, latitud]): [number, number] => [latitud, longitud])} interactive={false} pathOptions={{ color: '#1d4636', weight: 2, fillColor: '#2f7d43', fillOpacity: 0.3 }} />] : [])}
         {terrenos.map((terreno, indice) => <Marker key={terreno.id} position={[terreno.latitud, terreno.longitud]}
           title={terreno.nombre} alt={`Terreno ${terreno.nombre}`} icon={divIcon({ className: 'marcador-terreno', html: `<span class="contenido-marcador-terreno">${indice + 1}</span>`, iconSize: [32, 32], iconAnchor: [16, 16] })}>
           <Popup><strong>{terreno.nombre}</strong><p>{terreno.area_ha === null ? 'Área sin indicar' : `${terreno.area_ha} ha`}</p><Link to={`/terrenos/${terreno.id}`}>Ver detalle de {terreno.nombre}</Link></Popup>

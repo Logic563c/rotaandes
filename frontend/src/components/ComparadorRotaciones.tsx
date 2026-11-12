@@ -6,6 +6,7 @@ import { useAgricultura } from '../lib/useAgricultura';
 import type { EstadoCalendario, EstrategiaRotacion } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
 import { CabeceraModulo, Icono } from './Iconos';
+import { AyudaGrafica, TipoDato } from './AyudaGrafica';
 import type { NombreIcono } from './Iconos';
 
 const ESTADOS: Record<EstadoCalendario, string> = { recomendado: '✓ Compatible según la regla referencial', posible_con_cuidado: '! Posible con cuidado', no_recomendado: '× Restricción comprobada', no_determinado: '? Información insuficiente' };
@@ -31,11 +32,13 @@ export function TarjetaEstrategia({ estrategia, posicion }: { estrategia: Estrat
       <p className="mt-1 text-xs text-oliva">Ciclo referencial: {paso.ciclo_meses ?? 'sin dato'} meses. {paso.espera_meses === null ? 'Espera no determinada.' : `Espera previa: ${paso.espera_meses} meses.`}</p>
       <details className="mt-2"><summary className="cursor-pointer py-2 font-semibold">Ver criterio del calendario</summary><p className="mt-2 leading-relaxed text-oliva">{paso.motivo}</p></details>
     </li>)}</ol> : <p className="mt-5 text-sm text-oliva">No hay una secuencia verificable para esta posición. No se ha completado con cultivos inventados.</p>}
-    <dl className="mt-6 space-y-4 rounded-2xl bg-crema/70 p-4">{INDICADORES.map(({ clave, nombre, icono, color }) => {
+    <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-oliva"><TipoDato tipo="indice" /><span>Escala de 0 a 100: barra más larga = más favorable dentro del modelo.</span></div>
+    <dl className="mt-3 space-y-4 rounded-2xl bg-crema/70 p-4">{INDICADORES.map(({ clave, nombre, icono, color }) => {
       const valor = estrategia.puntajes[clave];
       return <div key={clave} className={clave === 'total' ? 'border-t border-pino/15 pt-4' : ''}><div className="flex flex-wrap justify-between gap-2 text-sm"><dt className="flex items-center gap-2 font-semibold"><Icono nombre={icono} className="size-4 shrink-0" />{nombre}</dt><dd className={clave === 'total' ? 'font-bold' : ''}>{valor === null ? 'No determinado' : `${valor.toLocaleString('es-EC', { maximumFractionDigits: 2 })}/100`}</dd></div>
-        {valor !== null && <div aria-hidden="true" className={`mt-2 overflow-hidden rounded-full bg-arena ${clave === 'total' ? 'h-3' : 'h-2'}`}><div className="h-full rounded-full" style={{ width: `${valor}%`, background: color }} /></div>}</div>;
-    })}</dl>
+        {valor !== null ? <div aria-hidden="true" className={`relative mt-2 overflow-hidden rounded-full bg-arena ${clave === 'total' ? 'h-3' : 'h-2'}`}><div className="h-full rounded-full" style={{ width: `${valor}%`, background: color }} /><span className="absolute inset-y-0 left-1/2 w-px bg-white" /></div>
+          : <div aria-hidden="true" className="mt-2 h-2 rounded-full border border-dashed border-stone-400" />}</div>;
+    })}<div aria-hidden="true" className="flex justify-between text-[11px] text-oliva"><span>0</span><span>50</span><span>100</span></div></dl>
     <p className="mt-6 text-sm leading-relaxed">{estrategia.por_que}</p>
     <details className="mt-5 rounded-xl border border-pino/15 bg-white/70 p-3"><summary className="cursor-pointer py-2 text-sm font-semibold">Evidencia, ventajas y límites</summary>
       <ListaFactores titulo="Evidencia utilizada" valores={estrategia.evidencia} /><ListaFactores titulo="Atributos potencialmente favorables del catálogo" valores={estrategia.beneficios} />
@@ -66,6 +69,13 @@ export function ComparadorRotaciones({ terrenoId, contexto }: { terrenoId: strin
         {datos.estrategias.some((valor) => valor.id === null) && <p role="status" className="mt-5 rounded-xl border border-stone-400 bg-stone-100 p-4 text-sm">No hay dos alternativas con información suficiente. Revisa las limitaciones; no se han inventado recomendaciones.</p>}
         <button className="enlace-nav mt-4 underline" type="button" disabled={consulta.isFetching} onClick={() => { void consulta.refetch(); }}>{consulta.isFetching ? 'Actualizando comparación…' : 'Actualizar comparación'}</button>
         <div className="mt-5 grid min-w-0 items-start gap-5 xl:grid-cols-3">{datos.estrategias.map((estrategia, indice) => <TarjetaEstrategia key={estrategia.id ?? `sin-dato-${indice}`} estrategia={estrategia} posicion={indice} />)}</div>
+        <AyudaGrafica queMuestra="Cada tarjeta es una rotación. Las barras de colores muestran cinco índices del modelo de RotaAndes: agua, suelo, compatibilidad climática, valor de mercado referencial y el total ponderado con tus prioridades."
+          ejeHorizontal="La longitud de cada barra va de 0 (izquierda) a 100 (derecha). La marca blanca del centro señala 50."
+          ejeVertical="No hay eje vertical: cada fila es un índice distinto. Los índices no tienen unidades (no son litros, kilos ni dólares)."
+          colores={INDICADORES.map(({ nombre, color }) => ({ color, texto: nombre, trazo: 'barra' as const }))}
+          lectura="Una barra larga indica que la rotación es más favorable en ese aspecto según las reglas del modelo; una barra corta, menos favorable. Compara la misma barra entre las tres tarjetas. Una barra vacía con borde punteado significa «No determinado» por falta de datos."
+          precauciones={['Son índices de una heurística referencial, no probabilidades, cosechas ni ingresos medidos.', 'El catálogo de cultivos y las fórmulas están pendientes de validación agronómica local.', 'Una diferencia de pocos puntos no es importante: lee también el porqué, los riesgos y los vacíos de información.']}
+          ejemplo="Si una alternativa tiene la barra verde de Suelo más larga que tu rotación actual, el modelo considera que alterna mejor las familias o aporta más al suelo. Revisa luego sus riesgos antes de decidir." />
         <details className="mt-6 rounded-2xl border border-pino/20 bg-white/70 p-5 text-sm leading-relaxed"><summary className="cursor-pointer py-2 font-semibold">Cómo se calculan los indicadores</summary>
           <p className="mt-3">Escala del catálogo: N(x)=25×(x−1). Agua combina demanda inversa, tolerancia a sequía y cobertura referencial de lluvia/riego. Suelo promedia fijación de nitrógeno, materia orgánica y protección de erosión, y resta hasta 25 puntos por familias compartidas. Clima combina tolerancias y severidad heurística durante los ciclos. Valor de mercado es el promedio normalizado del catálogo, sin ingresos monetarios.</p>
           <p className="mt-3">Total = (agua×prioridad de agua + suelo×prioridad de suelo + clima×3 + valor de mercado×prioridad de ingresos) / suma de esos cuatro pesos. Un dato esencial ausente conserva el total no determinado. No es un modelo agronómico validado.</p>

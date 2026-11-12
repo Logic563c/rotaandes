@@ -20,7 +20,10 @@ export interface Terreno {
   id: string; usuario_id: string; nombre: string; latitud: number; longitud: number;
   altitud_m: number | null; area_ha: number | null; tiene_riego: boolean | null;
   tipo_suelo: string | null; creado_en: string | null;
+  /** Delimitación opcional de la zona de cultivo (GeoJSON Polygon, [longitud, latitud]). */
+  poligono: PoligonoGeoJson | null; area_poligono_m2: number | null;
 }
+export interface PoligonoGeoJson { type: 'Polygon'; coordinates: [number, number][][] }
 export interface DatosTerreno {
   nombre: string; latitud: number; longitud: number; area_ha: number | null;
   tiene_riego: boolean; tipo_suelo: 'franco' | 'arenoso' | 'arcilloso' | 'no_se' | null;

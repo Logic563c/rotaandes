@@ -4,6 +4,7 @@ import { Icono } from './Iconos';
 import type { NombreIcono } from './Iconos';
 
 const ACCESOS: [string, string, NombreIcono, string, string][] = [
+  ['delimitacion', 'Delimitar mi zona de cultivo', 'area', '#2f7d43', '#e3f1e1'],
   ['calendario', '¿Qué puedo sembrar?', 'calendario', '#2f7d43', '#e3f1e1'],
   ['pronostico', '¿Cómo estará el clima?', 'nube', '#1f6391', '#e2eff8'],
   ['rotaciones', '¿Qué cultivo puedo sembrar después?', 'rotacion', '#a3492a', '#f8e6dc'],

@@ -6,6 +6,8 @@ import { ContextoSesion } from '../lib/useSesion';
 import type { RespuestaPronostico, UsuarioPublico } from '../types/api';
 import { PronosticoTerreno } from './PronosticoTerreno';
 
+vi.mock('./GraficasPronostico', () => ({ GraficasPronostico: () => <div aria-label="Gráficas de prueba">Gráficas comprobadas en E2E</div> }));
+
 // Fixture meteorológica sintética, exclusiva de pruebas y nunca persistida en desarrollo.
 function datosPrueba(instante = new Date().toISOString()): RespuestaPronostico {
   const hoy = new Date(Date.parse(instante) - 5 * 3600000).toISOString().slice(0, 10);

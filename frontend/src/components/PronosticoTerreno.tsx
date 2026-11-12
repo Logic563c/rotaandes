@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { obtenerPronostico } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import { EstadoConsulta } from './EstadoConsulta';
 import { CabeceraModulo, Icono } from './Iconos';
 import type { CSSProperties } from 'react';
+
+const Graficas = lazy(async () => ({ default: (await import('./GraficasPronostico')).GraficasPronostico }));
 
 const mostrarNumero = (valor: number | null, unidad: string) => valor === null ? 'Sin dato' : `${valor.toLocaleString('es-EC')} ${unidad}`;
 const mostrarFecha = (fecha: string) => new Intl.DateTimeFormat('es-EC', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }).format(new Date(`${fecha}T12:00:00-05:00`));
@@ -55,6 +57,7 @@ export function PronosticoTerreno({ terrenoId, latitud, longitud }: { terrenoId:
           {datos.alertas.length > 0 ? <ul className="mt-4 space-y-3">{datos.alertas.map((alerta) => <li key={alerta.fecha} className="rounded-xl border border-arcilla/30 bg-arcilla/10 p-4 text-sm leading-relaxed"><p className="font-semibold"><span aria-hidden="true">❄ </span>Posible helada · <time dateTime={alerta.fecha}>{mostrarFecha(alerta.fecha)}</time></p><p className="mt-2">{alerta.mensaje}</p></li>)}</ul>
             : <p className="mt-3 text-sm text-oliva">{datos.dias.some((dia) => dia.t_min === null) ? 'No se detectaron alertas en los días evaluables. Hay días sin mínima válida: no se puede descartar riesgo en ellos.' : 'No se prevén mínimas dentro del umbral en estos siete días. Esto no garantiza ausencia de heladas locales.'}</p>}
         </div>
+        <Suspense fallback={<p role="status" className="mt-6">Preparando gráficas del pronóstico…</p>}><Graficas dias={datos.dias} umbralC={datos.umbral_helada_c} /></Suspense>
         <ol aria-label="Pronóstico diario" className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{datos.dias.map((dia) => {
           const alerta = datos.alertas.some((valor) => valor.fecha === dia.fecha);
           return <li key={dia.fecha} className="tarjeta tarjeta--acento p-5" style={{ '--acento': alerta ? '#a3492a' : dia.t_min === null ? '#8a8a80' : '#1f6391' } as CSSProperties}><h3 className="font-semibold capitalize"><time dateTime={dia.fecha}>{mostrarFecha(dia.fecha)}</time></h3>
