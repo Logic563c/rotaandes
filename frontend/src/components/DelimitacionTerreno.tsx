@@ -44,7 +44,7 @@ export function DelimitacionTerreno({ terreno: recibido }: { terreno: Terreno })
     {modoInicial === null ? <>
       {!terreno.poligono && <p className="mt-4 text-sm">{puedeEditar ? 'Este terreno todavía no tiene una zona delimitada.' : 'El propietario no ha delimitado una zona de cultivo para este terreno.'}</p>}
       {puedeEditar && <button type="button" className="boton-primario mt-4" onClick={() => { establecerMensaje(''); establecerModoInicial('dibujar'); }}><Icono nombre="mapa" className="size-5" />Delimitar zona de cultivo</button>}
-    </> : <LimiteEditor><Suspense fallback={<p role="status" className="tarjeta estado-cargando mt-5 p-5">Preparando el mapa de la zona…</p>}><div className="mt-5">
+    </> : <LimiteEditor><Suspense fallback={<p role="status" className="tarjeta estado-cargando mt-5 p-5">Preparando el mapa de la zona…</p>}><div className="aparecer mt-5">
       <Editor key={`${modoInicial}:${JSON.stringify(terreno.poligono)}`} terreno={terreno} modoInicial={modoInicial} puedeEditar={puedeEditar} estaGuardando={guardar.isPending} error={guardar.error?.message ?? null}
         alGuardar={(poligono) => { establecerMensaje(''); guardar.mutate(poligono); }} alSolicitarEliminacion={() => { eliminar.reset(); establecerConfirmacion(true); }}
         alCambiarModo={(modo) => { if (modo !== 'ver') { establecerMensaje(''); guardar.reset(); } else if (!terreno.poligono) establecerModoInicial(null); }} />

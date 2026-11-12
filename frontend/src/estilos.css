@@ -93,6 +93,46 @@
   .ayuda-grafica > summary { color: #174d73; }
   .tooltip-grafica { max-width: 240px; border: 1px solid #1d463633; border-radius: 0.75rem; background: #fff; padding: 0.55rem 0.7rem; color: #1d4636; font-size: 0.8rem; line-height: 1.4; box-shadow: 0 8px 20px -10px #1d463666; }
 
+  /* Portada: fondo agrícola con movimiento suave (CSS original, solo transform y opacidad). Se puede pausar y respeta prefers-reduced-motion. */
+  .portada-fondo { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .portada-fondo__nube { position: absolute; left: 0; width: 22rem; height: 6rem; border-radius: 999px; background: radial-gradient(closest-side, #ffffffd9, #ffffff00); filter: blur(2px); animation: desplazar-nube 80s linear infinite; will-change: transform; }
+  .portada-fondo__nube--1 { top: 6%; animation-duration: 75s; animation-delay: -20s; }
+  .portada-fondo__nube--2 { top: 30%; width: 16rem; height: 4.5rem; opacity: 0.7; animation-duration: 110s; animation-delay: -70s; }
+  .portada-fondo__nube--3 { top: 58%; width: 26rem; opacity: 0.45; animation-duration: 140s; animation-delay: -5s; }
+  .portada-fondo__surcos { position: absolute; inset: auto -10% 0 -10%; height: 42%; background: repeating-linear-gradient(-8deg, #2f7d4314 0 14px, #e6b33c12 14px 28px, #ffffff00 28px 46px); mask-image: linear-gradient(to top, #000 10%, transparent); animation: mecer-surcos 18s ease-in-out infinite alternate; }
+  @keyframes desplazar-nube { from { transform: translateX(-30vw); } to { transform: translateX(110vw); } }
+  @keyframes mecer-surcos { from { transform: translateX(-2%); } to { transform: translateX(2%); } }
+  .paisaje__halo, .paisaje__nube, .paisaje__planta, .paisaje__brote { transform-box: fill-box; }
+  .paisaje__halo { transform-origin: center; animation: latir-sol 6s ease-in-out infinite; }
+  .paisaje__nube { animation: flotar-nube 10s ease-in-out infinite alternate; }
+  .paisaje__nube--lenta { animation-duration: 15s; animation-delay: -4s; }
+  .paisaje__planta, .paisaje__brote { transform-origin: 50% 100%; animation: mecer-planta 5s ease-in-out infinite alternate; }
+  .paisaje__planta--b { animation-delay: -2s; }
+  @keyframes latir-sol { 0%, 100% { transform: scale(1); opacity: 0.18; } 50% { transform: scale(1.12); opacity: 0.3; } }
+  @keyframes flotar-nube { from { transform: translateX(0); } to { transform: translateX(26px); } }
+  @keyframes mecer-planta { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+  .portada-animada[data-movimiento="pausado"] .portada-fondo *, .portada-animada[data-movimiento="pausado"] [class^="paisaje__"] { animation-play-state: paused; }
+  .boton-movimiento { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; border: 1px solid #1d463633; border-radius: 999px; background: #ffffffcc; padding: 0.4rem 0.9rem; color: #1d4636; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+  .boton-movimiento:hover { background: #fff; }
+
+  /* Fotografías con licencia verificada (ver public/imagenes/CREDITOS.md). */
+  .foto-campo { overflow: hidden; border: 1px solid #1d463622; border-radius: 1.5rem; background: #fff; box-shadow: 0 10px 30px -18px #1d463640; }
+  .foto-campo img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; transition: transform 0.6s ease; }
+  .foto-campo:hover img { transform: scale(1.03); }
+
+  /* Interacciones sutiles. */
+  .tarjeta--interactiva { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+  .tarjeta--interactiva:hover { transform: translateY(-2px); border-color: #2f7d4355; box-shadow: 0 2px 4px #1d463612, 0 16px 34px -14px #1d463640; }
+  .boton-primario:active, .boton-secundario:active, .acceso-rapido:active { transform: scale(0.98); }
+  .aparecer { animation: aparecer-contenido 0.28s ease-out both; }
+  @keyframes aparecer-contenido { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .portada-fondo *, [class^="paisaje__"], .aparecer { animation: none; }
+    .foto-campo img, .tarjeta--interactiva { transition: none; }
+    .foto-campo:hover img, .tarjeta--interactiva:hover, .boton-primario:active, .boton-secundario:active, .acceso-rapido:active { transform: none; }
+    .boton-movimiento { display: none; }
+  }
+
   .estado-cargando { display: flex; align-items: center; gap: 0.85rem; }
   .estado-cargando::before { content: ""; flex: none; width: 1.4rem; height: 1.4rem; border-radius: 999px; border: 3px solid #e3f1e1; border-top-color: #2f7d43; animation: girar-carga 0.9s linear infinite; }
   @keyframes girar-carga { to { transform: rotate(360deg); } }

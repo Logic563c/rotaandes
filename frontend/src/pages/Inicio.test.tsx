@@ -44,4 +44,26 @@ describe('Página inicial', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Conexión disponible'));
     expect(solicitar).toHaveBeenCalledTimes(2);
   });
+  it('muestra fotografías agrícolas con descripción, crédito y licencia, cargadas de forma diferida', () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }))));
+    mostrarInicio();
+    const fotos = screen.getAllByRole('img').filter((imagen) => imagen.getAttribute('src')?.startsWith('/imagenes/'));
+    expect(fotos).toHaveLength(2);
+    for (const foto of fotos) { expect(foto.getAttribute('alt')?.length).toBeGreaterThan(30); expect(foto).toHaveAttribute('loading', 'lazy'); expect(foto.getAttribute('srcset')).toContain('1280w'); }
+    expect(screen.getAllByRole('link', { name: 'CC BY-SA 4.0' })).toHaveLength(2);
+    expect(screen.getByText(/Foto: Gideoraielgave/)).toBeInTheDocument(); expect(screen.getByText(/Foto: Arabsalam/)).toBeInTheDocument();
+  });
+  it('permite pausar y reanudar el movimiento del fondo y recuerda la preferencia', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }))));
+    window.localStorage.removeItem('rotaandes:movimiento-portada');
+    mostrarInicio();
+    const boton = screen.getByRole('button', { name: /Pausar movimiento del fondo/ });
+    expect(boton).toHaveAttribute('aria-pressed', 'false');
+    expect(document.querySelector('.portada-animada')).toHaveAttribute('data-movimiento', 'activo');
+    await userEvent.click(boton);
+    expect(screen.getByRole('button', { name: /Reanudar movimiento del fondo/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(document.querySelector('.portada-animada')).toHaveAttribute('data-movimiento', 'pausado');
+    expect(window.localStorage.getItem('rotaandes:movimiento-portada')).toBe('pausado');
+    window.localStorage.removeItem('rotaandes:movimiento-portada');
+  });
 });

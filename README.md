@@ -2,6 +2,19 @@
 
 Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance completo está en `PROYECTO.md` y las convenciones están en `AGENTS.md`.
 
+## Documentación de entrega (noviembre de 2026)
+
+| Documento | Para quién |
+| --- | --- |
+| [Manual de usuario](docs/GUIA_CLIENTE.md) | Agricultores y técnicos |
+| [Manual técnico](docs/MANUAL_TECNICO.md) | Quien mantenga o explique el sistema |
+| [Guía para defender RotaAndes](docs/GUIA_DEFENSA_JURADO.md) y [recorrido de demostración](docs/RECORRIDO_DEMOSTRACION.md) | Presentación ante el jurado |
+| [Gráficas y delimitación de parcelas](docs/INFORME_GRAFICAS_Y_DELIMITACION.md) | Detalle técnico de la fase del 12-11-2026 |
+| [Informe de la fase de entrega](docs/INFORME_FASE_ENTREGA.md) | Portada animada, fotos, paquetes ZIP y verificación final |
+| [Respaldo de producción](docs/PROCEDIMIENTO_RESPALDO_PRODUCCION.md) | Responsable de la publicación |
+
+Las secciones siguientes conservan el historial de cada fase; el estado vigente de la publicación está en los informes más recientes.
+
 Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/experiencia-agricultor` conserva tendencias 2005–2024, panel técnico y PDF, y añade la portada completa, el glosario, las fuentes y mejoras de navegación; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico sigue pendiente.
 
 La primera entrega se conserva en la etiqueta local anotada `v0.1.0-primera-entrega` (commit `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`). El comparador se desarrolla en `feat/rotaciones`; su metodología, verificaciones y límites están en [INFORME_ROTACIONES.md](docs/INFORME_ROTACIONES.md).

@@ -1,4 +1,8 @@
-﻿# GUIA DE USO - ROTAANDES
+﻿# MANUAL DE USUARIO - ROTAANDES
+
+Guía de uso para agricultores y técnicos. Para la parte técnica ver
+[MANUAL_TECNICO.md](MANUAL_TECNICO.md) y, para la demostración,
+[RECORRIDO_DEMOSTRACION.md](RECORRIDO_DEMOSTRACION.md).
 
 ## ¿Qué es RotaAndes?
 
@@ -14,6 +18,11 @@ Abrir:
 https://rotaandes.vercel.app/
 
 Seleccionar "Crear mi cuenta" o "Iniciar sesión".
+
+La portada tiene un fondo con movimiento suave. Si molesta, se puede
+detener con el botón "Pausar movimiento del fondo". Si el teléfono o la
+computadora tienen activada la opción de reducir el movimiento, el fondo
+queda quieto automáticamente.
 
 ## 2. Registrar un terreno
 

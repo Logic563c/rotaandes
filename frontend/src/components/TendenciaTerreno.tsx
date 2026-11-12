@@ -27,7 +27,7 @@ export function TendenciaTerreno({ terrenoId, latitud, longitud }: { terrenoId: 
     <CabeceraModulo icono="tendencia" etiqueta="Mirar nuestra historia climática"><h2 id={`${id}-titulo`} className="mt-1 break-words font-campo text-2xl sm:text-4xl">¿Cómo ha cambiado el clima?</h2></CabeceraModulo>
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">Compara años de 2005 a 2024 con NASA POWER. Son datos históricos regionales; no predicen el tiempo futuro ni atribuyen los cambios a una causa.</p>
     <button type="button" className="boton-secundario mt-5" aria-expanded={abierto} aria-controls={`${id}-contenido`} onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Ocultar tendencias históricas' : 'Ver tendencias 2005–2024'}</button>
-    {abierto && <div id={`${id}-contenido`} className="mt-6">
+    {abierto && <div id={`${id}-contenido`} className="aparecer mt-6">
       <EstadoConsulta cargando={consulta.isPending || consulta.isFetching} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} />
       {consulta.isError && <p className="mt-3 text-sm text-oliva">No hay una serie fiable disponible para esta ubicación. Los datos ausentes no se han reemplazado por valores inventados.</p>}
       {datos && !consulta.isFetching && <>

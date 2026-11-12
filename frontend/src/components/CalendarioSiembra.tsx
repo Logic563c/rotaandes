@@ -41,7 +41,7 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
     <CabeceraModulo icono="calendario" etiqueta="Planificar con información de nuestra zona"><h2 id="titulo-calendario" className="mt-1 break-words font-campo text-2xl sm:text-4xl">Calendario de siembra</h2></CabeceraModulo>
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">Meses orientativos según el catálogo referencial y la climatología NASA POWER. Selecciona una celda para conocer sus motivos. No es un pronóstico.</p>
     <button className="boton-secundario mt-5" type="button" aria-expanded={abierto} aria-controls="contenido-calendario" onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Ocultar calendario' : 'Ver calendario de siembra'}</button>
-    {abierto && <div id="contenido-calendario" className="mt-6 min-w-0">
+    {abierto && <div id="contenido-calendario" className="aparecer mt-6 min-w-0">
       <EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} />
       {consulta.isError && <p className="mt-3 text-sm text-oliva">No pudimos calcular el calendario con información fiable. Reintenta la consulta; no se han inventado recomendaciones.</p>}
       {consulta.isSuccess && datos && <>

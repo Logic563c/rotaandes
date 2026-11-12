@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { obtenerEstadoServicio } from '../lib/api';
@@ -24,8 +25,8 @@ const funciones: { titulo: string; detalle: string; icono: NombreIcono; acento: 
 function PaisajeAndino() {
   return <svg viewBox="0 0 480 400" className="block h-auto w-full" fill="none" aria-hidden="true" focusable="false">
     <rect width="480" height="400" fill="#dcecf6" />
-    <circle cx="372" cy="92" r="40" fill="#e6b33c" /><circle cx="372" cy="92" r="58" fill="#e6b33c" opacity="0.18" />
-    <path d="M60 70c18-10 40-8 52 4 14-8 38-4 44 10H52c-4-6 0-12 8-14Z" fill="#fff" opacity="0.85" />
+    <circle cx="372" cy="92" r="58" fill="#e6b33c" opacity="0.18" className="paisaje__halo" /><circle cx="372" cy="92" r="40" fill="#e6b33c" />
+    <path className="paisaje__nube" d="M60 70c18-10 40-8 52 4 14-8 38-4 44 10H52c-4-6 0-12 8-14Z" fill="#fff" opacity="0.85" /><path className="paisaje__nube paisaje__nube--lenta" d="M250 140c14-8 30-6 40 3 11-6 29-3 34 8h-80c-3-5 0-9 6-11Z" fill="#fff" opacity="0.7" />
     <path d="m0 250 110-150 54 66 86-118 230 202v150H0Z" fill="#9fb7a6" />
     <path d="m196 104 54-56 62 54-34-12-22 14-28-14-32 14Z" fill="#fbfaf5" />
     <path d="m0 262 118-96 92 92 104-98 166 130v110H0Z" fill="#5f8f6c" />
@@ -33,16 +34,32 @@ function PaisajeAndino() {
     <path d="M0 322c130-60 260-50 480 20v58H0Z" fill="#c9844f" />
     <path d="M0 350c120-40 230-34 480 28v22H0Z" fill="#a3492a" />
     <path d="M0 322c130-48 250-40 480 22M0 336c130-44 250-36 480 26M0 365c120-34 230-28 400 14" stroke="#f3dcb8" strokeWidth="3" />
-    <path d="M40 300v-26m-10 15 10-17 10 17M440 292v-30m-11 18 11-20 11 20" stroke="#1d4636" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M300 278c-6-18 4-28 14-28 4 10-2 22-14 28Zm0 0c4-14 18-18 26-12-4 10-16 14-26 12Zm0 0v20" stroke="#e3f1e1" strokeWidth="2.5" strokeLinecap="round" />
+    <path className="paisaje__planta" d="M40 300v-26m-10 15 10-17 10 17" stroke="#1d4636" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /><path className="paisaje__planta paisaje__planta--b" d="M440 292v-30m-11 18 11-20 11 20" stroke="#1d4636" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    <path className="paisaje__brote" d="M300 278c-6-18 4-28 14-28 4 10-2 22-14 28Zm0 0c4-14 18-18 26-12-4 10-16 14-26 12Zm0 0v20" stroke="#e3f1e1" strokeWidth="2.5" strokeLinecap="round" />
   </svg>;
 }
 
+const CLAVE_MOVIMIENTO = 'rotaandes:movimiento-portada';
+function leerMovimientoPausado(): boolean {
+  try { return window.localStorage.getItem(CLAVE_MOVIMIENTO) === 'pausado'; } catch { return false; }
+}
+const FOTOS = [
+  { archivo: 'laderas-cultivadas-latacunga', alto: 960, texto: 'Laderas de la sierra cubiertas de parcelas de cultivo de distintos colores, con casas y una iglesia al pie, en el valle de Latacunga.', pie: 'Laderas cultivadas en parcelas, valle de Latacunga.', autor: 'Gideoraielgave', original: 'https://commons.wikimedia.org/wiki/File:Valle_en_Latacunga_-_Cotopaxi_-_Ecuador_III.jpg' },
+  { archivo: 'parcelas-cotopaxi', alto: 963, texto: 'Lomas con parcelas agrícolas y pajonal; al fondo, el volcán Cotopaxi con nieve, parcialmente cubierto por nubes.', pie: 'Parcelas en las lomas, con el Cotopaxi al fondo.', autor: 'Arabsalam', original: 'https://commons.wikimedia.org/wiki/File:Road_to_Quilotoa_Cotopaxi_view_Ecuador_1614.jpg' },
+] as const;
+
 export function Inicio() {
   const consulta = useQuery({ queryKey: ['estadoServicio'], queryFn: ({ signal }) => obtenerEstadoServicio(signal) });
+  const [pausado, establecerPausado] = useState(leerMovimientoPausado);
+  function alternarMovimiento() {
+    const nuevo = !pausado; establecerPausado(nuevo);
+    try { window.localStorage.setItem(CLAVE_MOVIMIENTO, nuevo ? 'pausado' : 'activo'); } catch { /* Preferencia solo de esta visita. */ }
+  }
   return <Marco>
-    <div className="fondo-campo -mx-4 -mt-8 overflow-hidden border-b border-pino/10 px-4 pb-10 pt-8 sm:-mx-10 sm:-mt-12 sm:rounded-b-[2.5rem] sm:px-10 sm:pb-14 sm:pt-12">
-      <div className="grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+    <div className="portada-animada fondo-campo relative -mx-4 -mt-8 overflow-hidden border-b border-pino/10 px-4 pb-10 pt-8 sm:-mx-10 sm:-mt-12 sm:rounded-b-[2.5rem] sm:px-10 sm:pb-14 sm:pt-12" data-movimiento={pausado ? 'pausado' : 'activo'}>
+      {/* Fondo decorativo original en CSS: nubes que se desplazan y surcos con luz suave. Sin video ni imágenes externas. */}
+      <div aria-hidden="true" className="portada-fondo"><span className="portada-fondo__nube portada-fondo__nube--1" /><span className="portada-fondo__nube portada-fondo__nube--2" /><span className="portada-fondo__nube portada-fondo__nube--3" /><span className="portada-fondo__surcos" /></div>
+      <div className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <div><p className="etiqueta-seccion">Desde los Andes, para nuestra tierra</p>
           <h1 className="mt-5 font-campo text-4xl leading-tight tracking-tight sm:text-5xl">Conoce tu terreno, comprende el clima y explora mejores opciones para sembrar.</h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-oliva">Un espacio de apoyo para agricultores de Latacunga y Cotopaxi. Tu experiencia del campo, acompañada de información para comparar opciones.</p>
@@ -52,18 +69,26 @@ export function Inicio() {
             <li className="chip chip--cultivo"><Icono nombre="satelite" className="size-4" />Imágenes MODIS y SMAP</li>
             <li className="chip chip--maiz"><Icono nombre="sol" className="size-4" />Pronóstico Open-Meteo</li>
           </ul>
-          <a className="enlace-nav mt-4 underline" href="#como-funciona">Conocer cómo funciona <span aria-hidden="true" className="ml-2">↓</span></a>
+          <div className="mt-4 flex flex-wrap items-center gap-2"><a className="enlace-nav underline" href="#como-funciona">Conocer cómo funciona <span aria-hidden="true" className="ml-2">↓</span></a>
+            <button type="button" className="boton-movimiento" aria-pressed={pausado} onClick={alternarMovimiento}><span aria-hidden="true">{pausado ? '▶' : '❚❚'}</span>{pausado ? 'Reanudar movimiento del fondo' : 'Pausar movimiento del fondo'}</button></div>
         </div>
         <div className="mx-auto w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-white shadow-[0_24px_50px_-24px_#1d463680]"><PaisajeAndino /></div>
       </div>
     </div>
     <section id="como-funciona" tabIndex={-1} className="destino-terreno mt-12"><p className="etiqueta-seccion">A tu ritmo, paso a paso</p><h2 className="mt-3 font-campo text-3xl sm:text-4xl">Tu terreno es el punto de partida</h2>
-      <ol className="mt-7 grid gap-5 md:grid-cols-3">{pasos.map((paso, indice) => <li className="tarjeta tarjeta--acento p-6" style={{ '--acento': paso.acento } as CSSProperties} key={paso.titulo}>
+      <ol className="mt-7 grid gap-5 md:grid-cols-3">{pasos.map((paso, indice) => <li className="tarjeta tarjeta--acento tarjeta--interactiva p-6" style={{ '--acento': paso.acento } as CSSProperties} key={paso.titulo}>
         <div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-12 items-center justify-center rounded-2xl" style={{ background: paso.claro, color: paso.acento }}><Icono nombre={paso.icono} className="size-7" /></span><span className="chip chip--gris">Paso {indice + 1}</span></div>
         <h3 className="mt-4 font-campo text-2xl">{paso.titulo}</h3><p className="mt-3 leading-relaxed text-oliva">{paso.detalle}</p></li>)}</ol>
     </section>
+    <section className="mt-12" aria-labelledby="titulo-tierra"><p className="etiqueta-seccion">Nuestra sierra, parcela por parcela</p><h2 id="titulo-tierra" className="mt-3 font-campo text-3xl sm:text-4xl">Cada lote es distinto</h2>
+      <p className="mt-4 max-w-3xl leading-relaxed text-oliva">En Cotopaxi las parcelas suben por las laderas y cambian de cultivo de un año a otro. Por eso RotaAndes te deja marcar en el mapa el contorno de tu zona de cultivo, conocer su superficie aproximada y guardar tu historial de siembras.</p>
+      <div className="mt-7 grid gap-5 md:grid-cols-2">{FOTOS.map((foto) => <figure key={foto.archivo} className="foto-campo">
+        <img src={`/imagenes/${foto.archivo}-720.webp`} srcSet={`/imagenes/${foto.archivo}-720.webp 720w, /imagenes/${foto.archivo}-1280.webp 1280w`} sizes="(min-width: 768px) 45vw, 100vw" width={1280} height={foto.alto} loading="lazy" decoding="async" alt={foto.texto} />
+        <figcaption className="px-4 py-3 text-sm"><span className="font-semibold">{foto.pie}</span><span className="mt-1 block text-xs text-oliva">Foto: {foto.autor} · <a className="underline" href={foto.original} target="_blank" rel="noreferrer">Wikimedia Commons</a> · <a className="underline" href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noreferrer">CC BY-SA 4.0</a> (redimensionada)</span></figcaption>
+      </figure>)}</div>
+    </section>
     <section className="mt-12" aria-labelledby="titulo-funciones"><p className="etiqueta-seccion">Todo sobre tu parcela en un lugar</p><h2 id="titulo-funciones" className="mt-3 font-campo text-3xl sm:text-4xl">Lo que encontrarás</h2>
-      <ul className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{funciones.map((funcion) => <li key={funcion.titulo} className="tarjeta flex gap-4 p-5">
+      <ul className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{funciones.map((funcion) => <li key={funcion.titulo} className="tarjeta tarjeta--interactiva flex gap-4 p-5">
         <span aria-hidden="true" className="flex size-12 shrink-0 items-center justify-center rounded-2xl" style={{ background: funcion.claro, color: funcion.acento }}><Icono nombre={funcion.icono} className="size-7" /></span>
         <div><h3 className="text-lg font-semibold">{funcion.titulo}</h3><p className="mt-1 text-sm leading-relaxed text-oliva">{funcion.detalle}</p></div></li>)}</ul>
     </section>

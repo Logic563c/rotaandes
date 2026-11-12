@@ -39,7 +39,7 @@ export function PronosticoTerreno({ terrenoId, latitud, longitud }: { terrenoId:
     <CabeceraModulo icono="copo" etiqueta="Prepararnos para los próximos días"><h2 id="titulo-pronostico" className="mt-1 break-words font-campo text-2xl sm:text-4xl">Pronóstico y posibles heladas</h2></CabeceraModulo>
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">Siete días, incluido hoy, según Open-Meteo. Es un pronóstico meteorológico y se presenta separado de la climatología histórica de NASA.</p>
     <button type="button" className="boton-secundario mt-5" aria-expanded={abierto} aria-controls="contenido-pronostico" onClick={() => { establecerAhora(Date.now()); establecerAbierto(!abierto); }}>{abierto ? 'Ocultar pronóstico' : 'Ver pronóstico de siete días'}</button>
-    {abierto && <div id="contenido-pronostico" className="mt-6">
+    {abierto && <div id="contenido-pronostico" className="aparecer mt-6">
       <EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={reintentar} />
       {consulta.isError && <p className="mt-3 text-sm text-oliva">No hay información vigente disponible. No se sustituyen datos ausentes por un pronóstico inventado.</p>}
       {consulta.isSuccess && !vigente && <div className="tarjeta p-5"><p role="alert">El pronóstico ya no está vigente o no corresponde a esta ubicación. Consulta de nuevo para obtener información actualizada.</p><button className="boton-secundario mt-4" onClick={reintentar}>Reintentar</button></div>}

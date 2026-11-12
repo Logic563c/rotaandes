@@ -88,6 +88,7 @@ Una web donde el agricultor se registra, marca su terreno en un mapa, registra l
 - Correcciones a partir de la revisión interna y del equipo de Nicole.
 - Ajuste de los datos de cultivos validados por el equipo de Nicole.
 - Pruebas en celular, rendimiento, textos y guion de la demo.
+- [x] **Delimitación opcional de la zona de cultivo** en el mapa (polígono con superficie aproximada), solicitada por el cliente el 12 de noviembre (ver 7.5).
 
 ### Fuera de alcance
 - App móvil nativa.
@@ -337,6 +338,13 @@ Parámetros `lluvia_pct` (−30 a +30) y `temp_delta` (−2 a +2 °C). Se aplica
 
 La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Con 20 % menos lluvia, la papa deja de ser recomendada en noviembre."*
 
+### 7.5 Delimitación de la zona de cultivo (opcional)
+- El agricultor propietario puede dibujar un polígono sobre el mapa. Se guarda en `terrenos.poligono` como GeoJSON `Polygon` (WGS84, `[longitud, latitud]`, un solo contorno cerrado).
+- Validación en el backend: 3 a 100 vértices distintos, sin autointersecciones, todos a 10 km o menos del punto del terreno, y superficie entre 10 m² y 10 000 ha.
+- `area_poligono_m2` es la superficie geodésica aproximada (Chamberlain y Duquette, 2007). **No reemplaza** `area_ha`, que sigue siendo el área declarada. No es una medición catastral.
+- No cambia el clima, el calendario ni las rotaciones, que se siguen calculando con el punto del terreno. El dato NASA POWER es regional y no describe el interior del polígono.
+- El rol `tecnico` puede verla pero no modificarla. Detalles en `docs/INFORME_GRAFICAS_Y_DELIMITACION.md`.
+
 ---
 
 ## 8. API del backend (contrato entre frontend y backend)
@@ -384,6 +392,7 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
    - **Calendario:** matriz de colores; al tocar una celda se ve el motivo.
    - **Rotaciones:** 3 tarjetas (apiladas en celular) con barras de puntaje y todas las secciones del reto.
    - **Escenarios:** deslizadores de lluvia y temperatura que actualizan calendario y rotaciones en vivo.
+   - **Zona de cultivo:** dibujar, editar, guardar o eliminar la delimitación del terreno, con su superficie aproximada (opcional).
    - Botón **"Descargar reporte PDF"**.
 7. **Panel de técnico:** mapa con todos los terrenos, filtros y tabla de alertas.
 8. **Glosario.**
@@ -478,6 +487,7 @@ Si algo se complica, se avisa de inmediato para reorganizar.
 - [ ] El técnico ve todos los terrenos, filtra y ve las alertas.
 - [ ] Todo funciona aunque NASA POWER no responda (respaldo).
 - [ ] Un agricultor no puede ver ni editar terrenos de otro (probar cambiando el id en la URL).
+- [ ] Delimita su zona de cultivo en el mapa (también en celular), ve su superficie aproximada, la guarda y la vuelve a ver al abrir el terreno; el técnico solo puede verla.
 - [ ] Se ve bien en celular (Chrome Android) y en computadora.
 
 ---

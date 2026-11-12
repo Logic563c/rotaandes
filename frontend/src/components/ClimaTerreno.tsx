@@ -20,7 +20,7 @@ export function ClimaTerreno({ terrenoId, latitud, longitud, altitudM }: { terre
     <CabeceraModulo icono="termometro" etiqueta="Conocer el clima de nuestra zona"><h2 id="titulo-clima" className="mt-1 break-words font-campo text-2xl sm:text-4xl">Climatología histórica</h2></CabeceraModulo>
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">Resumen de largo plazo de NASA POWER. Representa la zona y no es un pronóstico ni una medición exacta de tu terreno.</p>
     <button className="boton-secundario mt-5" type="button" aria-expanded={abierto} aria-controls="contenido-clima" onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Ocultar climatología' : 'Ver climatología histórica'}</button>
-    {abierto && <div id="contenido-clima" className="mt-6">
+    {abierto && <div id="contenido-clima" className="aparecer mt-6">
       <EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} />
       {consulta.isError && <p className="mt-3 text-sm text-oliva">No se muestran valores inventados para sustituir datos ausentes.</p>}
       {consulta.isSuccess && clima && <>

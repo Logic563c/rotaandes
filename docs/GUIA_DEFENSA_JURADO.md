@@ -1,6 +1,30 @@
-# Guía de demostración y defensa ante el jurado
+# Guía para defender RotaAndes ante el jurado
 
-Revisión prevista: sábado 14 de noviembre de 2026. Esta guía sirve para mostrar RotaAndes paso a paso y responder preguntas habituales. El detalle de uso está en [GUIA_CLIENTE.md](GUIA_CLIENTE.md) y el detalle técnico en [INFORME_GRAFICAS_Y_DELIMITACION.md](INFORME_GRAFICAS_Y_DELIMITACION.md).
+Revisión prevista: sábado 14 de noviembre de 2026, ante el jurado, que incluye al coronel. Esta guía prepara la explicación de **qué hace RotaAndes, cómo se desarrolló y por qué sus resultados son confiables dentro de sus límites**.
+
+Documentos de apoyo:
+
+- [RECORRIDO_DEMOSTRACION.md](RECORRIDO_DEMOSTRACION.md): guion minuto a minuto.
+- [GUIA_CLIENTE.md](GUIA_CLIENTE.md): manual de usuario.
+- [MANUAL_TECNICO.md](MANUAL_TECNICO.md): manual técnico.
+- [INFORME_GRAFICAS_Y_DELIMITACION.md](INFORME_GRAFICAS_Y_DELIMITACION.md): detalle técnico de las gráficas y la delimitación.
+
+## Mensaje central (30 segundos)
+
+«RotaAndes ayuda a un agricultor de Cotopaxi a ver el clima de su zona con datos de la NASA, saber qué meses conviene sembrar y comparar su rotación actual con dos alternativas. Cada resultado dice de dónde viene y por qué. No reemplaza al agricultor ni al técnico: ordena la información para decidir mejor.»
+
+## Cómo se desarrolló (2 minutos)
+
+1. **Requisitos:**
+   - del cliente: registro, interactividad, clima, cuándo sembrar y enfoque en Latacunga;
+   - del reto NASA: usar POWER, MODIS y SMAP, y comparar 3 rotaciones con su porqué, evidencia, beneficios, vacíos y riesgos.
+2. **Contrato primero:** se definieron el modelo de datos y la API en `PROYECTO.md` antes de programar. El frontend y el backend se construyeron contra ese contrato.
+3. **Por módulos:** cada módulo se implementó, se probó y se documentó antes del siguiente: autenticación, terrenos, clima, pronóstico, calendario, rotaciones, escenarios, capas, tendencias, panel técnico, PDF, gráficas y delimitación.
+4. **Reglas explicables en lugar de inteligencia artificial opaca:** cada celda del calendario y cada puntaje trae su motivo en texto, de modo que un técnico puede auditarlo.
+5. **Calidad verificada:** cerca de 800 pruebas automáticas (unitarias, con base de datos real aislada y en navegador real en computadora y celular) se ejecutan antes de cada entrega.
+6. **Robustez:** si NASA no responde, la aplicación usa la caché o un respaldo verificado de la misma celda de la cuadrícula. Nunca inventa valores.
+
+**Arquitectura en una frase:** el navegador (React) solo habla con nuestra API (Node y Express). La API guarda los datos en PostgreSQL, consulta NASA y Open-Meteo, calcula y genera el PDF. Está publicada en Vercel y Railway.
 
 ## Antes de la presentación
 
@@ -127,3 +151,26 @@ Se cuidó que no:
 - cada gráfica indica si muestra un dato histórico, un pronóstico, un escenario hipotético o un índice.
 
 Solo las líneas de temperatura ajustan su escala a los valores para que se lean bien. Por eso conviene leer los números del eje o del cuadro emergente.
+
+**¿Las fotos y animaciones tienen derechos de uso?**
+Sí:
+
+- el fondo animado y el paisaje son ilustraciones propias hechas con CSS y SVG;
+- las dos fotos son de Wikimedia Commons con licencia CC BY-SA 4.0, verificada con la API de Commons;
+- cada foto muestra a su autor y su licencia en pantalla, y los detalles están en `frontend/public/imagenes/CREDITOS.md`.
+
+Además, la animación puede pausarse y se desactiva si el equipo pide reducir el movimiento.
+
+**¿Cómo se protegen los datos de los agricultores?**
+- Las contraseñas se guardan con bcrypt y nunca se envían de vuelta.
+- La sesión usa JWT de 15 minutos.
+- Cada consulta se filtra en el servidor por el usuario del token.
+- Hay límites de intentos en el inicio de sesión.
+- El PDF no incluye teléfono, notas privadas ni datos de contacto.
+
+**¿Qué se entrega al cliente?**
+- Un ZIP con el código fuente, sin credenciales.
+- Un ZIP con el esquema de la base de datos, las migraciones y datos ficticios restaurables.
+- Los manuales de usuario y técnico.
+- Esta guía, el recorrido de demostración y los informes de cada fase con sus capturas.
+
