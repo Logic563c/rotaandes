@@ -22,30 +22,40 @@ const sqlTemporal = join(tmpdir(), `${esquema}.sql`);
 const entorno = { ...process.env, PGHOST: url.hostname, PGPORT: url.port || '5432', PGUSER: decodeURIComponent(url.username), PGPASSWORD: decodeURIComponent(url.password), PGDATABASE: url.pathname.slice(1) };
 const ocultar = (texto) => String(texto ?? '').replace(/postgres(ql)?:\/\/\S+/g, '[url]').slice(0, 400);
 
-const conversion = spawnSync(join(binarios, 'pg_restore.exe'), ['--no-owner', '--no-privileges', '-f', sqlTemporal, respaldo], { encoding: 'utf8' });
-if (conversion.status !== 0) { console.error('pg_restore no pudo leer el respaldo:', ocultar(conversion.stderr)); process.exit(1); }
-const barra = String.fromCharCode(92);
-const sql = readFileSync(sqlTemporal, 'utf8').replace(/\bpublic\./g, `${esquema}.`)
-  .replace("set_config('search_path', '', false)", `set_config('search_path', '${esquema}', false)`)
-  .split('\n').filter((linea) => !linea.startsWith(`${barra}restrict`) && !linea.startsWith(`${barra}unrestrict`) && !/^CREATE SCHEMA public;|^COMMENT ON SCHEMA public/.test(linea)).join('\n');
-writeFileSync(sqlTemporal, sql);
-
-const cliente = new pg.Client({ connectionString: url.toString() }); await cliente.connect();
-let correcto;
+let correcto = false;
+let cliente = null;
+let esquemaCreado = false;
 try {
-  await cliente.query(`CREATE SCHEMA ${esquema}`);
+  const conversion = spawnSync(join(binarios, 'pg_restore.exe'), ['--no-owner', '--no-privileges', '-f', sqlTemporal, respaldo], { encoding: 'utf8' });
+  if (conversion.status !== 0) throw new Error(`pg_restore no pudo leer el respaldo: ${ocultar(conversion.stderr)}`);
+  const barra = String.fromCharCode(92);
+  const sql = readFileSync(sqlTemporal, 'utf8').replace(/\bpublic\./g, `${esquema}.`)
+    .replace("set_config('search_path', '', false)", `set_config('search_path', '${esquema}', false)`)
+    .split('\n').filter((linea) => !linea.startsWith(`${barra}restrict`) && !linea.startsWith(`${barra}unrestrict`) && !/^CREATE SCHEMA public;|^COMMENT ON SCHEMA public/.test(linea)).join('\n');
+  writeFileSync(sqlTemporal, sql);
+  cliente = new pg.Client({ connectionString: url.toString() });
+  await cliente.connect();
+  await cliente.query(`CREATE SCHEMA ${esquema}`); esquemaCreado = true;
   const carga = spawnSync(join(binarios, 'psql.exe'), ['-X', '-q', '-1', '-v', 'ON_ERROR_STOP=1', '-f', sqlTemporal], { env: entorno, encoding: 'utf8' });
   if (carga.status !== 0) throw new Error(`psql no pudo restaurar: ${ocultar(carga.stderr)}`);
   const tablas = ['usuarios', 'terrenos', 'siembras', 'cultivos', 'plantillas_rotacion', 'clima_cache', '_prisma_migrations'];
   for (const tabla of tablas) console.log(`  ${tabla.padEnd(20)} ${(await cliente.query(`SELECT count(*)::int AS n FROM ${esquema}.${tabla}`)).rows[0].n} filas`);
   const migraciones = await cliente.query(`SELECT migration_name FROM ${esquema}._prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name`);
   console.log('  migraciones aplicadas:', migraciones.rows.map((fila) => fila.migration_name).join(', '));
-  console.log('  restricciones:', (await cliente.query(`SELECT count(*)::int AS n FROM pg_constraint WHERE connamespace = $1::regnamespace`, [esquema])).rows[0].n);
+  console.log('  restricciones:', (await cliente.query('SELECT count(*)::int AS n FROM pg_constraint WHERE connamespace = $1::regnamespace', [esquema])).rows[0].n);
   const huerfanos = await cliente.query(`SELECT (SELECT count(*) FROM ${esquema}.terrenos t LEFT JOIN ${esquema}.usuarios u ON u.id = t.usuario_id WHERE u.id IS NULL)::int AS terrenos, (SELECT count(*) FROM ${esquema}.siembras s LEFT JOIN ${esquema}.terrenos t ON t.id = s.terreno_id WHERE t.id IS NULL)::int AS siembras`);
   console.log('  relaciones huérfanas:', JSON.stringify(huerfanos.rows[0]));
   correcto = huerfanos.rows[0].terrenos === 0 && huerfanos.rows[0].siembras === 0 && migraciones.rowCount > 0;
+} catch (error) {
+  console.error('  ERROR:', ocultar(error instanceof Error ? error.message : error));
 } finally {
-  await cliente.query(`DROP SCHEMA IF EXISTS ${esquema} CASCADE`); await cliente.end(); rmSync(sqlTemporal, { force: true });
-  console.log('  esquema desechable y SQL temporal eliminados.');
+  // El SQL temporal contiene datos reales: se elimina siempre, también ante errores.
+  rmSync(sqlTemporal, { force: true });
+  if (cliente) {
+    if (esquemaCreado) await cliente.query(`DROP SCHEMA IF EXISTS ${esquema} CASCADE`);
+    await cliente.end();
+  }
+  console.log(`  SQL temporal eliminado${esquemaCreado ? '; esquema desechable eliminado' : ''}.`);
 }
-console.log(correcto ? 'RESTAURACION_VERIFICADA' : 'RESTAURACION_CON_PROBLEMAS'); process.exit(correcto ? 0 : 1);
+console.log(correcto ? 'RESTAURACION_VERIFICADA' : 'RESTAURACION_CON_PROBLEMAS');
+process.exit(correcto ? 0 : 1);

@@ -8,6 +8,8 @@ param(
     [string]$BinPostgres = 'C:\Program Files\PostgreSQL\18\bin',
     [switch]$OmitirRestauracion
 )
+# Proyecto Railway fijado explícitamente (rotaandes); el servicio y el entorno también se indican en el comando.
+$ProyectoRailway = '948127e6-92fc-487f-a974-7315f6a3c1cd'
 $ErrorActionPreference = 'Stop'
 $raiz = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 function Paso([string]$texto) { Write-Host "`n== $texto" -ForegroundColor Cyan }
@@ -19,6 +21,7 @@ foreach ($binario in @('pg_restore.exe', 'psql.exe')) { if (-not (Test-Path (Joi
 & railway whoami *> $null; if ($LASTEXITCODE -ne 0) { Fallar 'Railway CLI no tiene sesión. Ejecuta: railway login' }
 & ssh-add -l *> $null; if ($LASTEXITCODE -ne 0) { Fallar 'El agente SSH no tiene claves cargadas. Ejecuta: ssh-add $env:USERPROFILE\.ssh\id_ed25519' }
 Push-Location $raiz
+$exito = $false; $base64 = $null; $respaldo = $null
 try {
     $estado = (& railway status 2>&1) -join ' '
     if ($estado -notmatch 'rotaandes') { Fallar 'El directorio no está vinculado al proyecto rotaandes de Railway (railway link).' }
@@ -30,8 +33,10 @@ try {
     $base64 = Join-Path $Destino "rotaandes_prod_$sello.dump.b64"
     $registro = Join-Path $Destino "pg_dump_$sello.log"
     $respaldo = Join-Path $Destino "rotaandes_prod_$sello.dump"
-    cmd /c "railway ssh -s postgres -e production -- sh -c ""pg_dump -Fc -Z 6 -d rotaandes_prod | base64 -w0"" > ""$base64"" 2> ""$registro"""
-    if ($LASTEXITCODE -ne 0) { Fallar "pg_dump terminó con código $LASTEXITCODE. Revisa $registro" }
+    # Solo lectura: pg_dump dentro del contenedor. Si pg_dump falla se marca en stderr, porque la tubería devolvería el código de base64.
+    cmd /c "railway ssh -p $ProyectoRailway -s postgres -e production -- sh -c ""(pg_dump -Fc -Z 6 -d rotaandes_prod || echo FALLO_PG_DUMP >&2) | base64 -w0"" > ""$base64"" 2> ""$registro"""
+    if ($LASTEXITCODE -ne 0) { Fallar "railway ssh terminó con código $LASTEXITCODE. Revisa $registro" }
+    if ((Get-Content $registro -Raw -ErrorAction SilentlyContinue) -match 'FALLO_PG_DUMP') { Fallar "pg_dump falló dentro del contenedor. Revisa $registro" }
     $contenido = [IO.File]::ReadAllText($base64).Trim()
     if ($contenido.Length -lt 100) { Fallar 'La salida del respaldo está vacía o incompleta.' }
     [IO.File]::WriteAllBytes($respaldo, [Convert]::FromBase64String($contenido))
@@ -60,7 +65,13 @@ try {
     }
 
     Paso '5/5 Resultado'
+    $exito = $true
     Write-Host 'RESPALDO VERIFICADO.' -ForegroundColor Green
     Write-Host 'Comunica a Claude solo: la ruta del archivo, su tamaño, su SHA-256 y la salida de la restauración (conteos).'
     Write-Host 'El archivo contiene correos y hashes de contraseñas: guárdalo en privado, nunca en Git ni en chats.'
-} finally { Pop-Location }
+} finally {
+    # Nunca deja la copia intermedia en base64. Si la verificación no terminó, elimina también el respaldo no válido.
+    if ($base64 -and (Test-Path $base64)) { Remove-Item $base64 -Force }
+    if (-not $exito -and $respaldo) { foreach ($archivo in @($respaldo, "$respaldo.sha256")) { if (Test-Path $archivo) { Remove-Item $archivo -Force } } }
+    Pop-Location
+}
