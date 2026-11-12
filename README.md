@@ -11,7 +11,7 @@ Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance
 | [Guía para defender RotaAndes](docs/GUIA_DEFENSA_JURADO.md) y [recorrido de demostración](docs/RECORRIDO_DEMOSTRACION.md) | Presentación ante el jurado |
 | [Gráficas y delimitación de parcelas](docs/INFORME_GRAFICAS_Y_DELIMITACION.md) | Detalle técnico de la fase del 12-11-2026 |
 | [Informe de la fase de entrega](docs/INFORME_FASE_ENTREGA.md) | Portada animada, fotos, paquetes ZIP y verificación final |
-| [Respaldo de producción](docs/PROCEDIMIENTO_RESPALDO_PRODUCCION.md) | Responsable de la publicación |
+| [Respaldo de producción](docs/PROCEDIMIENTO_RESPALDO_PRODUCCION.md) y [publicación final](docs/INFORME_PUBLICACION_FINAL.md) | Responsable de la publicación |
 
 Las secciones siguientes conservan el historial de cada fase; el estado vigente de la publicación está en los informes más recientes.
 
