@@ -93,25 +93,44 @@
   .ayuda-grafica > summary { color: #174d73; }
   .tooltip-grafica { max-width: 240px; border: 1px solid #1d463633; border-radius: 0.75rem; background: #fff; padding: 0.55rem 0.7rem; color: #1d4636; font-size: 0.8rem; line-height: 1.4; box-shadow: 0 8px 20px -10px #1d463666; }
 
-  /* Portada: fondo agrícola con movimiento suave (CSS original, solo transform y opacidad). Se puede pausar y respeta prefers-reduced-motion. */
-  .portada-fondo { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-  .portada-fondo__nube { position: absolute; left: 0; width: 22rem; height: 6rem; border-radius: 999px; background: radial-gradient(closest-side, #ffffffd9, #ffffff00); filter: blur(2px); animation: desplazar-nube 80s linear infinite; will-change: transform; }
-  .portada-fondo__nube--1 { top: 6%; animation-duration: 75s; animation-delay: -20s; }
-  .portada-fondo__nube--2 { top: 30%; width: 16rem; height: 4.5rem; opacity: 0.7; animation-duration: 110s; animation-delay: -70s; }
-  .portada-fondo__nube--3 { top: 58%; width: 26rem; opacity: 0.45; animation-duration: 140s; animation-delay: -5s; }
-  .portada-fondo__surcos { position: absolute; inset: auto -10% 0 -10%; height: 42%; background: repeating-linear-gradient(-8deg, #2f7d4314 0 14px, #e6b33c12 14px 28px, #ffffff00 28px 46px); mask-image: linear-gradient(to top, #000 10%, transparent); animation: mecer-surcos 18s ease-in-out infinite alternate; }
-  @keyframes desplazar-nube { from { transform: translateX(-30vw); } to { transform: translateX(110vw); } }
-  @keyframes mecer-surcos { from { transform: translateX(-2%); } to { transform: translateX(2%); } }
-  .paisaje__halo, .paisaje__nube, .paisaje__planta, .paisaje__brote { transform-box: fill-box; }
-  .paisaje__halo { transform-origin: center; animation: latir-sol 6s ease-in-out infinite; }
-  .paisaje__nube { animation: flotar-nube 10s ease-in-out infinite alternate; }
-  .paisaje__nube--lenta { animation-duration: 15s; animation-delay: -4s; }
-  .paisaje__planta, .paisaje__brote { transform-origin: 50% 100%; animation: mecer-planta 5s ease-in-out infinite alternate; }
-  .paisaje__planta--b { animation-delay: -2s; }
-  @keyframes latir-sol { 0%, 100% { transform: scale(1); opacity: 0.18; } 50% { transform: scale(1.12); opacity: 0.3; } }
-  @keyframes flotar-nube { from { transform: translateX(0); } to { transform: translateX(26px); } }
-  @keyframes mecer-planta { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
-  .portada-animada[data-movimiento="pausado"] .portada-fondo *, .portada-animada[data-movimiento="pausado"] [class^="paisaje__"] { animation-play-state: paused; }
+  /* Portada: fotografía real de Cotopaxi con acercamiento muy lento (solo transform) y velo claro para la lectura.
+     Se pausa con el botón y se detiene con prefers-reduced-motion. */
+  .portada-foto { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .portada-foto img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 38%; transform-origin: 66% 40%; animation: acercar-foto 38s ease-in-out infinite alternate; will-change: transform; }
+  @keyframes acercar-foto { from { transform: scale(1.04) translate3d(0, 0, 0); } to { transform: scale(1.13) translate3d(-1.5%, -1%, 0); } }
+  .portada-velo { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, #f8f6eff2 0%, #f8f6efe0 55%, #f8f6eff5 100%); }
+  @media (min-width: 1024px) { .portada-velo { background: linear-gradient(90deg, #f8f6effa 0%, #f8f6eff2 46%, #f8f6efcc 58%, #f8f6ef59 82%, #f8f6ef26 100%), linear-gradient(0deg, #f8f6efe6 0%, #f8f6ef00 26%); } }
+  .portada-animada[data-movimiento="pausado"] .portada-foto img, .portada-animada[data-movimiento="pausado"] .tarjeta-flotante { animation-play-state: paused; }
+
+  /* Composición fotográfica de la portada: foto, contorno de parcela y etiquetas flotantes dentro de la imagen. */
+  .composicion-campo { position: relative; }
+  .composicion-campo figcaption .credito-foto { display: inline-block; border-radius: 0.5rem; background: #ffffffd9; padding: 0.15rem 0.5rem; }
+  .composicion-campo__foto { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border: 4px solid #fff; border-radius: 2rem; background: #dfe8de; box-shadow: 0 30px 60px -28px #1d4636a6; }
+  .composicion-campo__foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .composicion-campo__trazo { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .composicion-campo__trazo polygon { fill: #2f7d4333; stroke: #ffffff; stroke-width: 3; stroke-dasharray: 9 6; vector-effect: non-scaling-stroke; }
+  .composicion-campo__trazo circle { fill: #1d4636; stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .tarjeta-flotante { position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 0.4rem; max-width: 70%; border: 1px solid #1d463622; border-radius: 0.9rem; background: #ffffffed; padding: 0.45rem 0.75rem; color: #1d4636; font-size: 0.74rem; font-weight: 700; line-height: 1.2; box-shadow: 0 10px 24px -12px #1d463699; animation: flotar-tarjeta 7s ease-in-out infinite alternate; }
+  .tarjeta-flotante svg { flex: none; }
+  .tarjeta-flotante--a { top: 0.9rem; left: 0.9rem; }
+  .tarjeta-flotante--b { top: 38%; right: 0.9rem; animation-delay: -2.5s; }
+  .tarjeta-flotante--c { top: calc(75% - 1.5rem); left: 0.9rem; animation-delay: -5s; }
+  @media (min-width: 640px) { .tarjeta-flotante { font-size: 0.82rem; padding: 0.55rem 0.9rem; } }
+  @keyframes flotar-tarjeta { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+  /* Cabeceras de las páginas internas: fotografía tenue bajo un velo oscuro; texto claro con contraste >= 4,5:1. */
+  .banner-foto { position: relative; overflow: hidden; border-radius: 2rem; background: #1d4636; padding: 1.5rem; color: #f8f6ef; }
+  @media (min-width: 640px) { .banner-foto { padding: 2.25rem 2.5rem; } }
+  .banner-foto__imagen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 45%; }
+  .banner-foto__velo { position: absolute; inset: 0; background: linear-gradient(180deg, #143025d1 0%, #143025c7 100%); }
+  @media (min-width: 768px) { .banner-foto__velo { background: linear-gradient(100deg, #143025f0 0%, #143025e0 50%, #143025cc 70%, #1430258c 86%, #14302540 100%); } }
+  .banner-foto__velo--uniforme, .banner-foto__velo.banner-foto__velo--uniforme { background: linear-gradient(180deg, #143025db 0%, #143025d1 100%); }
+  .banner-foto .etiqueta-seccion { color: #fbf0d0; }
+  .banner-foto .chip { box-shadow: 0 0 0 1px #ffffff40; }
+  .credito-foto { width: fit-content; max-width: 100%; font-size: 0.72rem; line-height: 1.4; color: #4b5d49; }
+  .credito-foto a { text-decoration: underline; text-underline-offset: 2px; }
+  .credito-foto--claro { color: #f8f6efd9; }
+
   .boton-movimiento { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; border: 1px solid #1d463633; border-radius: 999px; background: #ffffffcc; padding: 0.4rem 0.9rem; color: #1d4636; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
   .boton-movimiento:hover { background: #fff; }
 
@@ -127,7 +146,7 @@
   .aparecer { animation: aparecer-contenido 0.28s ease-out both; }
   @keyframes aparecer-contenido { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) {
-    .portada-fondo *, [class^="paisaje__"], .aparecer { animation: none; }
+    .portada-foto img, .tarjeta-flotante, .aparecer { animation: none; }
     .foto-campo img, .tarjeta--interactiva { transition: none; }
     .foto-campo:hover img, .tarjeta--interactiva:hover, .boton-primario:active, .boton-secundario:active, .acceso-rapido:active { transform: none; }
     .boton-movimiento { display: none; }

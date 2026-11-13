@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/useSesion';
 import { Marco } from '../components/Marco';
 import { Icono } from '../components/Iconos';
+import { BannerFoto } from '../components/Fotografia';
+import { FOTOS } from '../lib/fotografias';
 import type { NombreIcono } from '../components/Iconos';
 import type { CSSProperties } from 'react';
 
@@ -19,13 +21,12 @@ export function EspacioPersonal() {
   if (!usuario) return null;
   const esTecnico = usuario.rol === 'tecnico';
   return <Marco>
-    <section className="relative overflow-hidden rounded-[2rem] bg-pino p-6 text-crema sm:p-10">
-      <div aria-hidden="true" className="absolute -right-16 -top-16 size-56 rounded-full bg-cultivo/40" /><div aria-hidden="true" className="absolute -bottom-20 right-24 size-44 rounded-full bg-maiz/25" />
-      <div className="relative max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.14em] text-maiz-claro">Mi espacio · {esTecnico ? 'Técnico agrícola' : 'Agricultor'}</p>
+    <BannerFoto foto={FOTOS.portada} className="sm:p-10">
+      <div className="max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.14em] text-maiz-claro">Mi espacio · {esTecnico ? 'Técnico agrícola' : 'Agricultor'}</p>
         <h1 className="mt-4 break-words font-campo text-4xl sm:text-5xl">Bienvenido, {usuario.nombre}.</h1>
         <p className="mt-5 text-lg leading-relaxed text-crema/90">Tu cuenta está lista. Abre tus terrenos para consultar el clima, el calendario y las opciones de siembra. Puedes revisar tus prioridades cuando lo necesites.</p>
       </div>
-    </section>
+    </BannerFoto>
     <div className="mt-7 grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
       <section className="tarjeta tarjeta--acento p-6 sm:p-8">
         <div className="flex items-center gap-3"><span aria-hidden="true" className="flex size-12 items-center justify-center rounded-2xl bg-cultivo-claro text-cultivo"><Icono nombre={esTecnico ? 'tecnico' : 'mapa'} className="size-7" /></span><p className="etiqueta-seccion">Acción principal</p></div>

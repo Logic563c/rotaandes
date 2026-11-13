@@ -6,6 +6,8 @@ import { Marco } from '../components/Marco';
 import { Icono } from '../components/Iconos';
 import type { NombreIcono } from '../components/Iconos';
 import type { CSSProperties } from 'react';
+import { CreditoFoto } from '../components/Fotografia';
+import { conjuntoFoto, FOTOS as FOTOS_PORTADA, fuenteFoto } from '../lib/fotografias';
 
 const pasos: { titulo: string; detalle: string; icono: NombreIcono; acento: string; claro: string }[] = [
   { titulo: 'Registra tu terreno', detalle: 'Ubícalo en el mapa y cuenta qué siembras, si tienes riego y qué es importante para ti.', icono: 'mapa', acento: '#2f7d43', claro: '#e3f1e1' },
@@ -21,22 +23,22 @@ const funciones: { titulo: string; detalle: string; icono: NombreIcono; acento: 
   { titulo: 'Vista satelital e informe', detalle: 'Imágenes MODIS y SMAP de la región e informe PDF para compartir.', icono: 'satelite', acento: '#1d4636', claro: '#ece5d3' },
 ];
 
-// Ilustración original: páramo, terrazas de cultivo y el sol andino.
-function PaisajeAndino() {
-  return <svg viewBox="0 0 480 400" className="block h-auto w-full" fill="none" aria-hidden="true" focusable="false">
-    <rect width="480" height="400" fill="#dcecf6" />
-    <circle cx="372" cy="92" r="58" fill="#e6b33c" opacity="0.18" className="paisaje__halo" /><circle cx="372" cy="92" r="40" fill="#e6b33c" />
-    <path className="paisaje__nube" d="M60 70c18-10 40-8 52 4 14-8 38-4 44 10H52c-4-6 0-12 8-14Z" fill="#fff" opacity="0.85" /><path className="paisaje__nube paisaje__nube--lenta" d="M250 140c14-8 30-6 40 3 11-6 29-3 34 8h-80c-3-5 0-9 6-11Z" fill="#fff" opacity="0.7" />
-    <path d="m0 250 110-150 54 66 86-118 230 202v150H0Z" fill="#9fb7a6" />
-    <path d="m196 104 54-56 62 54-34-12-22 14-28-14-32 14Z" fill="#fbfaf5" />
-    <path d="m0 262 118-96 92 92 104-98 166 130v110H0Z" fill="#5f8f6c" />
-    <path d="M0 292c120-50 210-40 290-6s130 30 190-4v118H0Z" fill="#2f7d43" />
-    <path d="M0 322c130-60 260-50 480 20v58H0Z" fill="#c9844f" />
-    <path d="M0 350c120-40 230-34 480 28v22H0Z" fill="#a3492a" />
-    <path d="M0 322c130-48 250-40 480 22M0 336c130-44 250-36 480 26M0 365c120-34 230-28 400 14" stroke="#f3dcb8" strokeWidth="3" />
-    <path className="paisaje__planta" d="M40 300v-26m-10 15 10-17 10 17" stroke="#1d4636" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" /><path className="paisaje__planta paisaje__planta--b" d="M440 292v-30m-11 18 11-20 11 20" stroke="#1d4636" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-    <path className="paisaje__brote" d="M300 278c-6-18 4-28 14-28 4 10-2 22-14 28Zm0 0c4-14 18-18 26-12-4 10-16 14-26 12Zm0 0v20" stroke="#e3f1e1" strokeWidth="2.5" strokeLinecap="round" />
-  </svg>;
+// Composición fotográfica: campos e invernaderos de Cotopaxi con un contorno de parcela y etiquetas de las funciones.
+// Las etiquetas son decorativas (repiten funciones descritas en la página) y no muestran datos inventados.
+function ComposicionCampo() {
+  const foto = FOTOS_PORTADA.invernaderos;
+  return <figure className="composicion-campo mx-auto w-full max-w-md lg:max-w-none">
+    <div className="composicion-campo__foto">
+      <img src={fuenteFoto(foto)} srcSet={conjuntoFoto(foto)} sizes="(min-width: 1024px) 40vw, 90vw" width={1200} height={900} alt={foto.descripcion} decoding="async" fetchPriority="high" />
+      <svg aria-hidden="true" focusable="false" viewBox="0 0 400 300" preserveAspectRatio="none" className="composicion-campo__trazo"><polygon points="70,196 210,182 300,214 236,262 92,256" /><g>{[[70, 196], [210, 182], [300, 214], [236, 262], [92, 256]].map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="5" />)}</g></svg>
+    </div>
+    <div aria-hidden="true">
+      <span className="tarjeta-flotante tarjeta-flotante--a"><Icono nombre="nube" className="size-4 text-cielo" />Clima con datos NASA</span>
+      <span className="tarjeta-flotante tarjeta-flotante--b"><Icono nombre="area" className="size-4 text-cultivo" />Delimita tu parcela</span>
+      <span className="tarjeta-flotante tarjeta-flotante--c"><Icono nombre="calendario" className="size-4 text-arcilla" />Calendario de siembra</span>
+    </div>
+    <figcaption className="mt-3 px-1"><CreditoFoto foto={foto} /></figcaption>
+  </figure>;
 }
 
 const CLAVE_MOVIMIENTO = 'rotaandes:movimiento-portada';
@@ -57,8 +59,9 @@ export function Inicio() {
   }
   return <Marco>
     <div className="portada-animada fondo-campo relative -mx-4 -mt-8 overflow-hidden border-b border-pino/10 px-4 pb-10 pt-8 sm:-mx-10 sm:-mt-12 sm:rounded-b-[2.5rem] sm:px-10 sm:pb-14 sm:pt-12" data-movimiento={pausado ? 'pausado' : 'activo'}>
-      {/* Fondo decorativo original en CSS: nubes que se desplazan y surcos con luz suave. Sin video ni imágenes externas. */}
-      <div aria-hidden="true" className="portada-fondo"><span className="portada-fondo__nube portada-fondo__nube--1" /><span className="portada-fondo__nube portada-fondo__nube--2" /><span className="portada-fondo__nube portada-fondo__nube--3" /><span className="portada-fondo__surcos" /></div>
+      {/* Fondo fotográfico real (Cotopaxi y campos) con acercamiento lento en CSS y un velo claro que garantiza la lectura. */}
+      <div aria-hidden="true" className="portada-foto"><img src={fuenteFoto(FOTOS_PORTADA.portada)} srcSet={conjuntoFoto(FOTOS_PORTADA.portada)} sizes="100vw" alt="" decoding="async" fetchPriority="high" /></div>
+      <div aria-hidden="true" className="portada-velo" />
       <div className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <div><p className="etiqueta-seccion">Desde los Andes, para nuestra tierra</p>
           <h1 className="mt-5 font-campo text-4xl leading-tight tracking-tight sm:text-5xl">Conoce tu terreno, comprende el clima y explora mejores opciones para sembrar.</h1>
@@ -72,8 +75,9 @@ export function Inicio() {
           <div className="mt-4 flex flex-wrap items-center gap-2"><a className="enlace-nav underline" href="#como-funciona">Conocer cómo funciona <span aria-hidden="true" className="ml-2">↓</span></a>
             <button type="button" className="boton-movimiento" aria-pressed={pausado} onClick={alternarMovimiento}><span aria-hidden="true">{pausado ? '▶' : '❚❚'}</span>{pausado ? 'Reanudar movimiento del fondo' : 'Pausar movimiento del fondo'}</button></div>
         </div>
-        <div className="mx-auto w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-white shadow-[0_24px_50px_-24px_#1d463680]"><PaisajeAndino /></div>
+        <ComposicionCampo />
       </div>
+      <div className="relative mt-6"><CreditoFoto foto={FOTOS_PORTADA.portada} /></div>
     </div>
     <section id="como-funciona" tabIndex={-1} className="destino-terreno mt-12"><p className="etiqueta-seccion">A tu ritmo, paso a paso</p><h2 className="mt-3 font-campo text-3xl sm:text-4xl">Tu terreno es el punto de partida</h2>
       <ol className="mt-7 grid gap-5 md:grid-cols-3">{pasos.map((paso, indice) => <li className="tarjeta tarjeta--acento tarjeta--interactiva p-6" style={{ '--acento': paso.acento } as CSSProperties} key={paso.titulo}>

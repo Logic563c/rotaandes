@@ -9,6 +9,8 @@ import { useAgricultura } from '../lib/useAgricultura';
 import type { HeladaTecnico } from '../types/tecnico';
 import type { CSSProperties } from 'react';
 import { Icono } from '../components/Iconos';
+import { BannerFoto } from '../components/Fotografia';
+import { FOTOS } from '../lib/fotografias';
 
 const fecha = (valor: string) => new Date(`${valor}T12:00:00-05:00`).toLocaleDateString('es-EC', { timeZone: 'America/Guayaquil' });
 function heladaVisible(helada: HeladaTecnico, ahora: number): HeladaTecnico {
@@ -32,8 +34,8 @@ export function PanelTecnico() {
   if (!autorizado) return <Marco><h1 className="font-campo text-3xl">Acceso restringido</h1><p role="alert" className="mt-4">Este panel está disponible exclusivamente para técnicos agrícolas.</p><Link className="boton-secundario mt-5 inline-flex" to="/inicio">Volver a mi espacio</Link></Marco>;
   const terrenos = datos?.terrenos.map((t) => ({ ...t, helada: heladaVisible(t.helada, Math.max(ahora, consulta.dataUpdatedAt)) })) ?? [];
   const actualizar = () => { establecerAhora(Date.now()); void consulta.refetch(); };
-  return <Marco><div className="flex items-center gap-4"><span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-cielo-claro text-cielo"><Icono nombre="tecnico" className="size-8" /></span><div><p className="etiqueta-seccion">Acompañamiento agrícola · Solo lectura</p><h1 className="mt-2 font-campo text-4xl sm:text-5xl">Panel del técnico agrícola</h1></div></div>
-    <p className="mt-5 max-w-3xl leading-relaxed text-oliva">Consulta terrenos registrados y su historial, sin cambiar información de los agricultores. La parroquia corresponde al perfil del propietario y puede no ser la ubicación del lote.</p>
+  return <Marco><BannerFoto foto={FOTOS.parcelas}><div className="flex items-center gap-4"><span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-cielo-claro text-cielo"><Icono nombre="tecnico" className="size-8" /></span><div><p className="etiqueta-seccion">Acompañamiento agrícola · Solo lectura</p><h1 className="mt-2 font-campo text-4xl sm:text-5xl">Panel del técnico agrícola</h1></div></div>
+    <p className="mt-5 max-w-3xl leading-relaxed text-crema/90">Consulta terrenos registrados y su historial, sin cambiar información de los agricultores. La parroquia corresponde al perfil del propietario y puede no ser la ubicación del lote.</p></BannerFoto>
     <form aria-label="Filtros de terrenos" className="tarjeta tarjeta--acento mt-7 grid items-end gap-4 p-5 sm:grid-cols-2" onSubmit={(evento) => { evento.preventDefault(); actualizar(); }}>
       <div className="min-w-0"><label htmlFor="parroquia-tecnico" className="block text-sm font-semibold">Parroquia del perfil</label><select id="parroquia-tecnico" className="mt-2 w-full" value={parroquia} onChange={(e) => { establecerParroquia(e.target.value); establecerPagina(1); }}><option value="">Todas las parroquias</option>{(datos?.parroquias ?? (parroquia ? [parroquia] : [])).map((p) => <option key={p}>{p}</option>)}</select></div>
       <div className="min-w-0"><label htmlFor="cultivo-tecnico" className="block text-sm font-semibold">Cultivo en el historial</label><select id="cultivo-tecnico" className="mt-2 w-full" value={cultivo} disabled={catalogo.isPending || catalogo.isError} onChange={(e) => { establecerCultivo(e.target.value); establecerPagina(1); }}><option value="">Todos los cultivos</option>{catalogo.data?.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>

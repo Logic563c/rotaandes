@@ -9,6 +9,8 @@ import { listarTerrenos, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import type { Terreno } from '../types/api';
 import { Icono } from '../components/Iconos';
+import { BannerFoto } from '../components/Fotografia';
+import { FOTOS } from '../lib/fotografias';
 
 export function Terrenos() {
   const sesion = useAgricultura();
@@ -26,7 +28,7 @@ export function Terrenos() {
   } });
   const esAgricultor = sesion.usuario?.rol === 'agricultor';
   return <Marco>
-    <div className="flex flex-wrap items-end justify-between gap-5"><div><p className="etiqueta-seccion">Nuestra tierra, paso a paso</p><h1 className="mt-3 font-campo text-4xl sm:text-5xl">{esAgricultor ? 'Mis terrenos' : 'Consulta de terrenos'}</h1><p className="mt-4 text-oliva">{esAgricultor ? 'Ubica tus parcelas y conserva su historial de siembra.' : 'Acceso técnico de solo lectura. No permite modificar terrenos ni siembras.'}</p></div>{esAgricultor && <Link className="boton-primario" to="/terrenos/nuevo">Añadir terreno <span aria-hidden="true" className="ml-3">+</span></Link>}</div>
+    <BannerFoto foto={FOTOS.laderas}><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="etiqueta-seccion">Nuestra tierra, paso a paso</p><h1 className="mt-3 font-campo text-4xl sm:text-5xl">{esAgricultor ? 'Mis terrenos' : 'Consulta de terrenos'}</h1><p className="mt-4 text-crema/90">{esAgricultor ? 'Ubica tus parcelas y conserva su historial de siembra.' : 'Acceso técnico de solo lectura. No permite modificar terrenos ni siembras.'}</p></div>{esAgricultor && <Link className="boton-claro" to="/terrenos/nuevo">Añadir terreno <span aria-hidden="true" className="ml-3">+</span></Link>}</div></BannerFoto>
     {mensaje && <p role="status" className="mt-6 rounded-xl border border-pino/20 bg-white p-4">{mensaje}</p>}
     <div className="mt-8"><EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} /></div>
     {consulta.isSuccess && <div className="mt-7 grid items-start gap-7 lg:grid-cols-[1.1fr_1fr]">

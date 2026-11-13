@@ -19,6 +19,8 @@ import { DelimitacionTerreno } from '../components/DelimitacionTerreno';
 import { obtenerTerreno, eliminarTerreno } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import { Icono } from '../components/Iconos';
+import { BannerFoto } from '../components/Fotografia';
+import { FOTOS } from '../lib/fotografias';
 import type { NombreIcono } from '../components/Iconos';
 
 function Dato({ icono, titulo, children }: { icono: NombreIcono; titulo: string; children: ReactNode }) {
@@ -49,8 +51,8 @@ export function DetalleTerreno() {
   return <Marco><Link to={esAgricultor ? '/terrenos' : '/tecnico'} className="enlace-nav -ml-3 text-sm">← {esAgricultor ? 'Mis terrenos' : 'Panel técnico'}</Link>
     <div className="mt-7"><EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} /></div>
     {consulta.isSuccess && terreno && <>
-      <div className="flex flex-wrap items-end justify-between gap-5"><div className="min-w-0"><p className="etiqueta-seccion">Detalle de la parcela</p><h1 className="mt-3 break-words font-campo text-4xl sm:text-5xl">{terreno.nombre}</h1>
-        <ul aria-label="Resumen de la parcela" className="mt-4 flex flex-wrap gap-2"><li className="chip chip--cultivo"><Icono nombre="altitud" className="size-4" />{terreno.altitud_m === null ? 'Altitud no disponible' : `${terreno.altitud_m.toLocaleString('es-EC')} m s. n. m.`}</li><li className="chip chip--cielo"><Icono nombre="riego" className="size-4" />{terreno.tiene_riego === null ? 'Riego sin indicar' : terreno.tiene_riego ? 'Con riego' : 'Sin riego'}</li><li className="chip chip--maiz"><Icono nombre="area" className="size-4" />{terreno.area_ha === null ? 'Área sin indicar' : `${terreno.area_ha.toLocaleString('es-EC')} ha`}</li></ul></div>{esAgricultor && <div className="flex flex-wrap gap-3"><Link className="boton-secundario" to={`/terrenos/${id}/editar`}>Editar terreno</Link><button className="enlace-nav font-semibold text-arcilla" onClick={() => { eliminar.reset(); establecerConfirmacion(true); }}>Eliminar terreno</button></div>}</div>
+      <BannerFoto foto={FOTOS.invernaderos}><div className="flex flex-wrap items-end justify-between gap-5"><div className="min-w-0"><p className="etiqueta-seccion">Detalle de la parcela</p><h1 className="mt-3 break-words font-campo text-4xl sm:text-5xl">{terreno.nombre}</h1>
+        <ul aria-label="Resumen de la parcela" className="mt-4 flex flex-wrap gap-2"><li className="chip chip--cultivo"><Icono nombre="altitud" className="size-4" />{terreno.altitud_m === null ? 'Altitud no disponible' : `${terreno.altitud_m.toLocaleString('es-EC')} m s. n. m.`}</li><li className="chip chip--cielo"><Icono nombre="riego" className="size-4" />{terreno.tiene_riego === null ? 'Riego sin indicar' : terreno.tiene_riego ? 'Con riego' : 'Sin riego'}</li><li className="chip chip--maiz"><Icono nombre="area" className="size-4" />{terreno.area_ha === null ? 'Área sin indicar' : `${terreno.area_ha.toLocaleString('es-EC')} ha`}</li></ul></div>{esAgricultor && <div className="flex flex-wrap gap-3"><Link className="boton-secundario" to={`/terrenos/${id}/editar`}>Editar terreno</Link><button className="boton-secundario text-arcilla" onClick={() => { eliminar.reset(); establecerConfirmacion(true); }}>Eliminar terreno</button></div>}</div></BannerFoto>
       {mensaje && <p role="status" className="mt-6 rounded-xl border border-pino/20 bg-white p-4">{mensaje}</p>}
       <NavegacionTerreno />
       <div className="mt-8 grid items-start gap-7 lg:grid-cols-2"><div className="tarjeta tarjeta--acento p-6 sm:p-8"><h2 className="text-xl font-semibold">Datos del terreno</h2><dl className="mt-5 grid grid-cols-1 gap-3 text-sm min-[360px]:grid-cols-2">

@@ -264,3 +264,10 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - **PDF:** la sección 1 incluye un croquis vectorial con PDFKit, la superficie, los vértices, la comparación con el área declarada y una advertencia. El resumen añade una línea. Sin delimitación, el PDF lo indica y no añade páginas.
 - **Producción:** la migración no se aplicó en producción. Requiere autorización expresa y un respaldo verificado antes de desplegar el backend que la usa.
 
+## Mejora fotográfica de la interfaz (13-11-2026)
+
+- **Sin video:** el fondo de la portada es una fotografía real con un acercamiento CSS muy lento, que solo anima `transform`. Se pausa con el botón existente y se desactiva con `prefers-reduced-motion`.
+- **Fotos:** solo de Wikimedia Commons, con licencia verificada por API (CC BY 2.0 y CC BY-SA 4.0). Se convierten a WebP en dos tamaños con `srcset` y se acreditan junto a cada foto y en «Fuentes».
+- **Ubicación:** las fotos van solo en la portada y en las cabeceras de página, bajo un velo de contraste. Nunca van detrás de formularios, mapas, gráficas, tablas ni resultados.
+- **Contraste:** se verifica midiendo el fondo real bajo cada texto, contra el píxel más desfavorable. El criterio es ≥ 4,5:1.
+

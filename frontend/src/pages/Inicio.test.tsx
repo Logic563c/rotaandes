@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Inicio } from './Inicio';
@@ -47,11 +47,21 @@ describe('Página inicial', () => {
   it('muestra fotografías agrícolas con descripción, crédito y licencia, cargadas de forma diferida', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }))));
     mostrarInicio();
-    const fotos = screen.getAllByRole('img').filter((imagen) => imagen.getAttribute('src')?.startsWith('/imagenes/'));
+    // Las dos fotos de la sección «Cada lote es distinto» conservan su descripción, carga diferida y versiones.
+    const seccion = screen.getByRole('region', { name: 'Cada lote es distinto' });
+    const fotos = within(seccion).getAllByRole('img').filter((imagen) => imagen.getAttribute('src')?.startsWith('/imagenes/'));
     expect(fotos).toHaveLength(2);
     for (const foto of fotos) { expect(foto.getAttribute('alt')?.length).toBeGreaterThan(30); expect(foto).toHaveAttribute('loading', 'lazy'); expect(foto.getAttribute('srcset')).toContain('1280w'); }
-    expect(screen.getAllByRole('link', { name: 'CC BY-SA 4.0' })).toHaveLength(2);
-    expect(screen.getByText(/Foto: Gideoraielgave/)).toBeInTheDocument(); expect(screen.getByText(/Foto: Arabsalam/)).toBeInTheDocument();
+    expect(within(seccion).getAllByRole('link', { name: 'CC BY-SA 4.0' })).toHaveLength(2);
+    expect(within(seccion).getByText(/Foto: Gideoraielgave/)).toBeInTheDocument(); expect(within(seccion).getByText(/Foto: Arabsalam/)).toBeInTheDocument();
+    // Portada: composición con foto real descrita y fondo fotográfico decorativo (oculto a lectores de pantalla), ambos acreditados.
+    const composicion = screen.getByRole('img', { name: /Campos verdes e invernaderos/ });
+    expect(composicion.getAttribute('srcset')).toContain('1200w');
+    const fondo = document.querySelector('.portada-foto img');
+    expect(fondo).toHaveAttribute('alt', ''); expect(fondo?.closest('[aria-hidden="true"]')).not.toBeNull(); expect(fondo?.getAttribute('srcset')).toContain('1600w');
+    expect(screen.getByRole('link', { name: 'CC BY 2.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/2.0/deed.es');
+    expect(screen.getByText(/Foto: David Ceballos/)).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'CC BY-SA 4.0' })).toHaveLength(3);
   });
   it('permite pausar y reanudar el movimiento del fondo y recuerda la preferencia', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }))));

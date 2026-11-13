@@ -22,7 +22,12 @@ describe('Información pública, comprensión y rutas', () => {
   it('distingue imágenes, modelado y reglas sin ocultar el GeoJSON pendiente', async () => {
     mostrar('/fuentes'); await screen.findByRole('heading', { level: 1 }); const contenido = screen.getByRole('main');
     for (const texto of ['GeoJSON analítico', 'pendiente', 'no son predicciones', 'OpenStreetMap contributors', 'no sustituye']) expect(contenido.textContent).toContain(texto);
-    const enlaces = within(contenido).getAllByRole('link').filter((enlace) => enlace.getAttribute('href')?.startsWith('https:')); expect(enlaces.length).toBe(6); expect(enlaces.every((enlace) => !new URL(enlace.getAttribute('href') ?? '').username)).toBe(true);
+    const creditos = within(contenido).getByRole('region', { name: 'Créditos de las fotografías' });
+    // Las seis fuentes de datos conservan un enlace oficial cada una; los créditos fotográficos se comprueban aparte.
+    const enlaces = within(contenido).getAllByRole('link').filter((enlace) => enlace.getAttribute('href')?.startsWith('https:') && !creditos.contains(enlace)); expect(enlaces.length).toBe(6); expect(enlaces.every((enlace) => !new URL(enlace.getAttribute('href') ?? '').username)).toBe(true);
+    const enlacesCreditos = within(creditos).getAllByRole('link'); expect(enlacesCreditos).toHaveLength(10);
+    expect(enlacesCreditos.every((enlace) => /^https:\/\/(commons\.wikimedia\.org|creativecommons\.org)\//.test(enlace.getAttribute('href') ?? '') && !new URL(enlace.getAttribute('href') ?? '').username)).toBe(true);
+    for (const autor of ['David Ceballos', 'Arabsalam', 'Gideoraielgave']) expect(creditos.textContent).toContain(autor);
   });
   it('permite ir desde la landing al glosario y fuentes aunque falle el backend', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('red'))); mostrar('/'); await screen.findByRole('button', { name: 'Reintentar conexión' });
