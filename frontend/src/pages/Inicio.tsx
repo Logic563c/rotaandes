@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { obtenerEstadoServicio } from '../lib/api';
@@ -41,10 +40,6 @@ function ComposicionCampo() {
   </figure>;
 }
 
-const CLAVE_MOVIMIENTO = 'rotaandes:movimiento-portada';
-function leerMovimientoPausado(): boolean {
-  try { return window.localStorage.getItem(CLAVE_MOVIMIENTO) === 'pausado'; } catch { return false; }
-}
 const FOTOS = [
   { archivo: 'laderas-cultivadas-latacunga', alto: 960, texto: 'Laderas de la sierra cubiertas de parcelas de cultivo de distintos colores, con casas y una iglesia al pie, en el valle de Latacunga.', pie: 'Laderas cultivadas en parcelas, valle de Latacunga.', autor: 'Gideoraielgave', original: 'https://commons.wikimedia.org/wiki/File:Valle_en_Latacunga_-_Cotopaxi_-_Ecuador_III.jpg' },
   { archivo: 'parcelas-cotopaxi', alto: 963, texto: 'Lomas con parcelas agrícolas y pajonal; al fondo, el volcán Cotopaxi con nieve, parcialmente cubierto por nubes.', pie: 'Parcelas en las lomas, con el Cotopaxi al fondo.', autor: 'Arabsalam', original: 'https://commons.wikimedia.org/wiki/File:Road_to_Quilotoa_Cotopaxi_view_Ecuador_1614.jpg' },
@@ -52,14 +47,9 @@ const FOTOS = [
 
 export function Inicio() {
   const consulta = useQuery({ queryKey: ['estadoServicio'], queryFn: ({ signal }) => obtenerEstadoServicio(signal) });
-  const [pausado, establecerPausado] = useState(leerMovimientoPausado);
-  function alternarMovimiento() {
-    const nuevo = !pausado; establecerPausado(nuevo);
-    try { window.localStorage.setItem(CLAVE_MOVIMIENTO, nuevo ? 'pausado' : 'activo'); } catch { /* Preferencia solo de esta visita. */ }
-  }
   return <Marco>
-    <div className="portada-animada fondo-campo relative -mx-4 -mt-8 overflow-hidden border-b border-pino/10 px-4 pb-10 pt-8 sm:-mx-10 sm:-mt-12 sm:rounded-b-[2.5rem] sm:px-10 sm:pb-14 sm:pt-12" data-movimiento={pausado ? 'pausado' : 'activo'}>
-      {/* Fondo fotográfico real (Cotopaxi y campos) con acercamiento lento en CSS y un velo claro que garantiza la lectura. */}
+    <div className="portada-fotografica fondo-campo relative -mx-4 -mt-8 overflow-hidden border-b border-pino/10 px-4 pb-10 pt-8 sm:-mx-10 sm:-mt-12 sm:rounded-b-[2.5rem] sm:px-10 sm:pb-14 sm:pt-12">
+      {/* Fondo fotográfico estático de Cotopaxi y campos, con un velo claro para la lectura. */}
       <div aria-hidden="true" className="portada-foto"><img src={fuenteFoto(FOTOS_PORTADA.portada)} srcSet={conjuntoFoto(FOTOS_PORTADA.portada)} sizes="100vw" alt="" decoding="async" fetchPriority="high" /></div>
       <div aria-hidden="true" className="portada-velo" />
       <div className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
@@ -73,7 +63,7 @@ export function Inicio() {
             <li className="chip chip--maiz"><Icono nombre="sol" className="size-4" />Pronóstico Open-Meteo</li>
           </ul>
           <div className="mt-4 flex flex-wrap items-center gap-2"><a className="enlace-nav underline" href="#como-funciona">Conocer cómo funciona <span aria-hidden="true" className="ml-2">↓</span></a>
-            <button type="button" className="boton-movimiento" aria-pressed={pausado} onClick={alternarMovimiento}><span aria-hidden="true">{pausado ? '▶' : '❚❚'}</span>{pausado ? 'Reanudar movimiento del fondo' : 'Pausar movimiento del fondo'}</button></div>
+          </div>
         </div>
         <ComposicionCampo />
       </div>

@@ -12,9 +12,10 @@ Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance
 | [Gráficas y delimitación de parcelas](docs/INFORME_GRAFICAS_Y_DELIMITACION.md) | Detalle técnico de la fase del 12-11-2026 |
 | [Informe de la fase de entrega](docs/INFORME_FASE_ENTREGA.md) | Portada animada, fotos, paquetes ZIP y verificación final |
 | [Mejora fotográfica](docs/INFORME_MEJORA_FOTOGRAFICA.md) | Fotografías reales de Cotopaxi en portada y cabeceras, licencias y contraste medido |
+| [Ambientación global](docs/INFORME_AMBIENTACION_GLOBAL.md) | Fondo fotográfico compartido, portada estática accesible, comparativas y preparación de publicación del frontend |
 | [Respaldo de producción](docs/PROCEDIMIENTO_RESPALDO_PRODUCCION.md) y [publicación final](docs/INFORME_PUBLICACION_FINAL.md) | Responsable de la publicación |
 
-Las secciones siguientes conservan el historial de cada fase; el estado vigente de la publicación está en los informes más recientes.
+Las secciones siguientes conservan el historial de cada fase; el estado vigente de la publicación está en los informes más recientes. La última publicación fotográfica es `c8f663d729263f5f38c5f0f6d822308a51837dd5` (Vercel `dpl_J4uSetdbVUcu9wTz3hE59Au22irx`). La ambientación global se prepara únicamente en `feat/ambientacion-global`: su publicación requiere autorización posterior y no cambia esa versión pública.
 
 Esta entrega contiene autenticación y perfil, persistencia PostgreSQL + Prisma, administración de terrenos y siembras, mapa Leaflet/OpenStreetMap, altitud estimada desde Open-Meteo, los diez cultivos referenciales autorizados, climatología histórica NASA POWER, pronóstico de siete días con alertas preventivas, calendario mensual, comparador explicable de rotaciones, simulador visual de escenarios y visor de imágenes satelitales NASA GIBS. La rama local `feat/experiencia-agricultor` conserva tendencias 2005–2024, panel técnico y PDF, y añade la portada completa, el glosario, las fuentes y mejoras de navegación; estas actualizaciones todavía no se publican. El GeoJSON satelital analítico sigue pendiente.
 

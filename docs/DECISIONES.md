@@ -271,3 +271,12 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - **Ubicación:** las fotos van solo en la portada y en las cabeceras de página, bajo un velo de contraste. Nunca van detrás de formularios, mapas, gráficas, tablas ni resultados.
 - **Contraste:** se verifica midiendo el fondo real bajo cada texto, contra el píxel más desfavorable. El criterio es ≥ 4,5:1.
 
+## Ambientación global y portada estática (13-11-2026)
+
+- Esta actualización sustituye la decisión de movimiento de la fase fotográfica anterior: la fotografía de portada y sus etiquetas quedan estáticas. Se retira el botón de pausa y el estado de presentación asociado; no hay animación automática que necesite pausarse. Se conserva `prefers-reduced-motion` para las otras transiciones existentes. Referencia: [WCAG 2.2.2](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html).
+- `Marco` incorpora un único paisaje decorativo común en las páginas interiores. Reutiliza `parcelas-cotopaxi-720/1280.webp`, de Arabsalam, CC BY-SA 4.0, con crédito enlazado. La portada conserva únicamente su fondo original. No se descargan fotos nuevas ni se añaden dependencias.
+- El paisaje ocupa una capa fija sin flujo, con `aria-hidden`, texto alternativo vacío y `pointer-events: none`. Un velo protege los textos exteriores; tarjetas y módulos de datos usan fondo blanco opaco. La fotografía no se introduce en las superficies de mapas, tablas, formularios o gráficas.
+- Se conserva e incorpora expresamente el cambio local preexistente del crédito de portada: `#ffffffd9` pasa a `#ffffff`. Su parche y copia original se guardaron fuera de Git antes de crear la rama. Es un ajuste de contraste de presentación, no una modificación accidental del trabajo previo.
+- La prueba del botón de pausa se adapta a la portada estática solicitada, conservando su caso y añadiendo comprobaciones de fotografías, acciones y preferencias antiguas. Se añaden pruebas de fondo decorativo y teclado/movimiento reducido; no se eliminan suites ni verificaciones funcionales.
+- Backend, autenticación, cliente HTTP, cálculos, modelos, migraciones y configuración de producción permanecen sin cambios. Solo se prepara un despliegue posterior del frontend, sujeto a revisión y autorización.
+

@@ -32,11 +32,23 @@
 }
 
 @layer components {
+  /* Un solo paisaje ambiental compartido. El velo protege los textos sueltos;
+     las superficies de trabajo son opacas. No recibe clics ni ocupa espacio. */
+  .marco { position: relative; isolation: isolate; background: #f8f6ef; }
+  .marco__ambiente { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+  .marco__ambiente > img { width: 100%; height: 100%; object-fit: cover; object-position: 58% 50%; }
+  .marco__velo { position: absolute; inset: 0; background: #f8f6efdf; }
+  @media (min-width: 1152px) {
+    .marco__velo { background: linear-gradient(90deg, #f8f6ef80 0%, #f8f6efe8 12%, #f8f6efeb 32%, #f8f6efeb 68%, #f8f6efe8 88%, #f8f6ef80 100%); }
+  }
+  .marco__contenido { min-width: 0; }
+  .marco__credito-superficie { display: inline-block; max-width: 100%; border: 1px solid #1d463622; border-radius: 1rem; background: #fff; padding: 0.8rem 1rem; }
+
   /* Franja de cuatro colores inspirada en los tejidos andinos (CSS propio, sin imágenes). */
   .franja-andina { height: 6px; background: linear-gradient(90deg, #2f7d43 0 25%, #e6b33c 25% 50%, #a3492a 50% 75%, #1f6391 75% 100%); }
   .fondo-campo { background: radial-gradient(120% 90% at 100% 0%, #e2eff8 0%, transparent 55%), radial-gradient(90% 80% at 0% 100%, #e3f1e1 0%, transparent 60%), #f8f6ef; }
 
-  .tarjeta { border: 1px solid #1d463622; border-radius: 1.5rem; background: #ffffffd9; box-shadow: 0 1px 2px #1d463610, 0 10px 30px -12px #1d463626; }
+  .tarjeta { border: 1px solid #1d463622; border-radius: 1.5rem; background: #fff; box-shadow: 0 1px 2px #1d463610, 0 10px 30px -12px #1d463626; }
   .tarjeta--acento { border-top: 5px solid var(--acento, #2f7d43); }
   .campo { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; }
   .boton-primario { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; border-radius: 0.85rem; background: linear-gradient(180deg, #24573f, #1d4636); color: white; padding: 0.75rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px -8px #1d4636aa; transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -62,7 +74,7 @@
   .chip--gris { background: #eeece6; color: #4a4a44; }
 
   /* Módulos del detalle del terreno: tarjeta con color e icono propios. */
-  .modulo { --acento: #2f7d43; --acento-claro: #e3f1e1; margin-top: 2rem; min-width: 0; border: 1px solid #1d463620; border-top: 6px solid var(--acento); border-radius: 1.75rem; background: #fffffff0; padding: 1.5rem 1.25rem; box-shadow: 0 10px 30px -18px #1d463640; }
+  .modulo { --acento: #2f7d43; --acento-claro: #e3f1e1; margin-top: 2rem; min-width: 0; border: 1px solid #1d463620; border-top: 6px solid var(--acento); border-radius: 1.75rem; background: #fff; padding: 1.5rem 1.25rem; box-shadow: 0 10px 30px -18px #1d463640; }
   @media (min-width: 640px) { .modulo { padding: 2rem 2.25rem; } }
   .modulo--cielo { --acento: #1f6391; --acento-claro: #e2eff8; }
   .modulo--maiz { --acento: #c8921f; --acento-claro: #fbf0d0; }
@@ -93,37 +105,34 @@
   .ayuda-grafica > summary { color: #174d73; }
   .tooltip-grafica { max-width: 240px; border: 1px solid #1d463633; border-radius: 0.75rem; background: #fff; padding: 0.55rem 0.7rem; color: #1d4636; font-size: 0.8rem; line-height: 1.4; box-shadow: 0 8px 20px -10px #1d463666; }
 
-  /* Portada: fotografía real de Cotopaxi con acercamiento muy lento (solo transform) y velo claro para la lectura.
-     Se pausa con el botón y se detiene con prefers-reduced-motion. */
+  /* Portada estática: conserva la fotografía y su composición sin movimiento
+     automático. No necesita un control de pausa ni una preferencia almacenada. */
   .portada-foto { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-  .portada-foto img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 38%; transform-origin: 66% 40%; animation: acercar-foto 38s ease-in-out infinite alternate; will-change: transform; }
-  @keyframes acercar-foto { from { transform: scale(1.04) translate3d(0, 0, 0); } to { transform: scale(1.13) translate3d(-1.5%, -1%, 0); } }
+  .portada-foto img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 38%; }
   .portada-velo { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, #f8f6eff2 0%, #f8f6efe0 55%, #f8f6eff5 100%); }
   @media (min-width: 1024px) { .portada-velo { background: linear-gradient(90deg, #f8f6effa 0%, #f8f6eff2 46%, #f8f6efcc 58%, #f8f6ef59 82%, #f8f6ef26 100%), linear-gradient(0deg, #f8f6efe6 0%, #f8f6ef00 26%); } }
-  .portada-animada[data-movimiento="pausado"] .portada-foto img, .portada-animada[data-movimiento="pausado"] .tarjeta-flotante { animation-play-state: paused; }
 
   /* Composición fotográfica de la portada: foto, contorno de parcela y etiquetas flotantes dentro de la imagen. */
   .composicion-campo { position: relative; }
-  .composicion-campo figcaption .credito-foto { display: inline-block; border-radius: 0.5rem; background: #ffffffd9; padding: 0.15rem 0.5rem; }
+  .composicion-campo figcaption .credito-foto { display: inline-block; border-radius: 0.5rem; background: #ffffff; padding: 0.15rem 0.5rem; }
   .composicion-campo__foto { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border: 4px solid #fff; border-radius: 2rem; background: #dfe8de; box-shadow: 0 30px 60px -28px #1d4636a6; }
   .composicion-campo__foto img { display: block; width: 100%; height: 100%; object-fit: cover; }
   .composicion-campo__trazo { position: absolute; inset: 0; width: 100%; height: 100%; }
   .composicion-campo__trazo polygon { fill: #2f7d4333; stroke: #ffffff; stroke-width: 3; stroke-dasharray: 9 6; vector-effect: non-scaling-stroke; }
   .composicion-campo__trazo circle { fill: #1d4636; stroke: #fff; stroke-width: 2; vector-effect: non-scaling-stroke; }
-  .tarjeta-flotante { position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 0.4rem; max-width: 70%; border: 1px solid #1d463622; border-radius: 0.9rem; background: #ffffffed; padding: 0.45rem 0.75rem; color: #1d4636; font-size: 0.74rem; font-weight: 700; line-height: 1.2; box-shadow: 0 10px 24px -12px #1d463699; animation: flotar-tarjeta 7s ease-in-out infinite alternate; }
+  .tarjeta-flotante { position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 0.4rem; max-width: 70%; border: 1px solid #1d463622; border-radius: 0.9rem; background: #ffffffed; padding: 0.45rem 0.75rem; color: #1d4636; font-size: 0.74rem; font-weight: 700; line-height: 1.2; box-shadow: 0 10px 24px -12px #1d463699; }
   .tarjeta-flotante svg { flex: none; }
   .tarjeta-flotante--a { top: 0.9rem; left: 0.9rem; }
-  .tarjeta-flotante--b { top: 38%; right: 0.9rem; animation-delay: -2.5s; }
-  .tarjeta-flotante--c { top: calc(75% - 1.5rem); left: 0.9rem; animation-delay: -5s; }
+  .tarjeta-flotante--b { top: 38%; right: 0.9rem; }
+  .tarjeta-flotante--c { top: calc(75% - 1.5rem); left: 0.9rem; }
   @media (min-width: 640px) { .tarjeta-flotante { font-size: 0.82rem; padding: 0.55rem 0.9rem; } }
-  @keyframes flotar-tarjeta { from { transform: translateY(0); } to { transform: translateY(-5px); } }
 
   /* Cabeceras de las páginas internas: fotografía tenue bajo un velo oscuro; texto claro con contraste >= 4,5:1. */
   .banner-foto { position: relative; overflow: hidden; border-radius: 2rem; background: #1d4636; padding: 1.5rem; color: #f8f6ef; }
   @media (min-width: 640px) { .banner-foto { padding: 2.25rem 2.5rem; } }
   .banner-foto__imagen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 45%; }
   .banner-foto__velo { position: absolute; inset: 0; background: linear-gradient(180deg, #143025d1 0%, #143025c7 100%); }
-  @media (min-width: 768px) { .banner-foto__velo { background: linear-gradient(100deg, #143025f0 0%, #143025e0 50%, #143025cc 70%, #1430258c 86%, #14302540 100%); } }
+  @media (min-width: 1152px) { .banner-foto__velo { background: linear-gradient(100deg, #143025f0 0%, #143025e0 50%, #143025cc 70%, #1430258c 86%, #14302540 100%); } }
   .banner-foto__velo--uniforme, .banner-foto__velo.banner-foto__velo--uniforme { background: linear-gradient(180deg, #143025db 0%, #143025d1 100%); }
   .banner-foto .etiqueta-seccion { color: #fbf0d0; }
   .banner-foto .chip { box-shadow: 0 0 0 1px #ffffff40; }
@@ -131,8 +140,6 @@
   .credito-foto a { text-decoration: underline; text-underline-offset: 2px; }
   .credito-foto--claro { color: #f8f6efd9; }
 
-  .boton-movimiento { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; border: 1px solid #1d463633; border-radius: 999px; background: #ffffffcc; padding: 0.4rem 0.9rem; color: #1d4636; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-  .boton-movimiento:hover { background: #fff; }
 
   /* Fotografías con licencia verificada (ver public/imagenes/CREDITOS.md). */
   .foto-campo { overflow: hidden; border: 1px solid #1d463622; border-radius: 1.5rem; background: #fff; box-shadow: 0 10px 30px -18px #1d463640; }
@@ -149,7 +156,6 @@
     .portada-foto img, .tarjeta-flotante, .aparecer { animation: none; }
     .foto-campo img, .tarjeta--interactiva { transition: none; }
     .foto-campo:hover img, .tarjeta--interactiva:hover, .boton-primario:active, .boton-secundario:active, .acceso-rapido:active { transform: none; }
-    .boton-movimiento { display: none; }
   }
 
   .estado-cargando { display: flex; align-items: center; gap: 0.85rem; }

@@ -3,13 +3,20 @@ import type { ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useSesion } from '../lib/useSesion';
 import { Marca } from './Iconos';
+import { CreditoFoto } from './Fotografia';
+import { conjuntoFoto, FOTOS, fuenteFoto } from '../lib/fotografias';
 export function Marco({ children }: { children: ReactNode }) {
   const sesion = useSesion();
   const navegar = useNavigate();
   const ubicacion = useLocation(); const contenido = useRef<HTMLElement>(null);
+  const esPortada = ubicacion.pathname === '/';
   useEffect(() => { if (ubicacion.key !== 'default' && !ubicacion.hash) { contenido.current?.focus({ preventScroll: true }); contenido.current?.scrollIntoView?.({ block: 'start' }); } }, [ubicacion.key, ubicacion.hash]);
   return (
-    <div className="flex min-h-screen flex-col bg-crema text-pino">
+    <div className={`marco ${esPortada ? 'marco--portada' : 'marco--interior'} flex min-h-screen flex-col text-pino`}>
+      {!esPortada && <div className="marco__ambiente" aria-hidden="true">
+        <img src={fuenteFoto(FOTOS.parcelas)} srcSet={conjuntoFoto(FOTOS.parcelas)} sizes="100vw" alt="" decoding="async" />
+        <div className="marco__velo" />
+      </div>}
       <a href="#contenido" className="sr-only focus:not-sr-only focus:block focus:bg-maiz-claro focus:p-4 focus:font-semibold">Saltar al contenido</a>
       <header className="z-30 border-b sm:sticky sm:top-0 border-pino/10 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-10">
@@ -35,7 +42,10 @@ export function Marco({ children }: { children: ReactNode }) {
         </div>
         <div className="franja-andina" aria-hidden="true" />
       </header>
-      <main ref={contenido} id="contenido" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 focus:outline-none sm:px-10 sm:py-12">{children}</main>
+      <main ref={contenido} id="contenido" tabIndex={-1} className="marco__contenido mx-auto w-full max-w-6xl flex-1 px-4 py-8 focus:outline-none sm:px-10 sm:py-12">{children}</main>
+      {!esPortada && <div className="marco__credito mx-auto w-full max-w-6xl px-4 sm:px-10">
+        <div className="marco__credito-superficie"><CreditoFoto foto={FOTOS.parcelas} /><p className="mt-1 text-xs text-oliva">Paisaje ilustrativo de Cotopaxi; no representa tu terreno ni datos satelitales.</p></div>
+      </div>}
       <footer className="mt-10 bg-pino text-crema">
         <div className="franja-andina" aria-hidden="true" />
         <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-6 px-4 py-8 text-sm leading-relaxed sm:px-10">

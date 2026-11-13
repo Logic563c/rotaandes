@@ -63,16 +63,17 @@ describe('Página inicial', () => {
     expect(screen.getByText(/Foto: David Ceballos/)).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: 'CC BY-SA 4.0' })).toHaveLength(3);
   });
-  it('permite pausar y reanudar el movimiento del fondo y recuerda la preferencia', async () => {
+  it('conserva las fotografías y acciones con una portada estática, sin control de pausa ni depender de preferencias anteriores', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }))));
-    window.localStorage.removeItem('rotaandes:movimiento-portada');
+    window.localStorage.setItem('rotaandes:movimiento-portada', 'pausado');
     mostrarInicio();
-    const boton = screen.getByRole('button', { name: /Pausar movimiento del fondo/ });
-    expect(boton).toHaveAttribute('aria-pressed', 'false');
-    expect(document.querySelector('.portada-animada')).toHaveAttribute('data-movimiento', 'activo');
-    await userEvent.click(boton);
-    expect(screen.getByRole('button', { name: /Reanudar movimiento del fondo/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(document.querySelector('.portada-animada')).toHaveAttribute('data-movimiento', 'pausado');
+    expect(document.querySelector('.portada-fotografica')).toBeInTheDocument();
+    expect(document.querySelector('.portada-fotografica')).not.toHaveAttribute('data-movimiento');
+    expect(screen.queryByRole('button', { name: /movimiento del fondo/ })).not.toBeInTheDocument();
+    expect(document.querySelector('.portada-foto img')).toHaveAttribute('alt', '');
+    expect(screen.getByRole('img', { name: /Campos verdes e invernaderos/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Crear mi cuenta' })).toHaveAttribute('href', '/registro');
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
     expect(window.localStorage.getItem('rotaandes:movimiento-portada')).toBe('pausado');
     window.localStorage.removeItem('rotaandes:movimiento-portada');
   });
