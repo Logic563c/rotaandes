@@ -299,3 +299,9 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - **Rotaciones:** el comparador prefiere el primer mes recomendado dentro de 12 meses y solo usa uno con precaución si no hay ninguno. Así no programa meses fuera de época solo porque ahora dan precaución. Los cultivos nuevos sin índices dan puntajes nulos y estrategias «no determinadas». No cambia el significado de los índices.
 - **Comparación verificable:** `backend/scripts/compararCalendario.ts` compara el motor v1 conservado (`calendarioV1.ts`, solo de referencia) con el v2. Usa las mismas respuestas NASA archivadas y terrenos ficticios. Las pruebas originales del motor v1 se conservan sin cambiar aserciones.
 - **Capas satelitales:** no se modifican. Cada píxel de la imagen WMS mide unos 139 m. MODIS NDVI tiene 250 m nativos (6,25 ha por píxel) y SMAP, 9 km (unas 8100 ha). La escala del mapa y el área delimitada son conceptos distintos.
+
+## Integración y coherencia de estados (15-11-2026)
+
+- Se integran `feat/calendario-agronomico` y `feat/comprension-graficas` en `integracion/calendario-graficas`, desde `release/publicacion`, con fusiones `--no-ff`. Detalle en `docs/INFORME_INTEGRACION.md`.
+- Los cuatro estados usan el mismo nombre en calendario, rotaciones, simulador y PDF. «Qué puedes hacer» es texto orientativo derivado del motivo de cada casilla: no cambia el estado ni añade reglas agrícolas.
+- Se retiran frases duplicadas cuando «Para leerla» ya explica lo mismo. El eje de meses de la climatología permite omitir etiquetas en pantallas estrechas.

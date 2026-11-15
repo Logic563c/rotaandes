@@ -14,6 +14,7 @@ Plataforma de apoyo a la siembra y rotación de cultivos de Cotopaxi. El alcance
 | [Mejora fotográfica](docs/INFORME_MEJORA_FOTOGRAFICA.md) | Fotografías reales de Cotopaxi en portada y cabeceras, licencias y contraste medido |
 | [Ambientación global](docs/INFORME_AMBIENTACION_GLOBAL.md) | Fondo fotográfico compartido, portada estática accesible, comparativas y preparación de publicación del frontend |
 | [Comprensión de las gráficas](docs/INFORME_COMPRENSION_GRAFICAS.md) | Mejora local para revisión: orientación visible junto a barras y líneas, conservación de ayudas y comparativas antes/después |
+| [Calendario agronómico](docs/INFORME_CALENDARIO_AGRONOMICO.md) e [integración](docs/INFORME_INTEGRACION.md) | Calendario por ciclo con 29 cultivos y fuentes INIAP/FAO, comparación antes/después e integración con la lectura de gráficas (candidata, sin publicar) |
 | [Respaldo de producción](docs/PROCEDIMIENTO_RESPALDO_PRODUCCION.md) y [publicación final](docs/INFORME_PUBLICACION_FINAL.md) | Responsable de la publicación |
 
 Las secciones siguientes conservan el historial de cada fase; el estado vigente de la publicación está en los informes más recientes. La última publicación fotográfica es `c8f663d729263f5f38c5f0f6d822308a51837dd5` (Vercel `dpl_J4uSetdbVUcu9wTz3hE59Au22irx`). La ambientación global se prepara únicamente en `feat/ambientacion-global`: su publicación requiere autorización posterior y no cambia esa versión pública.
