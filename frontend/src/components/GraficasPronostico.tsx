@@ -17,6 +17,7 @@ export function GraficasPronostico({ dias, umbralC }: { dias: DiaPronostico[]; u
   return <div className="mt-6 grid min-w-0 gap-6 xl:grid-cols-2">
     <MarcoGrafica titulo="Temperaturas previstas" tipo="pronostico" fuente={fuente}
       descripcion="Temperatura mínima (noche) y máxima (día) previstas para cada uno de los próximos siete días."
+      lecturaRapida="Cada punto es un día previsto: la línea naranja muestra la máxima y la morada, la mínima. Más arriba significa más calor; más abajo, más frío. Compara la mínima con la línea roja para reconocer alertas preventivas; no confirma una helada."
       ejeVertical="Temperatura en grados Celsius (°C)" ejeHorizontal="Días, desde hoy"
       leyenda={[{ color: COLORES_VARIABLE.temperaturaMaxima, texto: 'Máxima prevista (°C)', trazo: 'punteada' }, { color: COLORES_VARIABLE.temperaturaMinima, texto: 'Mínima prevista (°C)', trazo: 'discontinua' }, { color: '#a3492a', texto: `Umbral de alerta de helada: ${umbral}`, trazo: 'referencia' }]}
       resumen={resumirMinimas(serie('t_min'), umbralC)}
@@ -35,6 +36,7 @@ export function GraficasPronostico({ dias, umbralC }: { dias: DiaPronostico[]; u
     </MarcoGrafica>
     <MarcoGrafica titulo="Lluvia prevista" tipo="pronostico" fuente={fuente}
       descripcion="Milímetros de lluvia previstos para cada día."
+      lecturaRapida="Cada barra es un día: más alta significa más lluvia prevista y más baja, menos. Compara qué días podrían ser más lluviosos; el pronóstico puede cambiar y no es el promedio mensual de NASA."
       ejeVertical="Lluvia en milímetros (mm) por día" ejeHorizontal="Días, desde hoy"
       leyenda={[{ color: COLORES_VARIABLE.lluvia, texto: 'Lluvia prevista del día (mm)', trazo: 'barra' }]}
       resumen={resumirSerie(serie('precipitacion_mm'), { nombre: 'lluvia', unidad: 'mm', alto: 'el día con más lluvia prevista', bajo: 'el de menos' })}

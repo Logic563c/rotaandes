@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient } from '../../backend/src/generated/prisma/client.js';
 import { validarUrlBase } from '../../backend/src/lib/configuracionBase.js';
@@ -18,6 +18,19 @@ import { metadatosCapa, validarConsultaCapa } from '../../backend/src/data/catal
 import { leerPdf } from '../../backend/tests/fixtures/leerPdf.js';
 
 async function comprobarAncho(pagina: Page) { expect(await pagina.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true); }
+async function comprobarLecturaGraficas(region: Locator, cantidad: number) {
+  const figuras = region.getByRole('figure'); await expect(figuras).toHaveCount(cantidad);
+  for (const figura of await figuras.all()) {
+    await expect(figura.getByText('Para leerla:')).toBeVisible();
+    await expect(figura).toHaveAccessibleDescription(/Para leerla:/);
+    await expect(figura.getByRole('list', { name: 'Leyenda de la gráfica' })).toBeVisible();
+    await expect(figura.locator('details')).not.toHaveAttribute('open');
+    // La ayuda sigue disponible y puede abrirse con teclado.
+    await figura.locator('summary').focus(); await figura.page().keyboard.press('Enter');
+    await expect(figura.getByText('Precauciones', { exact: true })).toBeVisible();
+    await figura.page().keyboard.press('Enter');
+  }
+}
 async function comprobarEncabezados(pagina: Page) { const niveles = await pagina.locator('h1,h2,h3,h4,h5,h6').evaluateAll((encabezados) => encabezados.filter((encabezado) => encabezado.getClientRects().length).map((encabezado) => Number(encabezado.tagName.slice(1)))); expect(niveles.filter((nivel) => nivel === 1)).toHaveLength(1); expect(niveles.every((nivel, indice) => indice === 0 || nivel <= (niveles[indice - 1] ?? 0) + 1)).toBe(true); }
 async function comprobarContraste(pagina: Page) {
   return pagina.evaluate(() => {
@@ -82,13 +95,20 @@ test('entrega final: agricultor completo, todos los módulos, persistencia y té
     for (const [estado, texto] of [['recomendado', 'Recomendado según la regla referencial'], ['posible_con_cuidado', 'Posible con cuidado'], ['no_recomendado', 'No recomendado'], ['no_determinado', 'No determinado: falta información esencial']]) { const cantidad = calculado.celdas.filter((celda: unknown) => typeof celda === 'object' && celda !== null && 'mes' in celda && celda.mes === 1 && 'estado' in celda && celda.estado === estado).length; await expect(resumen.getByText(`${texto} (${cantidad})`, { exact: true })).toBeVisible(); }
     await comprobarAncho(page); await resumen.screenshot({ path: informacion.outputPath('resumen-calendario.png'), animations: 'disabled' });
     await page.getByRole('button', { name: 'Ver climatología histórica', exact: true }).click(); await expect(page.getByRole('table', { name: /Valores mensuales/ })).toBeVisible({ timeout: 60000 });
+    await comprobarLecturaGraficas(page.getByRole('region', { name: 'Climatología histórica', exact: true }), 3);
     await page.getByRole('button', { name: 'Comparar rotaciones', exact: true }).click(); await expect(page.getByRole('heading', { name: 'Actual: patrón del historial', exact: true })).toBeVisible(); await page.screenshot({ path: informacion.outputPath('detalle-terreno.png'), fullPage: true, animations: 'disabled' });
     await page.getByRole('button', { name: 'Ver pronóstico de siete días', exact: true }).click(); await expect(page.getByRole('region', { name: 'Pronóstico y posibles heladas', exact: true }).getByText('Open-Meteo', { exact: true }).first()).toBeVisible({ timeout: 60000 });
+    await comprobarLecturaGraficas(page.getByRole('region', { name: 'Pronóstico y posibles heladas', exact: true }), 2);
     await page.getByRole('button', { name: 'Abrir simulador de escenarios', exact: true }).click(); const simulador = page.getByRole('region', { name: 'Simulador de escenarios climáticos', exact: true });
     const nuevaConsulta = page.waitForResponse((respuesta) => { const url = new URL(respuesta.url()); return url.pathname.endsWith('/rotaciones') && url.searchParams.get('lluvia_pct') === '-30' && url.searchParams.get('temp_delta') === '2'; });
     await simulador.getByRole('slider', { name: 'Variación de lluvia' }).focus(); await page.keyboard.press('Home'); await simulador.getByRole('slider', { name: 'Variación de temperatura' }).focus(); await page.keyboard.press('End');
     expect((await nuevaConsulta).status()).toBe(200); await simulador.getByRole('group', { name: 'Condiciones hipotéticas' }).screenshot({ path: informacion.outputPath('escenarios.png') });
     await page.getByRole('button', { name: 'Ver tendencias 2005–2024', exact: true }).click(); await expect(page.getByRole('region', { name: 'Tabla anual de tendencias', exact: true })).toBeVisible({ timeout: 60000 }); await page.getByRole('region', { name: 'Tabla anual de tendencias', exact: true }).screenshot({ path: informacion.outputPath('tendencias.png') });
+    await comprobarLecturaGraficas(page.getByRole('region', { name: '¿Cómo ha cambiado el clima?', exact: true }), 4);
+    const tarjetas = page.getByRole('region', { name: 'Comparador de rotaciones', exact: true }).getByRole('article');
+    await expect(tarjetas).toHaveCount(3);
+    for (const tarjeta of await tarjetas.all()) await expect(tarjeta.getByText(/Compara la misma fila entre opciones:/)).toBeVisible();
+    await expect(simulador.getByText(/En cada fila, la barra gris es el original/)).toBeVisible();
     const visor = page.getByRole('region', { name: 'Mapa y capas satelitales', exact: true }); await visor.getByRole('button', { name: 'Explorar capas NASA' }).click();
     for (const [nombre, imagen] of [['Vegetación NDVI (MODIS)', 'Vegetación NDVI'], ['Humedad superficial (SMAP)', 'Humedad superficial SMAP']] as const) { await visor.getByRole('radio', { name: nombre, exact: true }).check(); await expect(visor.getByRole('img', { name: imagen, exact: true })).toBeVisible({ timeout: 30000 }); await expect(visor.getByRole('list', { name: 'Leyenda ' + imagen, exact: true })).toBeVisible(); await visor.screenshot({ path: informacion.outputPath(imagen === 'Vegetación NDVI' ? 'ndvi.png' : 'smap.png') }); }
     await comprobarAncho(page);

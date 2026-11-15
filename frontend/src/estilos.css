@@ -99,6 +99,7 @@
 
   /* Gráficas: ejes con unidades, resumen, ayuda desplegable y cuadro emergente legible. */
   .eje-grafica { margin: 0.25rem 0; font-size: 0.75rem; font-weight: 600; color: #4b5d49; }
+  .lectura-rapida-grafica { margin: 0.75rem 0; border-left: 3px solid #2f7d43; border-radius: 0.5rem; background: #f3f9f2; padding: 0.75rem; color: #1d4636; font-size: 0.875rem; line-height: 1.6; overflow-wrap: anywhere; }
   .resumen-grafica { border-radius: 0.85rem; background: #f8f6ef; padding: 0.75rem 0.9rem; font-size: 0.85rem; line-height: 1.55; }
   .ayuda-grafica { border: 1px solid #1f639133; border-radius: 1rem; background: #f3f8fc; padding: 0.35rem 0.9rem 0.6rem; }
   .ayuda-grafica[open] { padding-bottom: 1rem; }

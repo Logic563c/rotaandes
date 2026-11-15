@@ -25,6 +25,15 @@ function respuesta(entrada: URL | RequestInfo) {
 async function abrir() { await userEvent.click(screen.getByRole('button', { name: 'Abrir simulador de escenarios' })); await screen.findByText('Escenario original seleccionado'); }
 afterEach(() => { clientes.forEach((cliente) => cliente.clear()); clientes.length = 0; vi.unstubAllGlobals(); });
 describe('Simulador visual, controles, peticiones y sesiones', () => {
+  it('explica las barras original y simulada sin presentarlas como un pronóstico', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (entrada: URL | RequestInfo) => respuesta(entrada))); mostrar(); await abrir();
+    const lectura = screen.getByText(/En cada fila, la barra gris es el original/);
+    expect(lectura).toBeVisible();
+    expect(lectura).toHaveTextContent(/amarilla rayada.*más larga.*mejora.*más corta, empeora/);
+    expect(lectura).toHaveTextContent(/misma rotación: no es un pronóstico ni una cosecha garantizada/);
+    expect(screen.getAllByText('¿Cómo interpretar esta gráfica?').length).toBeGreaterThan(0);
+    expect(screen.getByRole('table', { name: /Indicadores comparados de Patrón actual/ })).toBeVisible();
+  });
   it('abre a petición, compara límites de ambos controles, explica por teclado y restaura sin otra consulta', async () => {
     const solicitar = vi.fn(async (entrada: URL | RequestInfo) => respuesta(entrada)); vi.stubGlobal('fetch', solicitar); mostrar(); expect(solicitar).not.toHaveBeenCalled(); await abrir();
     expect(solicitar).toHaveBeenCalledTimes(2); const lluvia = screen.getByRole('slider', { name: 'Variación de lluvia' }); const temperatura = screen.getByRole('slider', { name: 'Variación de temperatura' });

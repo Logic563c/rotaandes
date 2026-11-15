@@ -17,6 +17,18 @@ function mostrar() {
 }
 afterEach(() => { clientes.forEach((cliente) => cliente.clear()); clientes.length = 0; vi.unstubAllGlobals(); });
 describe('Comparador: tres tarjetas, límites, errores y sesiones', () => {
+  it('explica la longitud de las barras sin equiparar los puntajes con cosechas o dinero', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(crearRotacionesPrueba()))));
+    mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Comparar rotaciones' }));
+    const tarjeta = await screen.findByRole('article', { name: 'Patrón actual de prueba' });
+    const lectura = within(tarjeta).getByText('Para leerla:').parentElement;
+    expect(lectura).toBeVisible();
+    expect(lectura).toHaveTextContent(/misma fila.*más larga es más favorable.*compatibilidad climática; más corta, menos/);
+    expect(lectura).toHaveTextContent(/no cosechas ni dinero.*faltan datos/);
+    expect(tarjeta.querySelector('dl')).toHaveAccessibleDescription(/Compara la misma fila/);
+    expect(within(tarjeta).getByText('Evidencia, ventajas y límites')).toBeVisible();
+    expect(within(tarjeta).getByText('55/100')).toBeVisible();
+  });
   it('consulta a petición, muestra tres alternativas con valores/textos y explicaciones por teclado', async () => {
     const pendiente = Promise.withResolvers<Response>(); const solicitar = vi.fn().mockReturnValue(pendiente.promise); vi.stubGlobal('fetch', solicitar);
     mostrar(); expect(solicitar).not.toHaveBeenCalled(); const abrir = screen.getByRole('button', { name: 'Comparar rotaciones' }); abrir.focus(); await userEvent.keyboard('{Enter}'); expect(screen.getByRole('status')).toHaveTextContent('Cargando');

@@ -8,7 +8,7 @@ import type { CeldaCalendario, EscenarioCalendario } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
 import { TarjetaEstrategia } from './ComparadorRotaciones';
 import { CabeceraModulo } from './Iconos';
-import { AyudaGrafica, LeyendaGrafica, TipoDato } from './AyudaGrafica';
+import { AyudaGrafica, LecturaRapidaGrafica, LeyendaGrafica, TipoDato } from './AyudaGrafica';
 import { COLORES_VARIABLE } from '../lib/graficas';
 
 const ESCENARIO_ORIGINAL: EscenarioCalendario = { lluvia_pct: 0, temp_delta: 0 };
@@ -59,6 +59,7 @@ function ComparacionRotaciones({ original, modificado }: { original: ResultadosE
     <div className="mt-9 flex flex-wrap items-center gap-3"><h3 className="font-campo text-2xl">Variación de las puntuaciones</h3><TipoDato tipo="hipotetico" /></div>
     <LeyendaGrafica elementos={[{ color: COLORES_VARIABLE.original, texto: 'Original: clima histórico sin cambios', trazo: 'barra' }, { color: COLORES_VARIABLE.simulado, texto: 'Simulado: escenario hipotético', trazo: 'barra' }]} />
     <p className="mt-3 text-sm leading-relaxed text-oliva">Se compara la misma estrategia por su identificador, aunque cambie de posición. Si entra o sale del grupo de tres, sus indicadores completos del otro escenario no están disponibles: no se resta el puntaje de otra rotación. Los cambios se expresan en puntos del índice, no en porcentajes ni dinero.</p>
+    <LecturaRapidaGrafica texto="En cada fila, la barra gris es el original y la amarilla rayada, tu simulación. Si la amarilla es más larga, ese puntaje mejora en el modelo; si es más corta, empeora. Compara la misma rotación: no es un pronóstico ni una cosecha garantizada." />
     <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-2">{comparacion.map((estrategia) => <div key={estrategia.id} className="tarjeta min-w-0 p-4 sm:p-5">
       <h4 className="break-words font-semibold">{estrategia.nombre}</h4>
       {(!estrategia.original || !estrategia.modificado) && <p className="mt-3 text-sm text-oliva">{estrategia.original ? 'Sale del grupo de tres en la simulación.' : 'Entra al grupo de tres en la simulación.'} Sin comparación completa para la misma estrategia.</p>}
