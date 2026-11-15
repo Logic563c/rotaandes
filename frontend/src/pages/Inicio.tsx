@@ -16,7 +16,7 @@ const pasos: { titulo: string; detalle: string; icono: NombreIcono; acento: stri
 const funciones: { titulo: string; detalle: string; icono: NombreIcono; acento: string; claro: string }[] = [
   { titulo: 'Clima de tu zona', detalle: 'Lluvia, temperaturas y humedad del suelo por mes, con datos de NASA POWER.', icono: 'termometro', acento: '#1f6391', claro: '#e2eff8' },
   { titulo: 'Pronóstico y heladas', detalle: 'Siete días de Open-Meteo con aviso preventivo cuando la mínima baja de 2 °C.', icono: 'copo', acento: '#1f6391', claro: '#e2eff8' },
-  { titulo: 'Calendario de siembra', detalle: 'Diez cultivos y doce meses, con el motivo de cada recomendación.', icono: 'calendario', acento: '#2f7d43', claro: '#e3f1e1' },
+  { titulo: 'Calendario de siembra', detalle: '29 cultivos y doce meses, con el motivo de cada recomendación.', icono: 'calendario', acento: '#2f7d43', claro: '#e3f1e1' },
   { titulo: 'Tres rotaciones', detalle: 'Tu patrón actual frente a dos alternativas, con evidencia, riesgos y vacíos.', icono: 'rotacion', acento: '#a3492a', claro: '#f8e6dc' },
   { titulo: 'Simulador de escenarios', detalle: 'Prueba menos lluvia o más calor sin modificar tus datos.', icono: 'deslizador', acento: '#7a5410', claro: '#fbf0d0' },
   { titulo: 'Vista satelital e informe', detalle: 'Imágenes MODIS y SMAP de la región e informe PDF para compartir.', icono: 'satelite', acento: '#1d4636', claro: '#ece5d3' },

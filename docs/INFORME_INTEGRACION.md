@@ -10,6 +10,7 @@ Versión candidata para revisión del cliente. Sin push, sin merge a `release/pu
 | `c33c1bf` | `feat/comprension-graficas` | Confirma los 14 cambios que estaban sin commit: «Para leerla» en 9 gráficas, rotaciones y simulador. Ver [INFORME_COMPRENSION_GRAFICAS.md](INFORME_COMPRENSION_GRAFICAS.md). Antes del commit, `npm run check` dio 824 pruebas aprobadas. |
 | `bfe28d2`, `b5b25af` | `integracion/calendario-graficas` | Fusiones `--no-ff` de ambas ramas sobre `release/publicacion` (`69f925b`). El único conflicto fue en `docs/DECISIONES.md`: se conservan las dos secciones en orden cronológico. El simulador, la prueba final de navegador y los estilos se fusionaron sin conflicto. |
 | `eb8f349` | `integracion/calendario-graficas` | Coherencia tras la integración (detalle abajo) |
+| Commit siguiente a este informe | `integracion/calendario-graficas` | La portada, la página de fuentes, el mensaje de la semilla y el README hablaban de «diez cultivos»; ahora dicen 29. Solo cambian textos. |
 
 ## Ajustes de coherencia (`eb8f349`)
 

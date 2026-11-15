@@ -159,7 +159,7 @@ Ambas plataformas deben utilizar **la raíz del monorepo**, con su único lockfi
 | Servicio | Instalación / compilación | Arranque / salida |
 | --- | --- | --- |
 | Railway, backend | `npm ci --include=dev` y `npm run build --workspace backend` | `npm run start --workspace backend`; salud `/api/health` |
-| Railway, predeploy autorizado | `npm run produccion:preparar --workspace backend` | `prisma migrate deploy`, verificación y semillas originales de diez cultivos y ocho plantillas |
+| Railway, predeploy autorizado | `npm run produccion:preparar --workspace backend` | `prisma migrate deploy`, verificación y semillas del catálogo (29 cultivos desde `20261115000100_catalogo_ampliado`) y ocho plantillas |
 | Vercel, frontend | `npm ci --include=dev` y `npm run build:publicacion --workspace frontend` | `frontend/dist`; rutas SPA en `vercel.json` |
 
 `.railway/railway.ts` declara PostgreSQL privado y backend, compilación, predeploy, arranque y healthcheck. Railway ya no acepta `railway.json` en servicios nuevos; se sustituyó tras verificar la documentación y el CLI actuales. El SDK oficial `railway@3.16.0` es una dependencia de desarrollo, sin cambios al stack de aplicación. IaC se evalúa localmente; planificar no crea servicios, aplicar sí requiere aprobación y revisar que no haya eliminaciones.
@@ -203,7 +203,7 @@ El catálogo ya está cargado en esta computadora. Para reproducirlo en un clon 
 npm.cmd run db:seed --workspace backend
 ```
 
-También está configurado `prisma db seed`. La semilla realiza upsert de los diez cultivos exactos de la sección 10 de `PROYECTO.md` en una transacción. Se ejecutó dos veces para verificar su idempotencia. No crea usuarios, terrenos, siembras ni plantillas y no borra filas ajenas. Los valores son referenciales y están pendientes de validación agronómica local; las descripciones sin texto de referencia permanecen nulas. El comando de desarrollo rechaza `NODE_ENV=test`; las pruebas utilizan el mismo catálogo dentro de su aislamiento y lo revierten o limpian.
+También está configurado `prisma db seed`. La semilla realiza upsert, en una transacción, de los 29 cultivos del catálogo: los diez exactos de la sección 10 de `PROYECTO.md` y los diecinueve de la ampliación con fuentes citadas. Se ejecutó dos veces para verificar su idempotencia. No crea usuarios, terrenos, siembras ni plantillas y no borra filas ajenas. Los valores son referenciales y están pendientes de validación agronómica local; las descripciones sin texto de referencia permanecen nulas. El comando de desarrollo rechaza `NODE_ENV=test`; las pruebas utilizan el mismo catálogo dentro de su aislamiento y lo revierten o limpian.
 
 Se fijan `prisma`, `@prisma/client` y `@prisma/adapter-pg` a **7.10.1**. Prisma 7 usa `backend/prisma.config.ts` para la URL y el adaptador `pg` para el cliente. El cliente se genera explícitamente en `backend/src/generated/prisma/`, excluido de Git, y se compila con el backend. `dev`, `typecheck` y `build` lo generan automáticamente; generar el cliente no conecta a PostgreSQL.
 
