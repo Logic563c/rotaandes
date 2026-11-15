@@ -9,11 +9,45 @@ function conRiego() { const entrada = crearEntradaCalendario(); entrada.terreno.
 const de = (entrada: unknown, cultivo: string, mes = 1) => calcularCalendario(entrada).find((celda) => celda.cultivo_id === cultivo && celda.mes === mes);
 
 describe('Clasificación de riesgos concretos y datos esenciales', () => {
+  it.each(['riego', 'altitud', 'temperatura', 'lluvia'] as const)('recalcula los 29 cultivos y los doce resúmenes mensuales cuando cambia %s', (factor) => {
+    const entrada = conRiego();
+    if (factor === 'lluvia') entrada.terreno.tieneRiego = false;
+    const antes = calcularCalendario(entrada);
+    if (factor === 'riego') entrada.terreno.tieneRiego = false;
+    if (factor === 'altitud') entrada.terreno.altitudM = 3800;
+    if (factor === 'temperatura') entrada.escenario.tempDelta = -2;
+    if (factor === 'lluvia') entrada.escenario.lluviaPct = -30;
+    // Para temperatura se sitúa la mínima a ambos lados del umbral preventivo,
+    // sin modificar perfiles ni parámetros agronómicos de los cultivos.
+    if (factor === 'temperatura') {
+      entrada.mensual.forEach((mes) => { mes.t_min = 3; mes.riesgo_helada = 'medio'; });
+    }
+    const base = factor === 'temperatura' ? calcularCalendario({ ...entrada, escenario: { lluviaPct: 0, tempDelta: 0 } }) : antes;
+    const despues = calcularCalendario(entrada);
+    expect(base).toHaveLength(348); expect(despues).toHaveLength(348);
+    for (let mes = 1; mes <= 12; mes++) {
+      const iniciales = base.filter((celda) => celda.mes === mes); const finales = despues.filter((celda) => celda.mes === mes);
+      expect(finales).toHaveLength(29); expect(new Set(finales.map((celda) => celda.cultivo_id)).size).toBe(29);
+      expect(finales.some((celda) => iniciales.find((inicial) => inicial.cultivo_id === celda.cultivo_id)?.estado !== celda.estado)).toBe(true);
+      for (const celda of finales) {
+        expect(celda.resumen.length).toBeGreaterThan(0); expect(celda.motivo).toContain(celda.resumen);
+      }
+    }
+  });
   it('la altitud de celda ausente es información faltante, nunca amarillo permanente', () => {
     const entrada = conRiego(); entrada.elevacionCeldaM = null;
     const acelga = de(entrada, 'acelga');
     expect(acelga?.estado).toBe('no_determinado'); expect(acelga?.resumen).toContain('falta la altitud de la celda NASA');
     expect(acelga?.motivo).toContain('Qué puedes hacer:');
+  });
+  it('sin elevación NASA los doce resúmenes conservan los 29 casos sin determinar y explican el dato faltante', () => {
+    const entrada = conRiego(); entrada.terreno.altitudM = 3650; entrada.elevacionCeldaM = null;
+    const celdas = calcularCalendario(entrada);
+    for (let mes = 1; mes <= 12; mes++) {
+      const mensual = celdas.filter((celda) => celda.mes === mes); expect(mensual).toHaveLength(29);
+      expect(mensual.every((celda) => celda.estado === 'no_determinado')).toBe(true);
+      expect(mensual.every((celda) => celda.resumen.includes('falta la altitud de la celda NASA'))).toBe(true);
+    }
   });
   it('el salto de 3399 a 3400 m no añade otra corrección si se conoce la altitud de la celda', () => {
     const entrada = conRiego(); entrada.elevacionCeldaM = 3400;

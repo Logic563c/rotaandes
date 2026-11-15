@@ -7,9 +7,44 @@ import { validarUrlBase } from '../../backend/src/lib/configuracionBase.js';
 import { claveClima } from '../../backend/src/services/clima.js';
 import { catalogoCompleto } from '../../backend/src/data/catalogoCultivos.js';
 import { crearBasePrueba } from '../../backend/tests/fixtures/nasaPruebas.js';
+import type { Locator, Page } from '@playwright/test';
+
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const ETIQUETAS = { recomendado: 'Recomendado', posible_con_cuidado: 'Posible con precaución', no_recomendado: 'No recomendado', no_determinado: 'No determinado' };
+const esquemaResultado = z.object({
+  version: z.literal('calendario_ciclo_v3'),
+  celdas: z.array(z.object({ cultivo_id: z.string(), mes: z.number(), estado: z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']), resumen: z.string() })),
+  cultivos: z.array(z.object({ id: z.string(), nombre: z.string(), categoria_nombre: z.string(), ciclo_corto: z.boolean() })),
+});
+async function comprobarResumenYDetalle(page: Page, region: Locator, cuerpo: z.infer<typeof esquemaResultado>) {
+  const resumen = region.getByRole('region', { name: 'Resumen del calendario', exact: true });
+  const matriz = region.getByRole('region', { name: 'Matriz mensual de siembra' });
+  const nombres = new Map(cuerpo.cultivos.map((cultivo) => [cultivo.id, cultivo.nombre]));
+  const etiquetasMatriz = await matriz.getByRole('button').evaluateAll((botones) => botones.map((boton) => boton.getAttribute('aria-label')).sort());
+  expect(etiquetasMatriz).toEqual(cuerpo.celdas.map((celda) => `${nombres.get(celda.cultivo_id)}, ${MESES[celda.mes - 1]}: ${ETIQUETAS[celda.estado]}`).sort());
+  for (let mes = 1; mes <= 12; mes++) {
+    await resumen.getByRole('combobox').selectOption(String(mes));
+    const celdas = cuerpo.celdas.filter((celda) => celda.mes === mes); expect(celdas).toHaveLength(29);
+    await expect(resumen.getByRole('status')).toContainText('29 cultivos evaluados');
+    for (const estado of Object.keys(ETIQUETAS) as (keyof typeof ETIQUETAS)[]) {
+      const delGrupo = celdas.filter((celda) => celda.estado === estado);
+      const titulo = estado === 'no_determinado' ? 'No determinado: faltan datos o fuentes' : ETIQUETAS[estado];
+      const termino = resumen.getByText(`${titulo} (${delGrupo.length})`, { exact: true }); await expect(termino).toBeVisible();
+      expect(await termino.locator('../..').getByRole('button').allTextContents()).toEqual(delGrupo.map((celda) => nombres.get(celda.cultivo_id)));
+    }
+    for (const id of ['acelga', 'berro', 'papa']) {
+      const celda = celdas.find((valor) => valor.cultivo_id === id); if (!celda) throw new Error('Cultivo de prueba ausente.');
+      await resumen.getByRole('button', { name: `Ver motivos de ${nombres.get(id)} en ${MESES[mes - 1]}`, exact: true }).click();
+      const dialogo = page.getByRole('dialog'); await expect(dialogo.getByText(celda.resumen, { exact: true })).toBeVisible();
+      await expect(dialogo.getByText(new RegExp(`^[✓!×?] ${ETIQUETAS[celda.estado]}$`))).toBeVisible();
+      await dialogo.getByRole('button', { name: 'Cerrar explicación' }).click();
+    }
+  }
+}
 
 // Catálogo completo (29 cultivos) con datos FICTICIOS y clima NASA archivado: grupos, filtros, explicación, celular y siembra de un cultivo nuevo.
 test('calendario ampliado: categorías, filtros, explicación, celular y siembra de un cultivo nuevo', async ({ page }, informacion) => {
+  test.setTimeout(180000);
   const grupo = new Pool({ connectionString: validarUrlBase(process.env.TEST_DATABASE_URL, true) });
   const email = `calendario-ampliado-${randomUUID()}@example.invalid`; const password = randomBytes(24).toString('base64url');
   const clave = claveClima(-1.045, -78.591); const creados: string[] = [];
@@ -33,17 +68,25 @@ test('calendario ampliado: categorías, filtros, explicación, celular y siembra
 
     const solicitud = page.waitForResponse((respuesta) => respuesta.url().includes(`/terrenos/${id}/calendario?`)); await page.getByRole('button', { name: 'Ver calendario de siembra' }).click();
     const respuesta = await solicitud; expect(respuesta.status()).toBe(200);
-    const cuerpo = z.object({ celdas: z.array(z.object({ cultivo_id: z.string(), mes: z.number(), estado: z.string(), resumen: z.string() })), cultivos: z.array(z.object({ id: z.string(), categoria_nombre: z.string(), ciclo_corto: z.boolean() })) }).parse(await respuesta.json());
+    const cuerpo = esquemaResultado.parse(await respuesta.json());
     expect(cuerpo.celdas).toHaveLength(348); expect(cuerpo.cultivos).toHaveLength(29);
     const region = page.getByRole('region', { name: 'Calendario de siembra', exact: true }); const matriz = region.getByRole('region', { name: 'Matriz mensual de siembra' });
     await expect(region.getByRole('columnheader')).toHaveCount(13); await expect(region.getByRole('rowheader')).toHaveCount(29);
     for (const nombre of ['Hortalizas de hoja (8)', 'Hortalizas de raíz (4)', 'Cebollas (2)', 'Cucurbitáceas (fruto) (2)', 'Tubérculos andinos (3)']) await expect(matriz.getByText(nombre, { exact: true })).toBeVisible();
     for (const etiqueta of ['Recomendado', 'Posible con precaución', 'No recomendado', 'No determinado']) await expect(region.getByRole('list', { name: 'Leyenda del calendario' }).getByText(new RegExp(`^. ${etiqueta}$`))).toBeVisible();
+    await comprobarResumenYDetalle(page, region, cuerpo);
+    // Solo cambia la parcela ficticia de esta prueba; se comprueba una nueva consulta real al backend.
+    await grupo.query('UPDATE terrenos SET tiene_riego=false WHERE id=$1 AND usuario_id=$2', [id, usuario]);
+    const renovacion = page.waitForResponse((valor) => valor.url().includes(`/terrenos/${id}/calendario?`));
+    await region.getByRole('button', { name: 'Actualizar calendario', exact: true }).click();
+    const respuestaNueva = await renovacion; expect(respuestaNueva.status()).toBe(200); const sinRiego = esquemaResultado.parse(await respuestaNueva.json());
+    expect(sinRiego.celdas.some((celda) => cuerpo.celdas.find((inicial) => inicial.cultivo_id === celda.cultivo_id && inicial.mes === celda.mes)?.estado !== celda.estado)).toBe(true);
+    await comprobarResumenYDetalle(page, region, sinRiego);
     await region.getByRole('checkbox', { name: 'Solo ciclos de hasta 4 meses' }).check();
     await expect(region.getByRole('rowheader')).toHaveCount(cuerpo.cultivos.filter((cultivo) => cultivo.ciclo_corto).length);
     await region.getByRole('searchbox', { name: 'Buscar cultivo' }).fill('lechuga'); await expect(region.getByText('Ningún cultivo coincide con los filtros elegidos.')).toBeVisible();
     await region.getByRole('button', { name: 'Quitar filtros' }).click(); await expect(region.getByRole('rowheader')).toHaveCount(29);
-    const lechuga = cuerpo.celdas.find((celda) => celda.cultivo_id === 'lechuga' && celda.mes === 2);
+    const lechuga = sinRiego.celdas.find((celda) => celda.cultivo_id === 'lechuga' && celda.mes === 2);
     await region.getByRole('button', { name: new RegExp('^Lechuga, Febrero:') }).click();
     const dialogo = page.getByRole('dialog', { name: 'Lechuga · Febrero' }); await expect(dialogo.getByText(lechuga?.resumen ?? 'Fixture incompleta', { exact: true })).toBeVisible();
     await expect(dialogo.getByText('Lactuca sativa', { exact: true })).toBeVisible(); await expect(dialogo.getByRole('link', { name: 'INIAP (Yugsi, 2011)' })).toBeVisible();

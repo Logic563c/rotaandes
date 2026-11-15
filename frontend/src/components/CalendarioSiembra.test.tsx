@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -22,12 +22,44 @@ const clientes: QueryClient[] = [];
 function mostrar() {
   let tokenActivo = 'token-a';
   const usuario: UsuarioPublico = { id: 'usuario-a', nombre: 'Persona de prueba', email: 'fixture@example.invalid', rol: 'agricultor', parroquia: null, telefono: null, prioridad_agua: 3, prioridad_suelo: 3, prioridad_ingresos: 3, creado_en: null };
-  const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }); clientes.push(cliente);
+  const cliente = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0, refetchOnWindowFocus: false } } }); clientes.push(cliente);
   const contenido = (id = 'usuario-a', token = 'token-a') => <QueryClientProvider client={cliente}><ContextoSesion.Provider value={{ usuario: { ...usuario, id }, token, estaValidando: false, error: null, confirmarSesion: async () => {}, reintentar: () => {}, guardarPerfil: () => {}, cerrarSesion: () => { tokenActivo = ''; }, esSesionActual: (actual) => actual === tokenActivo }}><CalendarioSiembra key={id} terrenoId="terreno-prueba" latitud={-0.93} longitud={-78.62} altitudM={3000} tieneRiego={false} areaHa={1} /></ContextoSesion.Provider></QueryClientProvider>;
-  const vista = render(contenido()); return { cerrar: () => { tokenActivo = ''; }, cambiar: () => { tokenActivo = 'token-b'; vista.rerender(contenido('usuario-b', 'token-b')); } };
+  const vista = render(contenido()); return { cliente, cerrar: () => { tokenActivo = ''; }, cambiar: () => { tokenActivo = 'token-b'; vista.rerender(contenido('usuario-b', 'token-b')); } };
 }
-afterEach(() => { clientes.forEach((cliente) => cliente.clear()); clientes.length = 0; vi.unstubAllGlobals(); });
+afterEach(() => { clientes.forEach((cliente) => cliente.clear()); clientes.length = 0; focusManager.setFocused(undefined); vi.unstubAllGlobals(); });
 describe('Calendario: matriz, explicaciones y separación de sesiones', () => {
+  it('renueva un resultado antiguo al volver a la pestaña aunque las demás consultas no lo hagan', async () => {
+    const anterior = datosPrueba(); const nueva = datosPrueba(); nueva.celdas = nueva.celdas.map((celda) => ({ ...celda, estado: 'no_determinado' }));
+    const solicitar = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(anterior))).mockResolvedValueOnce(new Response(JSON.stringify(nueva))); vi.stubGlobal('fetch', solicitar);
+    const { cliente } = mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' })); await screen.findByRole('table');
+    const clave = cliente.getQueryCache().getAll()[0]?.queryKey; if (!clave) throw new Error('Consulta ausente.');
+    act(() => { cliente.setQueryData(clave, anterior, { updatedAt: Date.now() - 61000 }); focusManager.setFocused(false); focusManager.setFocused(true); });
+    expect(await screen.findByRole('button', { name: 'Papa, Enero: No determinado' })).toBeInTheDocument(); expect(solicitar).toHaveBeenCalledTimes(2);
+    const resumen = screen.getByRole('region', { name: 'Resumen del calendario' }); expect(within(resumen).getByText('No determinado: faltan datos o fuentes (2)')).toBeInTheDocument();
+  });
+  it('actualiza juntos el resumen, la matriz y el detalle sin conservar la clasificación anterior', async () => {
+    const anterior = datosPrueba(); anterior.celdas = anterior.celdas.map((celda) => ({ ...celda, estado: 'posible_con_cuidado', resumen: 'Precaución de prueba anterior.' }));
+    const nueva = datosPrueba(); nueva.celdas = nueva.celdas.map((celda) => ({ ...celda, estado: celda.cultivo_id === 'papa' ? 'recomendado' : 'no_determinado', resumen: `Nuevo resultado de prueba para ${celda.cultivo_id}.` }));
+    const pendiente = Promise.withResolvers<Response>();
+    const solicitar = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify(anterior))).mockReturnValueOnce(pendiente.promise); vi.stubGlobal('fetch', solicitar);
+    mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' })); await screen.findByRole('table');
+    const resumen = screen.getByRole('region', { name: 'Resumen del calendario' }); await userEvent.selectOptions(within(resumen).getByRole('combobox'), '10');
+    expect(within(resumen).getByText('Posible con precaución (2)')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar calendario' }));
+    expect(screen.getByRole('button', { name: 'Actualizando calendario…' })).toBeDisabled();
+    await act(async () => { pendiente.resolve(new Response(JSON.stringify(nueva))); });
+    expect(await within(resumen).findByText('Recomendado (1)')).toBeInTheDocument(); expect(within(resumen).getByText('Posible con precaución (0)')).toBeInTheDocument();
+    expect(within(resumen).getByText('No determinado: faltan datos o fuentes (1)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Papa, Octubre: Recomendado' })).toBeInTheDocument();
+    await userEvent.click(within(resumen).getByRole('button', { name: 'Ver motivos de Papa en Octubre' }));
+    expect(within(screen.getByRole('dialog')).getByText('Nuevo resultado de prueba para papa.')).toBeInTheDocument();
+    expect(screen.queryByText('Precaución de prueba anterior.')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar explicación' }));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar cultivo' }), 'papa');
+    expect(screen.getAllByRole('rowheader')).toHaveLength(1); expect(within(resumen).getAllByRole('button')).toHaveLength(2);
+    expect(within(resumen).getByRole('status')).toHaveTextContent('2 cultivos evaluados');
+    expect(solicitar).toHaveBeenCalledTimes(2);
+  });
   it('carga a petición, conserva doce meses y abre/cierra explicación por teclado', async () => {
     const pendiente = Promise.withResolvers<Response>(); const solicitar = vi.fn().mockReturnValue(pendiente.promise); vi.stubGlobal('fetch', solicitar);
     mostrar(); expect(solicitar).not.toHaveBeenCalled(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' })); expect(screen.getByRole('status')).toHaveTextContent('Cargando');

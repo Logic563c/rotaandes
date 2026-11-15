@@ -79,7 +79,7 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
   const [busqueda, establecerBusqueda] = useState(''); const [categoria, establecerCategoria] = useState(''); const [soloHortalizas, establecerSoloHortalizas] = useState(false); const [soloCortos, establecerSoloCortos] = useState(false);
   const idBusqueda = useId(); const idCategoria = useId();
   const sesion = useAgricultura(); const escenario = { lluvia_pct: 0, temp_delta: 0 };
-  const consulta = useQuery({ queryKey: [...sesion.clave, 'calendario', terrenoId, latitud, longitud, altitudM, tieneRiego, areaHa, escenario], enabled: abierto, retry: false, staleTime: 60000,
+  const consulta = useQuery({ queryKey: [...sesion.clave, 'calendario', terrenoId, latitud, longitud, altitudM, tieneRiego, areaHa, escenario], enabled: abierto, retry: false, staleTime: 60000, refetchOnWindowFocus: true,
     queryFn: ({ signal }) => sesion.ejecutar((token) => obtenerCalendario(token, terrenoId, escenario, signal), signal) });
   const datos = consulta.data;
   const normalizar = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -101,10 +101,15 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">Meses orientativos para sembrar o trasplantar cada cultivo. Se evalúa el ciclo completo con la climatología NASA POWER y parámetros de INIAP y FAO. Selecciona una casilla para conocer sus motivos. No es un pronóstico.</p>
     <button className="boton-secundario mt-5" type="button" aria-expanded={abierto} aria-controls="contenido-calendario" onClick={() => establecerAbierto(!abierto)}>{abierto ? 'Ocultar calendario' : 'Ver calendario de siembra'}</button>
     {abierto && <div id="contenido-calendario" className="aparecer mt-6 min-w-0">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <button type="button" className="boton-secundario" disabled={consulta.isFetching} onClick={() => { void consulta.refetch(); }}>{consulta.isFetching ? 'Actualizando calendario…' : 'Actualizar calendario'}</button>
+        {consulta.isFetching && !consulta.isPending && <p role="status" className="text-sm text-oliva">Consultando de nuevo el resumen, la matriz y los detalles…</p>}
+        {consulta.isSuccess && !consulta.isFetching && <p className="text-sm text-oliva">Consulta realizada: <time dateTime={new Date(consulta.dataUpdatedAt).toISOString()}>{new Date(consulta.dataUpdatedAt).toLocaleString('es-EC', { timeZone: 'America/Guayaquil' })}</time>.</p>}
+      </div>
       <EstadoConsulta cargando={consulta.isPending} error={consulta.error} alReintentar={() => { void consulta.refetch(); }} />
       {consulta.isError && <p className="mt-3 text-sm text-oliva">No pudimos calcular el calendario con información fiable. Reintenta la consulta; no se han inventado recomendaciones.</p>}
       {consulta.isSuccess && datos && <>
-        <ResumenCalendario datos={datos} />
+        <ResumenCalendario datos={datos} alSeleccionar={(celda) => establecerSeleccion({ cultivoId: celda.cultivo_id, mes: celda.mes })} />
         <div className="panel-fuente text-sm leading-relaxed"><p className="font-semibold">Clima: <a className="underline" href="https://power.larc.nasa.gov/docs/" target="_blank" rel="noreferrer">NASA POWER</a> · {datos.clima.periodo.inicio}–{datos.clima.periodo.fin}</p>
           <p className="mt-2">Consulta del dato: <time dateTime={datos.clima.actualizado_en}>{new Date(datos.clima.actualizado_en).toLocaleDateString('es-EC')}</time>. Origen: {datos.clima.estado_datos === 'nasa' ? 'NASA reciente' : datos.clima.estado_datos === 'cache' ? 'caché' : datos.clima.estado_datos === 'respaldo' ? 'respaldo verificado' : 'dato anterior'}{datos.clima.desactualizado ? ' · Desactualizado: consultar con precaución.' : ''}</p>
           <p className="mt-2 text-oliva">{datos.clima.resolucion}</p><p className="mt-2 font-semibold">NASA aporta el clima de la zona. Las reglas de cultivo son de RotaAndes, con fuentes citadas en cada casilla, y están pendientes de validación agronómica local.</p>
