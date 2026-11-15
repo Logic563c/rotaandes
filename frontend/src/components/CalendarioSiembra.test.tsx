@@ -87,8 +87,28 @@ describe('Calendario: matriz, explicaciones y separación de sesiones', () => {
   });
   it('advierte cuando las hortalizas quedan sin determinar por falta de riego', async () => {
     const datos = datosPrueba(); datos.cultivos = datos.cultivos.map((cultivo) => ({ ...cultivo, es_hortaliza: true }));
+    datos.celdas = datos.celdas.map((celda) => celda.estado === 'no_determinado' ? { ...celda, resumen: 'No se puede determinar: no se sabe cuánta agua necesita sin riego.' } : celda);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
     expect(await screen.findByText(/tu terreno no tiene riego/)).toBeInTheDocument();
+  });
+  it('no atribuye al riego una incertidumbre causada por altitud o heladas', async () => {
+    const datos = datosPrueba(); datos.cultivos = datos.cultivos.map((cultivo) => ({ ...cultivo, es_hortaliza: true }));
+    datos.celdas = datos.celdas.map((celda) => ({ ...celda, estado: 'no_determinado', resumen: 'No se puede determinar: falta la altitud de la celda NASA.' }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
+    await screen.findByRole('table'); expect(screen.queryByRole('note')).not.toBeInTheDocument();
+  });
+  it('explica una condición anual una sola vez y mantiene las doce casillas accesibles', async () => {
+    const datos = datosPrueba();
+    datos.celdas = datos.celdas.map((celda) => celda.cultivo_id === 'papa' ? { ...celda, estado: 'no_determinado', resumen: `No se puede determinar para Papa en el mes ${celda.mes}: falta la altitud de la celda NASA.`, motivo: 'Falta ese dato para estimar la temperatura.' } : celda);
+    const febrero = datos.celdas.find((celda) => celda.cultivo_id === 'papa' && celda.mes === 2);
+    if (!febrero) throw new Error('Fixture incompleta.');
+    febrero.resumen = 'No se puede determinar para Papa en febrero: falta la altitud de la celda NASA; riesgo de helada sin dato.';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
+    await screen.findByRole('table'); await userEvent.click(screen.getByText('Condiciones que se repiten durante el año'));
+    expect(screen.getAllByText('falta la altitud de la celda NASA.', { exact: false })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Papa, .*: No determinado$/ })).toHaveLength(12);
+    await userEvent.click(screen.getByRole('button', { name: 'Papa, Enero: No determinado' }));
+    expect(await screen.findByRole('dialog', { name: 'Papa · Enero' })).toBeInTheDocument();
   });
   it('no muestra una respuesta tardía al cerrar sesión', async () => {
     const pendiente = Promise.withResolvers<Response>(); vi.stubGlobal('fetch', vi.fn().mockReturnValue(pendiente.promise)); const sesion = mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' })); sesion.cerrar();

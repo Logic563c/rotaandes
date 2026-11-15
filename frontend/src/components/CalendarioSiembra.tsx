@@ -13,7 +13,7 @@ const ESTADOS: Record<EstadoCalendario, { etiqueta: string; simbolo: string; est
   recomendado: { etiqueta: 'Recomendado', simbolo: '✓', estilo: 'border-cultivo/50 bg-cultivo-claro text-[#1f5a2f]',
     definicion: 'Los datos disponibles y las reglas con fuente favorecen la siembra en todo el ciclo del cultivo.' },
   posible_con_cuidado: { etiqueta: 'Posible con precaución', simbolo: '!', estilo: 'border-maiz bg-maiz-claro text-maiz-oscuro',
-    definicion: 'Se puede sembrar, pero hay un riesgo manejable o algo que debes comprobar (heladas, agua, época o variedad).' },
+    definicion: 'Se identifica un riesgo concreto que debes manejar, como frío durante el ciclo o lluvia insuficiente para cubrir toda la necesidad de agua.' },
   no_recomendado: { etiqueta: 'No recomendado', simbolo: '×', estilo: 'border-arcilla/40 bg-arcilla-claro text-[#85391f]',
     definicion: 'Hay una incompatibilidad justificada: demasiado frío, heladas en un cultivo sensible o falta de agua sin riego.' },
   no_determinado: { etiqueta: 'No determinado', simbolo: '?', estilo: 'border-stone-400 bg-stone-100 text-stone-700',
@@ -25,6 +25,19 @@ const SIN_CATEGORIA = 'Otros cultivos';
 function describirCiclo(cultivo: CultivoCalendario): string | null {
   if (cultivo.ciclo_dias_min === null || cultivo.ciclo_dias_max === null) return null;
   return cultivo.ciclo_dias_min === cultivo.ciclo_dias_max ? `Ciclo aprox. ${cultivo.ciclo_dias_max} días` : `Ciclo aprox. ${cultivo.ciclo_dias_min}-${cultivo.ciclo_dias_max} días`;
+}
+
+function condicionesAnuales(datos: RespuestaCalendario, cultivos: CultivoCalendario[]) {
+  return cultivos.flatMap((cultivo) => {
+    const celdas = datos.celdas.filter((celda) => celda.cultivo_id === cultivo.id);
+    const primera = celdas[0];
+    if (celdas.length !== 12 || !primera || primera.estado === 'recomendado') return [];
+    const razones = (resumen: string | null | undefined) => (resumen?.split(': ').slice(1).join(': ').replace(/\.$/, '') ?? '').split('; ').filter(Boolean);
+    if (!celdas.every((celda) => celda.estado === primera.estado)) return [];
+    const comunes = razones(primera.resumen).filter((razon) => celdas.every((celda) => razones(celda.resumen).includes(razon)));
+    if (!comunes.length) return [];
+    return [{ id: cultivo.id, nombre: cultivo.nombre, estado: primera.estado, motivo: comunes.join('; ') }];
+  });
 }
 
 function ExplicacionCelda({ celda, cultivo, clima, alCerrar }: { celda: CeldaCalendario; cultivo: CultivoCalendario | undefined; clima: RespuestaCalendario['clima']; alCerrar: () => void }) {
@@ -80,8 +93,9 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
   }, []);
   const categorias = [...new Set((datos?.cultivos ?? []).map((cultivo) => cultivo.categoria_nombre ?? SIN_CATEGORIA))].sort((a, b) => (orden.get(a) ?? 99) - (orden.get(b) ?? 99));
   const celdaSeleccionada = datos?.celdas.find((celda) => celda.cultivo_id === seleccion?.cultivoId && celda.mes === seleccion.mes);
-  const hortalizasSinDato = datos && datos.terreno.tiene_riego !== true ? datos.celdas.filter((celda) => celda.estado === 'no_determinado' && datos.cultivos.find((cultivo) => cultivo.id === celda.cultivo_id)?.es_hortaliza).length : 0;
+  const hortalizasSinDato = datos && datos.terreno.tiene_riego !== true ? datos.celdas.filter((celda) => celda.estado === 'no_determinado' && (celda.resumen ?? celda.motivo).includes('no se sabe cuánta agua necesita') && datos.cultivos.find((cultivo) => cultivo.id === celda.cultivo_id)?.es_hortaliza).length : 0;
   const hayFiltros = busqueda !== '' || categoria !== '' || soloHortalizas || soloCortos;
+  const condiciones = datos ? condicionesAnuales(datos, cultivos) : [];
   return <section className="modulo" aria-labelledby="titulo-calendario">
     <CabeceraModulo icono="calendario" etiqueta="Planificar con información de nuestra zona"><h2 id="titulo-calendario" className="mt-1 break-words font-campo text-2xl sm:text-4xl">Calendario de siembra</h2></CabeceraModulo>
     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-oliva">Meses orientativos para sembrar o trasplantar cada cultivo. Se evalúa el ciclo completo con la climatología NASA POWER y parámetros de INIAP y FAO. Selecciona una casilla para conocer sus motivos. No es un pronóstico.</p>
@@ -96,6 +110,7 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
           <p className="mt-2 text-oliva">{datos.clima.resolucion}</p><p className="mt-2 font-semibold">NASA aporta el clima de la zona. Las reglas de cultivo son de RotaAndes, con fuentes citadas en cada casilla, y están pendientes de validación agronómica local.</p>
           <p className="mt-2">Altitud estimada: {datos.terreno.altitud_m === null ? 'desconocida' : `${datos.terreno.altitud_m} m`}. Área declarada: {datos.terreno.area_ha === null ? 'desconocida' : `${datos.terreno.area_ha} ha`}. Riego: {datos.terreno.tiene_riego === null ? 'desconocido' : datos.terreno.tiene_riego ? 'sí' : 'no'}.</p>
           <p className="mt-2">Escenario base: lluvia {datos.escenario.lluvia_pct} %; temperatura {datos.escenario.temp_delta} °C de variación.</p>
+          <p className="mt-2">El frío del calendario se estima para la altitud del terreno. El indicador regional de la sección Clima puede ser distinto; consulta el pronóstico antes de sembrar.</p>
         </div>
         {datos.clima.advertencias.length > 0 && <ul className="panel-aviso mt-5 list-disc space-y-2 pl-10 text-sm">{datos.clima.advertencias.map((aviso, indice) => <li key={indice}>{aviso}</li>)}</ul>}
         {datos.terreno.altitud_m === null && <p role="status" className="mt-5 rounded-xl border border-stone-400 bg-stone-100 p-4 text-sm">Altitud desconocida: no se puede estimar la temperatura del terreno y no se generan recomendaciones.</p>}
@@ -116,6 +131,10 @@ export function CalendarioSiembra({ terrenoId, latitud, longitud, altitudM, tien
           <label className="flex items-center gap-2 self-end text-sm"><input type="checkbox" checked={soloCortos} onChange={(evento) => establecerSoloCortos(evento.target.checked)} />Solo ciclos de hasta 4 meses</label>
         </fieldset>
         <p className="mt-3 text-sm text-oliva" role="status">Mostrando {cultivos.length} de {datos.cultivos.length} cultivos.{hayFiltros && <> <button type="button" className="underline" onClick={() => { establecerBusqueda(''); establecerCategoria(''); establecerSoloHortalizas(false); establecerSoloCortos(false); }}>Quitar filtros</button></>}</p>
+        {condiciones.length > 0 && <details className="panel-aviso mt-4 p-4 text-sm"><summary className="cursor-pointer font-semibold">Condiciones que se repiten durante el año</summary>
+          <p className="mt-3 leading-relaxed">Estos cultivos tienen el mismo resultado y motivo los doce meses. Una condición permanente o un ciclo que alcanza los meses fríos puede explicar esa uniformidad. El gris indica información faltante; no un riesgo demostrado. Abre una casilla para revisar el ciclo y qué puedes hacer.</p>
+          <ul className="mt-3 list-disc space-y-2 pl-5">{condiciones.map((cultivo) => <li key={cultivo.id}><span className="font-semibold">{cultivo.nombre} · {ESTADOS[cultivo.estado].etiqueta}:</span> {cultivo.motivo}.</li>)}</ul>
+        </details>}
         <p className="mt-2 text-sm text-oliva">Desliza la matriz para ver los doce meses. Con teclado, usa Tab para seleccionar una casilla y Enter para abrir su explicación.</p>
         {cultivos.length === 0 ? <p role="status" className="tarjeta mt-5 p-5">Ningún cultivo coincide con los filtros elegidos.</p> : <div className="mt-4 max-h-[40rem] max-w-full overflow-auto rounded-2xl border border-pino/20" role="region" aria-label="Matriz mensual de siembra" tabIndex={0}>
           <table className="w-full min-w-[1150px] table-fixed border-collapse text-left text-xs sm:min-w-[1280px]"><caption className="sr-only">Calendario orientativo por tipo de cultivo, cultivo y mes. Cada casilla abre la explicación de sus criterios.</caption><thead><tr><th scope="col" className="sticky left-0 top-0 z-20 w-32 border-b border-pino/15 bg-arena p-2 sm:w-48 sm:p-3">Cultivo</th>{MESES.map((mes) => <th scope="col" key={mes} className="sticky top-0 z-10 border-b border-pino/15 bg-arena px-2 py-3">{mes}</th>)}</tr></thead>

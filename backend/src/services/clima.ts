@@ -26,7 +26,7 @@ export function crearServicioClima(obtenerCache: ObtenerCacheClima, consultar = 
     const candidata = guardado ? validarBaseClima(guardado.datos, latitud, longitud, ahora) : null;
     const anterior = candidata && guardado?.actualizadoEn?.getTime() === Date.parse(candidata.consultado_en) ? candidata : null;
     // Ambas fechas deben coincidir: nunca rejuvenecer el dato cambiando solo el timestamp SQL.
-    if (anterior && guardado?.actualizadoEn?.getTime() === Date.parse(anterior.consultado_en) && ahora - Date.parse(anterior.consultado_en) < VIGENCIA_CLIMA_MS) return { base: anterior, origen: 'cache' };
+    if (anterior && anterior.elevacion_celda_m != null && ahora - Date.parse(anterior.consultado_en) < VIGENCIA_CLIMA_MS) return { base: anterior, origen: 'cache' };
     try {
       if ((reintentos.get(clave) ?? 0) > ahora) throw new ErrorClima();
       const base = await consultar(latitud, longitud);
@@ -39,7 +39,10 @@ export function crearServicioClima(obtenerCache: ObtenerCacheClima, consultar = 
       if (reintentos.size >= 500) { const primera = reintentos.keys().next().value; if (primera !== undefined) reintentos.delete(primera); }
       reintentos.set(clave, reloj().getTime() + 60000);
       const respaldo = buscarRespaldo(latitud, longitud);
-      if (anterior && (!respaldo || Date.parse(anterior.consultado_en) >= Date.parse(respaldo.consultado_en))) return { base: anterior, origen: 'desactualizado' };
+      // La caché antigua puede no tener elevación. Preferir el respaldo completo de la misma celda,
+      // identificando su fecha y procedencia; nunca injertar metadatos de otra celda ni rejuvenecer fechas.
+      const respaldoCompleto = respaldo && respaldo.elevacion_celda_m != null && validarBaseClima(respaldo, latitud, longitud, reloj().getTime());
+      if (anterior && !(anterior.elevacion_celda_m == null && respaldoCompleto) && (!respaldo || Date.parse(anterior.consultado_en) >= Date.parse(respaldo.consultado_en))) return { base: anterior, origen: 'desactualizado' };
       if (respaldo && validarBaseClima(respaldo, latitud, longitud, reloj().getTime())) return { base: respaldo, origen: 'respaldo' };
       throw new ErrorClima();
     }

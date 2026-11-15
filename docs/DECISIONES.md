@@ -305,3 +305,11 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - Se integran `feat/calendario-agronomico` y `feat/comprension-graficas` en `integracion/calendario-graficas`, desde `release/publicacion`, con fusiones `--no-ff`. Detalle en `docs/INFORME_INTEGRACION.md`.
 - Los cuatro estados usan el mismo nombre en calendario, rotaciones, simulador y PDF. «Qué puedes hacer» es texto orientativo derivado del motivo de cada casilla: no cambia el estado ni añade reglas agrícolas.
 - Se retiran frases duplicadas cuando «Para leerla» ya explica lo mismo. El eje de meses de la climatología permite omitir etiquetas en pantallas estrechas.
+
+## Riesgos demostrados e información faltante del calendario (15-11-2026)
+
+- El diagnóstico publicado en `INFORME_CORRECCION_CALENDARIO_RIESGOS.md` se hizo antes de cambiar reglas: 10 de 11 climatologías de producción carecían de elevación de celda y esa ausencia producía precaución permanente. Se intenta renovar esas entradas, con respaldo completo de la misma celda si NASA falla, sin modificar fechas ni combinar celdas.
+- `calendario_ciclo_v3` clasifica metadatos esenciales ausentes y conflictos de fuentes como no determinados. Ventanas y altitudes referenciales se informan sin imponer por sí solas amarillo. El frío se ajusta una vez al terreno, sin acumular el escalón regional de 3400 m.
+- Se sustituye la inferencia «INIAP permite sembrar todo el año → tolera heladas» por evidencia de especies de Iowa State University y FAO (2005). Las clases son cualitativas; no se inventan índices, umbrales letales ni adaptación de variedades de Cotopaxi. Berro requiere confirmar agua permanente, que el booleano de riego no representa.
+- Se conservan catálogo, ciclos máximos, esquema SQL, rutas y claves JSON. La versión del algoritmo y sus reglas se actualizan en `PROYECTO.md` en el mismo commit. Rotaciones, simulador y PDF usan el mismo motor.
+- Se informa una vez el motivo anual uniforme en la interfaz. Se conserva la uniformidad cuando la justifican las condiciones; no hay cuotas de colores. Las pruebas comprueban escenarios físicos y datos faltantes; se sustituye una antigua cota de 25 verdes por comprobaciones de incompatibilidades, pues fijar esa cota imponía un porcentaje artificial.

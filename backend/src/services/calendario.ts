@@ -3,7 +3,7 @@ import { calcularRiesgoHelada } from './nasaPower.js';
 import { CATEGORIAS_CULTIVO, CICLO_CORTO_MAX_DIAS, DIAS_POR_MES, FUENTES_AGRONOMICAS, IDS_CULTIVOS_NUEVOS, IDS_CULTIVOS_ORIGINALES, obtenerPerfil } from '../data/perfilesAgronomicos.js';
 import type { ClaveFuente, PerfilAgronomico } from '../data/perfilesAgronomicos.js';
 
-// Calendario de siembra v2 (PROYECTO.md §7.2). Evalúa todo el ciclo del cultivo, no solo el mes de siembra, con
+// Calendario de siembra v3 (PROYECTO.md §7.2). Evalúa todo el ciclo del cultivo, no solo el mes de siembra, con
 // criterios separados y explicados: época, altitud, temperatura media, heladas y agua. Precedencia del estado:
 // una exclusión justificada → no recomendado; si no, un dato o una fuente ausente → no determinado; si no, algún
 // riesgo manejable → posible con precaución; si no → recomendado. Ningún dato ausente se convierte en favorable.
@@ -13,7 +13,7 @@ export const MESES_CALENDARIO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', '
 export const GRADIENTE_TEMPERATURA_MEDIA_C_POR_KM = 6.9;
 /** Gradiente de temperatura mínima observado en los Andes ecuatorianos (Córdova et al., 2016). */
 export const GRADIENTE_TEMPERATURA_MINIMA_C_POR_KM = 5.5;
-export const VERSION_CALENDARIO = 'calendario_ciclo_v2';
+export const VERSION_CALENDARIO = 'calendario_ciclo_v3';
 export class ErrorCalendario extends Error { constructor() { super('No se puede calcular el calendario con los datos disponibles. Revisa el catálogo y la información climática.'); } }
 const numero = z.number().finite();
 export const esquemaEscenarioCalendario = z.strictObject({ lluviaPct: numero.min(-30).max(30), tempDelta: numero.min(-2).max(2) });
@@ -64,6 +64,8 @@ const ACCIONES: Record<string, string> = {
   'fuentes de temperatura y altitud no coinciden': 'usa una variedad adaptada a tu altitud y confírmala con un técnico',
   'temperatura en el límite (sin ajuste por altitud)': 'vuelve a consultar en unos días, cuando se actualicen los datos de NASA',
   'temperatura sin ajuste por altitud': 'vuelve a consultar en unos días, cuando se actualicen los datos de NASA',
+  'falta la altitud de la celda NASA': 'vuelve a consultar el clima; si el proveedor sigue sin responder, pide apoyo a un técnico',
+  'no se ha confirmado agua permanente': 'confirma con un técnico si hay agua limpia y constante o suelo saturado durante todo el ciclo; tener riego por sí solo no lo confirma',
   'riesgo alto de helada en el ciclo': 'protege el cultivo en noches frías, prefiere variedades tolerantes o elige otro mes',
   'riesgo medio de helada': 'vigila las noches frías y protege el cultivo si hace falta',
   'lluvia justa para el ciclo': 'prepara riego de apoyo por si el año es seco',
@@ -89,20 +91,18 @@ function citar(...claves: ClaveFuente[]): string { return [...new Set(claves)].m
 const esOriginal = (id: string) => (IDS_CULTIVOS_ORIGINALES as readonly string[]).includes(id);
 
 /** Clase de respuesta a heladas: catálogo §10 (tolerancia 1-5) para los originales; perfil con fuente para los nuevos. */
-type ClaseHelada = 'sensible' | 'moderada' | 'manejable_iniap' | 'tolerante' | 'desconocida';
+type ClaseHelada = 'sensible' | 'moderada' | 'tolera_helada_leve' | 'tolerante' | 'desconocida';
 function claseHelada(cultivo: CultivoCalendario, perfil: PerfilAgronomico): ClaseHelada {
   if (cultivo.toleranciaHelada !== null) return cultivo.toleranciaHelada <= 1 ? 'sensible' : cultivo.toleranciaHelada === 2 ? 'moderada' : 'tolerante';
-  return perfil.respuesta_helada === 'manejable_iniap' ? 'manejable_iniap' : 'desconocida';
+  return perfil.respuesta_helada ?? 'desconocida';
 }
 
 interface Contexto { terreno: TerrenoCalendario; meses: Map<number, MesNormalizado>; escenario: EscenarioCalendario; elevacionCeldaM: number | null; lluviaAnual: number | null }
 type Riesgo = 'bajo' | 'medio' | 'alto';
-const NIVEL: Record<Riesgo, number> = { bajo: 0, medio: 1, alto: 2 };
 /**
- * Riesgo de helada del mes para el calendario: el mayor entre la regla general del proyecto (§7.1, T2M_MIN de la celda
- * y +1 nivel desde 3400 m) y la misma regla aplicada a la mínima estimada para la altitud del terreno (gradiente de
- * 5,5 °C/km). Así una celda NASA más baja que el terreno no oculta heladas, y el calendario nunca muestra menos
- * riesgo que la vista de clima.
+ * Indicador preventivo del calendario: mínima regional ajustada una sola vez a la altitud del terreno.
+ * No sumar además el escalón regional de 3400 m. La climatología no mide noches extremas ni garantiza
+ * ausencia de heladas; la vista de clima conserva su indicador regional, identificado como tal.
  */
 function riesgoHeladaMes(mes: number, contexto: Contexto): { riesgo: Riesgo | null; ajustado: boolean } {
   const clima = contexto.meses.get(mes); const general = clima?.riesgo_helada ?? null;
@@ -110,7 +110,7 @@ function riesgoHeladaMes(mes: number, contexto: Contexto): { riesgo: Riesgo | nu
   if (general === null || clima?.t_min == null || altitud === null || elevacion === null) return { riesgo: general, ajustado: false };
   const ajustado = calcularRiesgoHelada(clima.t_min - GRADIENTE_TEMPERATURA_MINIMA_C_POR_KM * (altitud - elevacion) / 1000, null);
   if (ajustado === null) return { riesgo: general, ajustado: false };
-  return { riesgo: NIVEL[ajustado] > NIVEL[general] ? ajustado : general, ajustado: NIVEL[ajustado] > NIVEL[general] };
+  return { riesgo: ajustado, ajustado: true };
 }
 
 function evaluarEpoca(cultivo: CultivoCalendario, perfil: PerfilAgronomico, mes: number): Factor {
@@ -119,7 +119,7 @@ function evaluarEpoca(cultivo: CultivoCalendario, perfil: PerfilAgronomico, mes:
   if (cultivo.mesesSiembra.includes(mes)) return { criterio: 'epoca', efecto: 'favorable', breve: 'dentro de la época',
     texto: !esOriginal(cultivo.id) && perfil.siembra_todo_el_anio_iniap ? `INIAP (2011) indica que las hortalizas pueden sembrarse durante todo el año; se recomiendan siembras escalonadas.`
       : `${nombreMes(mes)} pertenece a la época referencial del catálogo del proyecto (${listaMeses(cultivo.mesesSiembra)}).` };
-  return { criterio: 'epoca', efecto: 'precaucion', breve: 'fuera de la época referencial',
+  return { criterio: 'epoca', efecto: 'informativo', breve: 'fuera de la época referencial',
     texto: `${nombreMes(mes)} está fuera de la época referencial del catálogo del proyecto (${listaMeses(cultivo.mesesSiembra)}). Esa época no está validada localmente y no excluye la siembra por sí sola; confirme la época con un técnico.` };
 }
 
@@ -135,7 +135,7 @@ function evaluarAltitud(cultivo: CultivoCalendario, perfil: PerfilAgronomico, al
   const origen = delCatalogo ? 'rango referencial del catálogo del proyecto' : `rango documentado (${citar(perfil.fuente_altitud ?? 'naranjo_melloco_2018')})`;
   const dentro = altitud >= rango.min && altitud <= rango.max;
   return dentro ? { criterio: 'altitud', efecto: 'favorable', breve: 'altitud dentro del rango', texto: `Altitud estimada del terreno: ${altitud} m, dentro del ${origen}: ${rango.min}-${rango.max} m.` }
-    : { criterio: 'altitud', efecto: 'precaucion', breve: 'altitud fuera del rango referencial', texto: `Altitud estimada del terreno: ${altitud} m, fuera del ${origen}: ${rango.min}-${rango.max} m. Ese rango no es un límite validado; la temperatura decide si hay una incompatibilidad.` };
+    : { criterio: 'altitud', efecto: 'informativo', breve: 'altitud fuera del rango referencial', texto: `Altitud estimada del terreno: ${altitud} m, fuera del ${origen}: ${rango.min}-${rango.max} m. Ese rango no es un límite validado; la temperatura decide si hay una incompatibilidad.` };
 }
 
 function mesesDelCiclo(mesSiembra: number, cantidad: number): number[] { return Array.from({ length: Math.min(12, cantidad) }, (_valor, desplazamiento) => (mesSiembra - 1 + desplazamiento) % 12 + 1); }
@@ -146,6 +146,7 @@ function evaluarTemperatura(cultivo: CultivoCalendario, perfil: PerfilAgronomico
   const altitud = contexto.terreno.altitudM;
   if (altitud === null) return { criterio: 'temperatura', efecto: 'indeterminado', breve: 'altitud desconocida', texto: 'Sin altitud del terreno no se estima su temperatura media.' };
   const ajuste = contexto.elevacionCeldaM === null ? null : -GRADIENTE_TEMPERATURA_MEDIA_C_POR_KM * (altitud - contexto.elevacionCeldaM) / 1000;
+  if (ajuste === null) return { criterio: 'temperatura', efecto: 'indeterminado', breve: 'falta la altitud de la celda NASA', texto: 'La fuente climática no informa la altitud de su cuadrícula: falta ese dato para estimar la temperatura del terreno. No se ha comprobado una incompatibilidad térmica; falta información.' };
   const valores: { mes: number; temperatura: number }[] = [];
   for (const mes of ciclo) {
     const clima = contexto.meses.get(mes);
@@ -156,50 +157,48 @@ function evaluarTemperatura(cultivo: CultivoCalendario, perfil: PerfilAgronomico
   const fuera = valores.filter((valor) => valor.temperatura < rango.minima || valor.temperatura > rango.maxima);
   const bajoOptimo = valores.filter((valor) => valor.temperatura < rango.optima_min);
   const minimaCiclo = Math.min(...valores.map((valor) => valor.temperatura)); const maximaCiclo = Math.max(...valores.map((valor) => valor.temperatura));
-  const descripcionAjuste = ajuste === null ? 'sin ajuste por altitud (NASA no informó la altitud de su celda)'
-    : `ajustada de la celda NASA (${mostrarNumero(contexto.elevacionCeldaM ?? 0, 0)} m) a ${altitud} m con ${mostrarNumero(GRADIENTE_TEMPERATURA_MEDIA_C_POR_KM)} °C/km (Córdova et al., 2016): ${ajuste >= 0 ? '+' : ''}${mostrarNumero(ajuste)} °C`;
+  const descripcionAjuste = `ajustada de la celda NASA (${mostrarNumero(contexto.elevacionCeldaM ?? 0, 0)} m) a ${altitud} m con ${mostrarNumero(GRADIENTE_TEMPERATURA_MEDIA_C_POR_KM)} °C/km (Córdova et al., 2016): ${ajuste >= 0 ? '+' : ''}${mostrarNumero(ajuste)} °C`;
   const datos = `Temperatura media estimada del ciclo: ${mostrarNumero(minimaCiclo)} a ${mostrarNumero(maximaCiclo)} °C (${descripcionAjuste}). Rango de crecimiento EcoCrop: ${rango.minima}-${rango.maxima} °C; óptimo ${rango.optima_min}-${rango.optima_max} °C.`;
   if (fuera.length) {
     const texto = `${datos} Fuera del rango en: ${fuera.map((valor) => `${nombreMes(valor.mes)} (${mostrarNumero(valor.temperatura)} °C)`).join(', ')}.`;
-    if (ajuste === null) return { criterio: 'temperatura', efecto: 'precaucion', breve: 'temperatura en el límite (sin ajuste por altitud)', texto: `${texto} Sin la altitud de la celda NASA no se confirma la incompatibilidad.` };
     const localAdmite = altitudDentro(cultivo, perfil, altitud) === true;
-    if (localAdmite) return { criterio: 'temperatura', efecto: 'precaucion', breve: 'fuentes de temperatura y altitud no coinciden',
+    if (localAdmite) return { criterio: 'temperatura', efecto: 'indeterminado', breve: 'fuentes de temperatura y altitud no coinciden',
       texto: `${texto} El rango de altitud local admite el cultivo, pero el rango genérico de EcoCrop no: las fuentes no coinciden. Verifique una variedad adaptada a esta altitud.` };
     return { criterio: 'temperatura', efecto: 'excluye', breve: minimaCiclo < rango.minima ? 'demasiado frío para el cultivo' : 'demasiado calor para el cultivo',
       texto: `${texto} Un cultivo no se desarrolla bien con temperatura media fuera de su rango documentado.` };
   }
   const nota = bajoOptimo.length ? ` Por debajo del óptimo en ${bajoOptimo.length} de ${valores.length} meses: el crecimiento es más lento y el ciclo puede acercarse a su duración máxima.` : ' Dentro del óptimo todo el ciclo.';
-  return { criterio: 'temperatura', efecto: ajuste === null ? 'precaucion' : 'favorable', breve: ajuste === null ? 'temperatura sin ajuste por altitud' : 'temperatura adecuada',
-    texto: `${datos}${nota}${ajuste === null ? ' Sin ajuste por altitud, el resultado debe confirmarse.' : ''}` };
+  return { criterio: 'temperatura', efecto: 'favorable', breve: 'temperatura adecuada',
+    texto: `${datos}${nota}` };
 }
 
 function evaluarHelada(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo: number[], contexto: Contexto): Factor {
   const clase = claseHelada(cultivo, perfil);
   const riesgos = ciclo.map((mes) => ({ mes, ...riesgoHeladaMes(mes, contexto) }));
   const algunoAjustado = riesgos.some((valor) => valor.ajustado);
-  const detalle = `Riesgo de helada en los ${ciclo.length} meses del ciclo: ${riesgos.map((valor) => `${nombreMes(valor.mes)} ${valor.riesgo ?? 'sin dato'}`).join('; ')}. Regla del proyecto con la mínima NASA (T2M_MIN)${algunoAjustado ? ', elevada en algunos meses al estimar la mínima a la altitud del terreno (5,5 °C/km, Córdova et al., 2016)' : ''}.`;
-  const origenClase = clase === 'manejable_iniap' ? 'INIAP (2011) indica que esta hortaliza puede sembrarse todo el año en la sierra: la helada es un riesgo a manejar (época, protección y variedad).'
-    : clase === 'desconocida' ? 'No hay una fuente verificada sobre su tolerancia a heladas.'
+  const detalle = `Riesgo de helada en los ${ciclo.length} meses del ciclo: ${riesgos.map((valor) => `${nombreMes(valor.mes)} ${valor.riesgo ?? 'sin dato'}`).join('; ')}. Indicador preventivo con la mínima promedio NASA (T2M_MIN)${algunoAjustado ? ', ajustada una sola vez a la altitud del terreno (5,5 °C/km, Córdova et al., 2016)' : ''}; no son heladas observadas ni temperaturas extremas nocturnas.`;
+  const origenClase = perfil.fuente_helada && cultivo.toleranciaHelada === null ? `${citar(perfil.fuente_helada)}: ${clase === 'tolera_helada_leve' ? 'tolera heladas leves; no implica resistencia a heladas fuertes ni valida la variedad local' : 'puede sufrir daño cerca de 0 °C'}.`
+    : clase === 'desconocida' ? 'No hay una fuente verificada sobre su tolerancia a heladas; sembrar todo el año no demuestra resistencia al frío.'
       : `Tolerancia a heladas del catálogo del proyecto: ${cultivo.toleranciaHelada}/5 (referencial).`;
   const hayAlto = riesgos.some((valor) => valor.riesgo === 'alto'); const hayMedio = riesgos.some((valor) => valor.riesgo === 'medio');
   const sinDato = riesgos.some((valor) => valor.riesgo === null);
   const mesesAlto = riesgos.filter((valor) => valor.riesgo === 'alto').map((valor) => nombreMes(valor.mes)).join(', ');
   const texto = (conclusion: string) => `${detalle} ${origenClase} ${conclusion}`;
-  if (sinDato && clase !== 'tolerante' && clase !== 'manejable_iniap') return { criterio: 'helada', efecto: 'indeterminado', breve: 'riesgo de helada sin dato', texto: texto('Falta el riesgo de algún mes del ciclo.') };
+  if (sinDato) return { criterio: 'helada', efecto: 'indeterminado', breve: 'riesgo de helada sin dato', texto: texto('Falta el riesgo de algún mes del ciclo; la tolerancia no sustituye el dato climático.') };
   if (clase === 'sensible') {
     if (hayAlto) return { criterio: 'helada', efecto: 'excluye', breve: 'heladas probables en un cultivo sensible', texto: texto(`Cultivo sensible con riesgo alto en ${mesesAlto}: no se recomienda.`) };
     if (hayMedio) return { criterio: 'helada', efecto: 'precaucion', breve: 'riesgo medio de helada', texto: texto('Cultivo sensible con riesgo medio: precaución.') };
   } else if (clase === 'moderada') {
     if (hayAlto || hayMedio) return { criterio: 'helada', efecto: 'precaucion', breve: hayAlto ? 'riesgo alto de helada en el ciclo' : 'riesgo medio de helada',
       texto: texto(hayAlto ? `Riesgo alto en ${mesesAlto}: posible daño; se puede sembrar con precaución (variedad, época y protección).` : 'Riesgo medio: precaución.') };
-  } else if (clase === 'manejable_iniap') {
+  } else if (clase === 'tolera_helada_leve') {
     if (hayAlto) return { criterio: 'helada', efecto: 'precaucion', breve: 'riesgo alto de helada en el ciclo', texto: texto(`Riesgo alto en ${mesesAlto}: proteja el cultivo o elija otro mes.`) };
-    if (hayMedio || sinDato) return { criterio: 'helada', efecto: 'informativo', breve: 'riesgo medio de helada', texto: texto(sinDato ? 'Falta el riesgo de algún mes.' : 'Riesgo medio: vigilar las noches frías.') };
+    if (hayMedio) return { criterio: 'helada', efecto: 'informativo', breve: 'riesgo medio de helada', texto: texto('Indicador medio: vigilar las noches frías; la tolerancia documentada a heladas leves no demuestra un daño en estas condiciones.') };
   } else if (clase === 'tolerante') {
     if (hayAlto || sinDato) return { criterio: 'helada', efecto: 'informativo', breve: 'vigilar heladas fuertes', texto: texto('El catálogo lo considera tolerante; vigilar heladas fuertes.') };
   } else {
     if (hayAlto) return { criterio: 'helada', efecto: 'indeterminado', breve: 'no se sabe cuánto resiste las heladas', texto: texto(`Hay riesgo alto en ${mesesAlto} y no se conoce cuánto resiste el cultivo: no se determina.`) };
-    if (hayMedio) return { criterio: 'helada', efecto: 'precaucion', breve: 'riesgo medio de helada', texto: texto('Riesgo medio con tolerancia desconocida: precaución.') };
+    if (hayMedio) return { criterio: 'helada', efecto: 'indeterminado', breve: 'no se sabe cuánto resiste las heladas', texto: texto('Indicador de frío medio con tolerancia desconocida: falta información esencial para evaluar el daño.') };
   }
   return { criterio: 'helada', efecto: 'favorable', breve: 'riesgo de helada bajo', texto: texto(hayMedio ? 'El riesgo medio no limita a este cultivo según su tolerancia referencial.' : 'Riesgo bajo en todo el ciclo.') };
 }
@@ -219,9 +218,7 @@ function evaluarAgua(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo
   if (anual !== null && ecocrop && anual > ecocrop.optima_max) factores.push({ criterio: 'agua', efecto: 'informativo', breve: 'zona lluviosa',
     texto: `Lluvia anual de la zona (NASA): ${mostrarNumero(anual, 0)} mm, por encima del óptimo anual de EcoCrop (${ecocrop.optima_min}-${ecocrop.optima_max} mm${anual > ecocrop.maxima ? `; supera también su máximo de ${ecocrop.maxima} mm` : ''}). Vigile drenaje y enfermedades por humedad.` });
   if (perfil.requiere_agua_permanente) {
-    factores.unshift(riego === true ? { criterio: 'agua', efecto: 'precaucion', breve: 'necesita agua permanente', texto: 'Necesita agua corriente o suelo saturado durante todo el ciclo (EcoCrop: drenaje pobre, suelo saturado más de la mitad del año). Verifique que el riego lo permita y que el agua sea limpia.' }
-      : riego === false ? { criterio: 'agua', efecto: 'excluye', breve: 'necesita agua permanente', texto: 'Necesita agua corriente o suelo saturado durante todo el ciclo (EcoCrop); la lluvia no lo sustituye y el terreno declara que no tiene riego.' }
-        : { criterio: 'agua', efecto: 'indeterminado', breve: 'no se sabe si el terreno tiene riego', texto: 'Necesita agua permanente y no se conoce si el terreno tiene riego.' });
+    factores.unshift({ criterio: 'agua', efecto: 'indeterminado', breve: 'no se ha confirmado agua permanente', texto: 'Necesita agua corriente o suelo saturado durante todo el ciclo (EcoCrop). Declarar riego no confirma esa disponibilidad ni la calidad del agua; no declarar riego tampoco descarta un manantial o suelo saturado. Falta confirmar esa condición: no se determina la siembra con el dato actual.' });
     return factores;
   }
   if (riego === true) {

@@ -70,10 +70,10 @@ describe('Calendario v2: cuatro estados con motivo', () => {
     const papa = celda(calcularCalendario(entrada), 'papa', 10);
     expect(papa?.estado).toBe('recomendado'); expect(papa?.resumen).toContain('favorecen sembrar Papa en octubre');
   });
-  it('pasa a precaución fuera de la época referencial no validada, sin convertirla en recomendado', () => {
+  it('no usa una ventana sin validación como riesgo si clima y agua son favorables', () => {
     const entrada = crearEntradaCalendario(); entrada.mensual.forEach((mes) => { mes.lluvia_mm = 120; });
     const junio = celda(calcularCalendario(entrada), 'papa', 6);
-    expect(junio?.estado).toBe('posible_con_cuidado'); expect(junio?.motivo).toContain('fuera de la época referencial');
+    expect(junio?.estado).toBe('recomendado'); expect(junio?.motivo).toContain('fuera de la época referencial');
   });
   it('no recomienda con una incompatibilidad justificada: lluvia bajo el mínimo FAO del ciclo y sin riego', () => {
     const entrada = crearEntradaCalendario(); entrada.mensual.forEach((mes) => { mes.lluvia_mm = 70; });
@@ -88,14 +88,15 @@ describe('Calendario v2: cuatro estados con motivo', () => {
   });
   it('sin altitud no produce verde ni amarillo y conserva exclusiones justificadas', () => {
     const entrada = crearEntradaCalendario(); entrada.terreno.altitudM = null; entrada.terreno.tieneRiego = false;
-    const celdas = calcularCalendario(entrada);
+    entrada.mensual.forEach((mes) => { mes.lluvia_mm = 0; }); const celdas = calcularCalendario(entrada);
     expect(celdas.some((valor) => valor.estado === 'recomendado' || valor.estado === 'posible_con_cuidado')).toBe(false);
-    expect(celda(celdas, 'berro', 1)?.estado).toBe('no_recomendado');
+    expect(celda(celdas, 'papa', 1)?.estado).toBe('no_recomendado');
+    expect(celda(celdas, 'berro', 1)?.estado).toBe('no_determinado');
   });
 });
 
 describe('Calendario v2: riego, agua y ciclos', () => {
-  it.each([[true, 'posible_con_cuidado'], [false, 'no_recomendado'], [null, 'no_determinado']] as const)('berro necesita agua permanente: riego %s → %s', (riego, estado) => {
+  it.each([[true, 'no_determinado'], [false, 'no_determinado'], [null, 'no_determinado']] as const)('berro necesita confirmar agua permanente: riego %s → %s', (riego, estado) => {
     const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = riego; expect(celda(calcularCalendario(entrada), 'berro', 3)?.estado).toBe(estado);
   });
   it.each([[100, 'recomendado'], [60, 'posible_con_cuidado'], [40, 'no_recomendado']] as const)('cebolla colorada sin riego con %s mm/mes compara 7 meses con FAO 350-550 mm', (lluvia, estado) => {
@@ -128,7 +129,7 @@ describe('Calendario v2: riego, agua y ciclos', () => {
 
 describe('Calendario v2: heladas y altitud', () => {
   const conHeladaAlta = () => { const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = true; entrada.mensual.forEach((mes) => { mes.t_min = 1; mes.riesgo_helada = 'alto'; }); return entrada; };
-  it.each([['maiz', 'no_recomendado'], ['papa', 'posible_con_cuidado'], ['lechuga', 'posible_con_cuidado'], ['apio', 'no_determinado'], ['haba', 'recomendado']] as const)(
+  it.each([['maiz', 'no_recomendado'], ['papa', 'posible_con_cuidado'], ['lechuga', 'no_recomendado'], ['apio', 'posible_con_cuidado'], ['haba', 'recomendado']] as const)(
     'con riesgo alto todo el ciclo %s queda %s según su tolerancia documentada', (id, estado) => {
       const resultado = calcularCalendario(conHeladaAlta()); const mes = id === 'haba' ? 10 : id === 'maiz' ? 9 : id === 'papa' ? 10 : 1;
       expect(celda(resultado, id, mes)?.estado).toBe(estado);
@@ -149,7 +150,7 @@ describe('Calendario v2: heladas y altitud', () => {
     const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = true; entrada.terreno.altitudM = 3700; entrada.elevacionCeldaM = 2958;
     entrada.mensual.forEach((mes) => { mes.t_med = 11.5; }); // 11,5 − 5,1 = 6,4 °C < 7 °C (mínimo EcoCrop de papa)
     const papa = celda(calcularCalendario(entrada), 'papa', 10);
-    expect(papa?.estado).toBe('posible_con_cuidado'); expect(papa?.resumen).toContain('fuentes de temperatura y altitud no coinciden');
+    expect(papa?.estado).toBe('no_determinado'); expect(papa?.resumen).toContain('fuentes de temperatura y altitud no coinciden');
   });
   it('una celda NASA más baja que el terreno no oculta heladas: usa la mínima estimada a su altitud si es mayor el riesgo', () => {
     const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = true; entrada.terreno.altitudM = 3650; entrada.elevacionCeldaM = 2500;
@@ -157,15 +158,15 @@ describe('Calendario v2: heladas y altitud', () => {
     const lechuga = celda(calcularCalendario(entrada), 'lechuga', 1);
     expect(lechuga?.motivo).toContain('enero alto'); expect(lechuga?.motivo).toContain('5,5 °C/km');
   });
-  it('fuera del rango de altitud referencial es precaución explicada, no exclusión automática', () => {
+  it('fuera del rango referencial conserva información y evalúa la temperatura antes de atribuir riesgo', () => {
     const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = true; entrada.terreno.altitudM = 2750; entrada.elevacionCeldaM = 2750;
     const cebada = celda(calcularCalendario(entrada), 'cebada', 1);
-    expect(cebada?.estado).toBe('posible_con_cuidado'); expect(cebada?.motivo).toContain('fuera del rango referencial del catálogo del proyecto: 2800-3600 m');
+    expect(cebada?.estado).toBe('recomendado'); expect(cebada?.motivo).toContain('fuera del rango referencial del catálogo del proyecto: 2800-3600 m');
   });
   it('sin altitud de la celda NASA no confirma exclusiones por temperatura y lo advierte', () => {
     const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = true; entrada.elevacionCeldaM = null; entrada.mensual.forEach((mes) => { mes.t_min = 3; mes.t_med = 5; mes.t_max = 9; mes.riesgo_helada = 'medio'; });
     const zapallo = celda(calcularCalendario(entrada), 'zapallo', 1);
-    expect(zapallo?.estado).toBe('posible_con_cuidado'); expect(zapallo?.motivo).toContain('sin ajuste por altitud');
+    expect(zapallo?.estado).toBe('no_determinado'); expect(zapallo?.motivo).toContain('falta la altitud de la celda NASA');
   });
 });
 
@@ -181,11 +182,12 @@ describe('Calendario v2: qué puede hacer el agricultor', () => {
   });
   it('en precaución sugiere acciones del riesgo concreto; en recomendado no añade acciones', () => {
     const entrada = crearEntradaCalendario(); entrada.mensual.forEach((mes) => { mes.lluvia_mm = 120; });
+    const mesFrio = entrada.mensual.find((mes) => mes.mes === 6); if (!mesFrio) throw new Error('Fixture incompleta.'); mesFrio.t_min = 1;
     const junio = celda(calcularCalendario(entrada), 'papa', 6); const octubre = celda(calcularCalendario(entrada), 'papa', 10);
-    expect(junio?.estado).toBe('posible_con_cuidado'); expect(junio?.motivo).toContain('Qué puedes hacer: Confirma la época de siembra');
+    expect(junio?.estado).toBe('posible_con_cuidado'); expect(junio?.motivo).toContain('Qué puedes hacer: Protege el cultivo en noches frías');
     expect(octubre?.estado).toBe('recomendado'); expect(octubre?.motivo).not.toContain('Qué puedes hacer');
     const conHelada = crearEntradaCalendario(); conHelada.terreno.tieneRiego = true; conHelada.mensual.forEach((mes) => { mes.t_min = 1; mes.riesgo_helada = 'alto'; });
-    expect(celda(calcularCalendario(conHelada), 'lechuga', 1)?.motivo).toContain('Protege el cultivo en noches frías');
+    expect(celda(calcularCalendario(conHelada), 'acelga', 1)?.motivo).toContain('Protege el cultivo en noches frías');
   });
 });
 
@@ -233,17 +235,18 @@ describe('Auditoría v2 con la respuesta NASA archivada de Latacunga (cálculo i
   it('con riego, las hortalizas documentadas por INIAP tienen meses viables en todas las altitudes evaluadas hasta 3400 m', () => {
     for (const altitud of [2750, 2900, 3150, 3400]) {
       const celdas = calendario(altitud, true);
-      for (const id of ['col', 'lechuga', 'zanahoria', 'rabano', 'acelga']) expect(celdas.some((valor) => valor.cultivo_id === id && (valor.estado === 'recomendado' || valor.estado === 'posible_con_cuidado')), `${id} ${altitud}`).toBe(true);
+      for (const id of ['col', 'zanahoria', 'rabano', 'acelga']) expect(celdas.some((valor) => valor.cultivo_id === id && (valor.estado === 'recomendado' || valor.estado === 'posible_con_cuidado')), `${id} ${altitud}`).toBe(true);
+      if (altitud === 3400) expect(celdas.filter((valor) => valor.cultivo_id === 'lechuga').every((valor) => valor.estado === 'no_recomendado')).toBe(true);
     }
   });
   it('sin riego no promete hortalizas cuya necesidad de agua no tiene fuente', () => {
     const celdas = calendario(2900, false);
     for (const id of ['lechuga', 'zanahoria', 'rabano', 'acelga']) expect(celdas.filter((valor) => valor.cultivo_id === id).every((valor) => valor.estado === 'no_determinado' || valor.estado === 'no_recomendado')).toBe(true);
   });
-  it('reduce los «No recomendado» de los 10 originales sin aumentar artificialmente los recomendados', () => {
+  it('conserva incompatibilidades de agua y frío sin imponer cuotas de colores', () => {
     const celdas = calendario(3000, false).filter((valor) => (IDS_CULTIVOS_ORIGINALES as readonly string[]).includes(valor.cultivo_id));
-    // Referencia v1 (auditoriaCalendarioV1): 88 no recomendados y 25 recomendados de 120.
-    expect(celdas.filter((valor) => valor.estado === 'no_recomendado').length).toBeLessThan(88);
-    expect(celdas.filter((valor) => valor.estado === 'recomendado').length).toBeLessThanOrEqual(25);
+    expect(celda(celdas, 'papa', 5)?.estado).toBe('no_recomendado');
+    expect(celda(celdas, 'papa', 5)?.motivo).toContain('No alcanza el mínimo');
+    expect(celdas.filter((valor) => valor.estado === 'recomendado').every((valor) => !valor.resumen.includes('con precaución'))).toBe(true);
   });
 });

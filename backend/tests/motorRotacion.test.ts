@@ -88,12 +88,12 @@ describe('Rotaciones: heurística autorizada, explicable y determinista', () => 
     const actual = compararRotaciones(entrada).estrategias[0]; expect(actual?.puntajes.suelo).toBe(75); expect(actual?.riesgos.join(' ')).toContain('familias compartidas');
   });
   it('los ciclos y las esperas cruzan años sin acortar duraciones ni programar meses rojos', () => {
-    // 120 mm/mes: la papa alcanza la necesidad FAO del ciclo (720 mm ≥ 700) y sus meses de época quedan recomendados.
+    // 120 mm/mes y clima estable: 720 mm ≥ 700 durante cada ciclo, sin una espera causada solo por una ventana referencial.
     const entrada = crearEntradaRotaciones(); entrada.mensual.forEach((mes) => { mes.lluvia_mm = 120; });
     const actual = compararRotaciones(entrada).estrategias[0];
     expect(actual?.planificacion.every((paso) => paso.estado === 'recomendado')).toBe(true);
     expect(actual?.planificacion.map((paso) => [paso.inicio_estimado, paso.fin_estimado, paso.espera_meses])).toEqual([
-      ['2030-12-01', '2031-06-01', 0], ['2031-10-01', '2032-04-01', 4], ['2032-10-01', '2033-04-01', 6],
+      ['2030-12-01', '2031-06-01', 0], ['2031-06-01', '2031-12-01', 0], ['2031-12-01', '2032-06-01', 0],
     ]);
     expect(sumarMesesRotacion('2030-12-01', 2)).toBe('2031-02-01'); expect(sumarMesesRotacion('9999-12-01', 1)).toBeNull();
   });

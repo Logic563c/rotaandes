@@ -264,7 +264,7 @@ GET https://power.larc.nasa.gov/api/temporal/daily/point
 | `GWETTOP` / `GWETROOT` | Humedad del suelo superficial / zona de raíces (0–1) | Estrés hídrico |
 | `ALLSKY_SFC_SW_DWN` | Radiación solar | Informativo |
 
-- **Caché** en `clima_cache` por 30 días.
+- **Caché** en `clima_cache` por 30 días. Si una entrada anterior no contiene la altitud de la celda NASA, se intenta renovarla aunque siga vigente. Si NASA falla, se prefiere un respaldo completo y verificado de la misma celda; se conserva su fecha y procedencia. Sin ese metadato no se inventa una temperatura del terreno.
 - **Limitación (mostrarla en la UI):** resolución de ~0,5° (unos 50 km). Representa la zona, no el microclima del lote.
 - **Respaldo:** JSON precargado en `backend/src/data/` para Latacunga, Pujilí, Saquisilí, Salcedo y una zona de páramo, por si la API falla durante la demo.
 
@@ -291,18 +291,21 @@ GET https://api.open-meteo.com/v1/elevation?latitude=-0.93&longitude=-78.62
 ### 7.1 Riesgo de helada mensual
 - `T2M_MIN` ≤ 2 °C → **alto** · 2–5 °C → **medio** · > 5 °C → **bajo**.
 - Si `altitud_m` ≥ 3.400, se sube un nivel (el dato NASA promedia zonas más bajas).
+- Este es el indicador **regional de la vista Clima**. El calendario usa la mínima estimada a la altitud del terreno, según 7.2; no acumula ambas correcciones. Ninguno representa heladas observadas ni sustituye el pronóstico.
 
-### 7.2 Calendario de siembra (cultivo × mes) — versión `calendario_ciclo_v2` (15-11-2026)
+### 7.2 Calendario de siembra (cultivo × mes) — versión `calendario_ciclo_v3` (15-11-2026)
 Para cada cultivo del catálogo y cada mes `m` de siembra o trasplante se evalúan **todos los meses del ciclo** (`ciclo_meses` desde `m`, cruzando el año) con cinco criterios, cada uno con su fuente (detalle en `backend/src/data/perfilesAgronomicos.ts` y `docs/INFORME_CALENDARIO_AGRONOMICO.md`):
-1. **Época:** `meses_siembra` del catálogo (referencial). Fuera de ella → precaución, no exclusión. INIAP (2011) indica que las hortalizas pueden sembrarse todo el año. Sin época documentada → informativo.
-2. **Altitud:** rango del catálogo o documentado; fuera → precaución. Sin altitud del terreno → no determinado.
-3. **Temperatura media del ciclo** (FAO EcoCrop), estimada para la altitud del terreno desde la altitud de la celda NASA con 6,9 °C/km (Córdova et al., 2016). Fuera del rango de crecimiento → no recomendado; si un rango de altitud local lo admite → precaución por conflicto de fuentes.
-4. **Heladas:** riesgo §7.1 de cada mes del ciclo, nunca menor que el de la mínima estimada a la altitud del terreno (5,5 °C/km). Tolerancia 1 → alto excluye; tolerancia 2 → alto con precaución; ≥ 3 → informativo; hortalizas INIAP → alto con precaución; sin fuente → alto no determinado.
-5. **Agua:** con riego se cumple (sin calcular volumen). Sin riego: necesidad por ciclo FAO (1986, Tabla 14) frente a la lluvia del ciclo (bajo el mínimo → no recomendado; entre mínimo y máximo → precaución); si no hay, `lluvia_min_mensual_mm` mes a mes (precaución); si no hay ninguna → no determinado. El berro necesita agua permanente.
+1. **Época:** `meses_siembra` del catálogo (referencial). La pertenencia o no a una ventana sin validación local se informa, sin atribuir por sí sola un riesgo climático. INIAP (2011) indica que las hortalizas pueden sembrarse todo el año; eso no documenta su resistencia a heladas.
+2. **Altitud:** informar el rango del catálogo o documentado y si el terreno está fuera; evaluar la temperatura estimada antes de atribuir incompatibilidad. Sin altitud del terreno → no determinado.
+3. **Temperatura media del ciclo** (FAO EcoCrop), estimada desde la altitud de la celda NASA con 6,9 °C/km (Córdova et al., 2016). Fuera del rango de crecimiento → no recomendado; si un rango local lo admite → no determinado por conflicto de fuentes. Sin altitud de celda → no determinado, en vez de una precaución permanente.
+4. **Heladas:** mínima promedio NASA ajustada **una sola vez** a la altitud del terreno (5,5 °C/km). Aplicar los umbrales ≤2 °C alto, 2–5 °C medio y >5 °C bajo a esa estimación, sin sumar el escalón regional de 3400 m. Tolerancias originales 1–5: conservar reglas de sensibilidad del catálogo. Para la ampliación: fuente por especie (Iowa State University, heladas leves en campo; FAO 2005, capítulo 4). Tolerancia leve documentada: alto → precaución, medio → informativo. Lechuga sensible cerca de 0 °C: alto → no recomendado, medio → precaución. Sin fuente: medio o alto → no determinado. Falta de dato climático en cualquier mes → no determinado, incluso si el cultivo se considera tolerante. No extrapolar inmunidad a heladas fuertes ni usar temperaturas de almacenamiento como límites del cultivo vivo.
+5. **Agua:** con riego se cumple el criterio ordinario (sin calcular caudal ni volumen). Sin riego: necesidad FAO (1986, Tabla 14) frente a la lluvia del ciclo (bajo el mínimo → no recomendado; entre mínimo y máximo → precaución); si no hay, `lluvia_min_mensual_mm` mes a mes (precaución); si no hay ninguna → no determinado. Para berro, el dato de riego no confirma ni descarta agua permanente o suelo saturado y agua limpia: no determinado hasta confirmar esa condición, que el modelo actual no recoge.
 
 Estado: 🔴 **No recomendado** si un criterio excluye; si no, ⚪ **No determinado** si falta un dato o una fuente; si no, 🟡 **Posible con precaución** si hay un riesgo manejable; si no, 🟢 **Recomendado**. Un dato ausente nunca se convierte en favorable ni en desfavorable.
 
 Cada celda incluye `resumen` (una frase) y `motivo` (criterios con datos y fuentes). NASA aporta el clima; la recomendación es una regla de RotaAndes, referencial y pendiente de validación local. El motor anterior se conserva en `calendarioV1.ts` solo para comparar.
+
+Se mantienen los ciclos máximos documentados y los 29 cultivos; no se acorta un ciclo ni se reparten colores para forzar diferencias mensuales. La interfaz explica en conjunto los motivos que se repiten durante todo el año, conservando cada casilla y sus acciones. Diagnóstico y comparación: `docs/INFORME_CORRECCION_CALENDARIO_RIESGOS.md`.
 
 ### 7.3 Motor de rotaciones (explicable)
 **Estrategias:**

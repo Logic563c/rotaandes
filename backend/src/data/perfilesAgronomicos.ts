@@ -3,11 +3,15 @@
 // Detalle de fuentes, extracción y limitaciones: docs/INFORME_CALENDARIO_AGRONOMICO.md.
 
 export type ClaveFuente = 'proyecto_s10' | 'iniap_hortalizas_2011' | 'fao_agua_1986' | 'fao_56_1998' | 'fao_ecocrop'
-  | 'naranjo_melloco_2018' | 'utc_papa_nabo_2017' | 'cordova_gradiente_2016';
+  | 'naranjo_melloco_2018' | 'utc_papa_nabo_2017' | 'cordova_gradiente_2016' | 'isu_heladas_hortalizas' | 'fao_heladas_2005';
 
 export interface FuenteAgronomica { clave: ClaveFuente; cita: string; referencia: string; url: string; uso: string }
 
 export const FUENTES_AGRONOMICAS: Record<ClaveFuente, FuenteAgronomica> = {
+  isu_heladas_hortalizas: { clave: 'isu_heladas_hortalizas', cita: 'Iowa State University (Nair)', referencia: 'Nair, A. Frost Management in Vegetables. Iowa State University Extension and Outreach. Tabla de cultivos susceptibles y tolerantes a heladas leves en campo.',
+    url: 'https://www.extension.iastate.edu/smallfarms/frost-management-vegetables', uso: 'Tolerancia cualitativa a heladas leves de col, remolacha, zanahoria, coliflor, apio, acelga, cebolla de bulbo y rábano. No documenta inmunidad a heladas fuertes ni adaptación de variedades de Cotopaxi.' },
+  fao_heladas_2005: { clave: 'fao_heladas_2005', cita: 'FAO (Snyder y de Melo-Abreu, 2005)', referencia: 'Snyder, R. L. y de Melo-Abreu, J. P. (2005). Frost protection: fundamentals, practice, and economics. Vol. 1, cap. 4. FAO. Introducción y tabla 4.5.',
+    url: 'https://www.fao.org/4/y7223e/y7223e0a.htm', uso: 'Sensibilidad de lechuga cerca de 0 °C y respuesta cualitativa al frío de cilantro y nabo en campo (tabla 4.5). Variedad, endurecimiento y etapa alteran el daño. No se trasladan temperaturas de almacenamiento de la tabla 4.4 al cultivo vivo.' },
   proyecto_s10: { clave: 'proyecto_s10', cita: 'Catálogo del proyecto (PROYECTO.md §10)', referencia: 'RotaAndes, PROYECTO.md §10: catálogo semilla de cultivos de Cotopaxi (valores aproximados pendientes de validación MAG/INIAP).',
     url: 'PROYECTO.md', uso: 'Rangos de altitud, ventanas de siembra, ciclo en meses y tolerancia a heladas de los 10 cultivos originales (referenciales).' },
   iniap_hortalizas_2011: { clave: 'iniap_hortalizas_2011', cita: 'INIAP (Yugsi, 2011)', referencia: 'Yugsi, L. (2011). Producción limpia de hortalizas. Guía de campo para capacitación a capacitadores. Boletín Técnico 408. INIAP, Estación Experimental Santa Catalina, Quito.',
@@ -45,10 +49,10 @@ export interface RangoTemperatura { minima: number; optima_min: number; optima_m
 export interface Intervalo { min: number; max: number }
 /**
  * Cómo responde el calendario a un mes con riesgo de helada alto dentro del ciclo cuando el cultivo no tiene
- * tolerancia en el catálogo original: 'manejable_iniap' (hortaliza que INIAP indica sembrable todo el año en la
- * sierra: precaución) o null (sin fuente: no determinado).
+ * tolerancia en el catálogo original. Sembrable todo el año no equivale a tolerante a heladas.
+ * Las clases son cualitativas y no inventan temperaturas letales ni índices de rotación.
  */
-export type RespuestaHeladaPerfil = 'manejable_iniap' | null;
+export type RespuestaHeladaPerfil = 'tolera_helada_leve' | 'sensible' | null;
 
 export interface PerfilAgronomico {
   id: string; nombre: string; nombre_cientifico: string; nota_denominacion: string | null;
@@ -60,28 +64,35 @@ export interface PerfilAgronomico {
   necesidad_agua_ciclo_mm: Intervalo | null; sensibilidad_sequia: string | null;
   altitud_documentada_m: Intervalo | null; fuente_altitud: ClaveFuente | null;
   siembra_todo_el_anio_iniap: boolean; riego_en_manejo_iniap: boolean; requiere_agua_permanente: boolean;
-  respuesta_helada: RespuestaHeladaPerfil;
+  respuesta_helada: RespuestaHeladaPerfil; fuente_helada: ClaveFuente | null;
   consideraciones_rotacion: string[]; pendientes: string[]; fuentes: ClaveFuente[];
 }
 
 const PENDIENTE_LOCAL = 'Validación agronómica local (MAG/INIAP) de parámetros, variedades y épocas en Cotopaxi.';
-const SIN_HELADA = 'Tolerancia a heladas sin fuente verificada en esta versión: con riesgo alto el calendario no determina la siembra.';
+const SIN_HELADA = 'Tolerancia a heladas sin fuente verificada: con indicador de frío medio o alto no se determina la siembra.';
 const SIN_AGUA = 'Necesidad de agua por ciclo sin fuente verificada: sin riego no se compara con la lluvia.';
 const ROTACION_BRASICAS = 'Familia Brassicaceae: evitar sembrarla seguida de otra brásica (col, coliflor, brócoli, nabo, rábano, col china o berro).';
 const ROTACION_HORTALIZAS_INIAP = 'INIAP (2011) recomienda hortalizas después de papa o maíz para aprovechar nutrientes y reducir plagas (p. 7), pero también advierte malezas tras esos cultivos (p. 16): planificar el control.';
 
 function perfil(datos: Omit<PerfilAgronomico, 'fuentes'>): PerfilAgronomico {
+  const resistentesLeves = ['col', 'remolacha', 'zanahoria', 'cebolla_colorada', 'coliflor', 'rabano', 'apio', 'acelga'];
+  const respuesta: { respuesta_helada: RespuestaHeladaPerfil; fuente_helada: ClaveFuente | null } = resistentesLeves.includes(datos.id)
+    ? { respuesta_helada: 'tolera_helada_leve', fuente_helada: 'isu_heladas_hortalizas' }
+    : ['cilantro', 'papa_nabo'].includes(datos.id) ? { respuesta_helada: 'tolera_helada_leve', fuente_helada: 'fao_heladas_2005' }
+      : datos.id === 'lechuga' ? { respuesta_helada: 'sensible', fuente_helada: 'fao_heladas_2005' }
+        : { respuesta_helada: datos.respuesta_helada, fuente_helada: datos.fuente_helada };
   const fuentes = new Set<ClaveFuente>([datos.fuente_ciclo]);
+  if (respuesta.fuente_helada) fuentes.add(respuesta.fuente_helada);
   if (datos.fuente_temperatura) fuentes.add(datos.fuente_temperatura);
   if (datos.lluvia_anual_mm) fuentes.add('fao_ecocrop');
   if (datos.necesidad_agua_ciclo_mm) fuentes.add('fao_agua_1986');
   if (datos.fuente_altitud) fuentes.add(datos.fuente_altitud);
   if (datos.siembra_todo_el_anio_iniap || datos.riego_en_manejo_iniap || datos.establecimiento !== 'no_documentado') fuentes.add('iniap_hortalizas_2011');
-  return { ...datos, fuentes: [...fuentes] };
+  return { ...datos, ...respuesta, pendientes: respuesta.fuente_helada ? datos.pendientes.filter((texto) => texto !== SIN_HELADA) : datos.pendientes, fuentes: [...fuentes] };
 }
 const base = { nota_denominacion: null, cosecha: null, necesidad_agua_ciclo_mm: null, sensibilidad_sequia: null, altitud_documentada_m: null, fuente_altitud: null,
-  siembra_todo_el_anio_iniap: false, riego_en_manejo_iniap: false, requiere_agua_permanente: false, respuesta_helada: null } as const;
-const hortalizaIniap = { ...base, siembra_todo_el_anio_iniap: true, riego_en_manejo_iniap: true, respuesta_helada: 'manejable_iniap' } as const;
+  siembra_todo_el_anio_iniap: false, riego_en_manejo_iniap: false, requiere_agua_permanente: false, respuesta_helada: null, fuente_helada: null } as const;
+const hortalizaIniap = { ...base, siembra_todo_el_anio_iniap: true, riego_en_manejo_iniap: true } as const;
 
 export const PERFILES_AGRONOMICOS: readonly PerfilAgronomico[] = [
   // Diez cultivos originales: altitud, ventana, ciclo y tolerancia a heladas siguen en el catálogo §10 (referencial).
