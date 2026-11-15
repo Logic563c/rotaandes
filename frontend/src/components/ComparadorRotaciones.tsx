@@ -6,7 +6,7 @@ import { useAgricultura } from '../lib/useAgricultura';
 import type { EstadoCalendario, EstrategiaRotacion } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
 import { CabeceraModulo, Icono } from './Iconos';
-import { AyudaGrafica, TipoDato } from './AyudaGrafica';
+import { AyudaGrafica, LecturaRapidaGrafica, TipoDato } from './AyudaGrafica';
 import type { NombreIcono } from './Iconos';
 
 const ESTADOS: Record<EstadoCalendario, string> = { recomendado: '✓ Compatible según la regla referencial', posible_con_cuidado: '! Posible con cuidado', no_recomendado: '× Restricción comprobada', no_determinado: '? Información insuficiente' };
@@ -21,7 +21,7 @@ function ListaFactores({ titulo, valores }: { titulo: string; valores: string[] 
   return valores.length > 0 ? <div className="mt-5"><h4 className="font-semibold">{titulo}</h4><ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed text-oliva">{valores.map((valor, indice) => <li key={indice}>{valor}</li>)}</ul></div> : null;
 }
 export function TarjetaEstrategia({ estrategia, posicion }: { estrategia: EstrategiaRotacion; posicion: number }) {
-  const titulo = useId();
+  const titulo = useId(); const lecturaId = useId();
   return <article aria-labelledby={titulo} className="tarjeta tarjeta--acento min-w-0 p-5 sm:p-6" style={{ '--acento': ACENTOS[posicion] ?? '#1d4636' } as CSSProperties}>
     <p className="etiqueta-seccion">{estrategia.es_actual ? 'Referencia del historial' : `Alternativa ${posicion}`}</p>
     <h3 id={titulo} className="mt-3 break-words font-campo text-2xl">{estrategia.nombre}</h3>
@@ -33,7 +33,8 @@ export function TarjetaEstrategia({ estrategia, posicion }: { estrategia: Estrat
       <details className="mt-2"><summary className="cursor-pointer py-2 font-semibold">Ver criterio del calendario</summary><p className="mt-2 leading-relaxed text-oliva">{paso.motivo}</p></details>
     </li>)}</ol> : <p className="mt-5 text-sm text-oliva">No hay una secuencia verificable para esta posición. No se ha completado con cultivos inventados.</p>}
     <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-oliva"><TipoDato tipo="indice" /><span>Escala de 0 a 100: barra más larga = más favorable dentro del modelo.</span></div>
-    <dl className="mt-3 space-y-4 rounded-2xl bg-crema/70 p-4">{INDICADORES.map(({ clave, nombre, icono, color }) => {
+    <LecturaRapidaGrafica id={lecturaId} texto="Compara la misma fila entre opciones: una barra más larga es más favorable en el modelo, también en compatibilidad climática; más corta, menos. Son puntajes, no cosechas ni dinero. «No determinado» significa que faltan datos." />
+    <dl aria-describedby={lecturaId} className="mt-3 space-y-4 rounded-2xl bg-crema/70 p-4">{INDICADORES.map(({ clave, nombre, icono, color }) => {
       const valor = estrategia.puntajes[clave];
       return <div key={clave} className={clave === 'total' ? 'border-t border-pino/15 pt-4' : ''}><div className="flex flex-wrap justify-between gap-2 text-sm"><dt className="flex items-center gap-2 font-semibold"><Icono nombre={icono} className="size-4 shrink-0" />{nombre}</dt><dd className={clave === 'total' ? 'font-bold' : ''}>{valor === null ? 'No determinado' : `${valor.toLocaleString('es-EC', { maximumFractionDigits: 2 })}/100`}</dd></div>
         {valor !== null ? <div aria-hidden="true" className={`relative mt-2 overflow-hidden rounded-full bg-arena ${clave === 'total' ? 'h-3' : 'h-2'}`}><div className="h-full rounded-full" style={{ width: `${valor}%`, background: color }} /><span className="absolute inset-y-0 left-1/2 w-px bg-white" /></div>

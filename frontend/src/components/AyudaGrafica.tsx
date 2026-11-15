@@ -1,5 +1,6 @@
 // Piezas comunes para que todas las gráficas se lean igual: tipo de dato, ejes con unidades,
 // leyenda propia, valor exacto al pasar el cursor o tocar, resumen y ayuda «¿Cómo interpretar esta gráfica?».
+import { useId } from 'react';
 import type { ReactNode } from 'react';
 import { Icono } from './Iconos';
 import type { NombreIcono } from './Iconos';
@@ -26,6 +27,11 @@ function Muestra({ color, trazo }: Omit<ElementoLeyenda, 'texto'>) {
 }
 export function LeyendaGrafica({ elementos }: { elementos: ElementoLeyenda[] }) {
   return <ul aria-label="Leyenda de la gráfica" className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">{elementos.map((elemento) => <li key={elemento.texto} className="flex items-center gap-2"><Muestra color={elemento.color} trazo={elemento.trazo} />{elemento.texto}</li>)}</ul>;
+}
+
+/** Orientación visible; complementa el resumen de valores y la ayuda detallada. */
+export function LecturaRapidaGrafica({ texto, id }: { texto: string; id?: string }) {
+  return <p id={id} className="lectura-rapida-grafica"><strong>Para leerla: </strong>{texto}</p>;
 }
 
 export interface AyudaGraficaProps {
@@ -64,14 +70,16 @@ export function TooltipGrafica({ activo, etiqueta, filas, claveEtiqueta, claveTi
 
 export interface MarcoGraficaProps {
   titulo: string; descripcion: string; tipo: TipoDatoGrafica; fuente: string; ejeVertical: string; ejeHorizontal: string;
-  leyenda: ElementoLeyenda[]; resumen?: string; ayuda: Omit<AyudaGraficaProps, 'colores' | 'ejeHorizontal' | 'ejeVertical'> & { ejeHorizontal?: string; ejeVertical?: string };
+  lecturaRapida: string; leyenda: ElementoLeyenda[]; resumen?: string; ayuda: Omit<AyudaGraficaProps, 'colores' | 'ejeHorizontal' | 'ejeVertical'> & { ejeHorizontal?: string; ejeVertical?: string };
   children: ReactNode;
 }
 /** Marco común: título, tipo de dato, fuente y periodo, ejes con unidades, leyenda, resumen y ayuda. */
-export function MarcoGrafica({ titulo, descripcion, tipo, fuente, ejeVertical, ejeHorizontal, leyenda, resumen, ayuda, children }: MarcoGraficaProps) {
-  return <figure aria-label={`Gráfica: ${titulo}`} className="tarjeta min-w-0 p-4 sm:p-6">
+export function MarcoGrafica({ titulo, descripcion, tipo, fuente, ejeVertical, ejeHorizontal, lecturaRapida, leyenda, resumen, ayuda, children }: MarcoGraficaProps) {
+  const lecturaId = useId();
+  return <figure aria-label={`Gráfica: ${titulo}`} aria-describedby={lecturaId} className="tarjeta min-w-0 p-4 sm:p-6">
     <figcaption className="mb-3"><div className="flex flex-wrap items-start justify-between gap-2"><h3 className="text-lg font-semibold">{titulo}</h3><TipoDato tipo={tipo} /></div>
       <p className="mt-1 text-sm leading-relaxed text-oliva">{descripcion}</p><p className="mt-1 text-xs text-oliva">{fuente}</p></figcaption>
+    <LecturaRapidaGrafica id={lecturaId} texto={lecturaRapida} />
     <p className="eje-grafica"><span aria-hidden="true">↑ </span>{ejeVertical}</p>
     {children}
     <p className="eje-grafica text-right">{ejeHorizontal}<span aria-hidden="true"> →</span></p>

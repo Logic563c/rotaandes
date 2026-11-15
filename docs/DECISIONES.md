@@ -280,6 +280,14 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - La prueba del botón de pausa se adapta a la portada estática solicitada, conservando su caso y añadiendo comprobaciones de fotografías, acciones y preferencias antiguas. Se añaden pruebas de fondo decorativo y teclado/movimiento reducido; no se eliminan suites ni verificaciones funcionales.
 - Backend, autenticación, cliente HTTP, cálculos, modelos, migraciones y configuración de producción permanecen sin cambios. Solo se prepara un despliegue posterior del frontend, sujeto a revisión y autorización.
 
+## Lectura inmediata de las gráficas (13-11-2026)
+
+- Se parte de `69f925be012ccbf28e537fecd870c8aeb0bebc20` en `feat/comprension-graficas`. La observación de Steeven se atiende añadiendo «Para leerla» antes de cada gráfica, sin sustituir títulos, leyendas, unidades, resúmenes calculados, tooltips ni ayuda detallada.
+- El texto explica qué representa una barra o punto, cómo comparar valores altos y bajos y qué conclusión descriptiva permite esa comparación. No introduce umbrales, recomendaciones agrícolas ni cálculos. La referencia roja del pronóstico conserva el umbral recibido, sin fijar otro en la explicación.
+- Se distinguen promedios climáticos mensuales, series anuales, pronósticos diarios y puntajes del modelo. La humedad mensual corresponde a raíces y la anual a superficie; no se confunden con porcentajes o mediciones del lote. El mes más frío sigue siendo un promedio de mínimas, no una noche extrema.
+- Las tarjetas de rotación reutilizan la misma orientación en el comparador y el simulador. La comparación hipotética explica las barras gris y amarilla rayada de la misma estrategia, sin presentarlas como un pronóstico, cosechas o dinero.
+- Se usa texto HTML visible con estilo propio y ajuste de línea. Cada figura lo relaciona mediante `aria-describedby`; la ayuda adicional permanece desplegable y utilizable con teclado. Las capturas usan datos de prueba controlados, el backend existente y PostgreSQL aislado; no acreditan una consulta científica nueva.
+- No se añaden dependencias ni se modifican backend, algoritmos, cliente HTTP, autenticación, APIs, modelos o migraciones. No se publica esta mejora ni se actualiza el ZIP de entrega.
 
 ## Calendario agronómico por ciclo y catálogo ampliado (15-11-2026)
 

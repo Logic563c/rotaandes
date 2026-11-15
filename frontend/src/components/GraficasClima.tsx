@@ -20,6 +20,7 @@ export function GraficasClima({ mensual, fuente }: { mensual: MesClima[]; fuente
   return <div className="mt-7 grid min-w-0 gap-6 xl:grid-cols-2">
     <MarcoGrafica titulo="Lluvia de cada mes" tipo="historico" fuente={fuente}
       descripcion="Cuánta lluvia cae en promedio en cada mes en tu zona. Cada barra es un mes."
+      lecturaRapida="Cada barra es un mes: más alta significa más lluvia y más baja, menos, cuando hay datos. Compara los meses habitualmente más lluviosos o secos; no indica cuánto lloverá este año."
       ejeVertical="Lluvia en milímetros (mm) por mes" ejeHorizontal="Meses del año"
       leyenda={[{ color: COLORES_VARIABLE.lluvia, texto: 'Lluvia promedio del mes (mm)', trazo: 'barra' }]}
       resumen={resumirSerie(serie('lluvia_mm'), { nombre: 'lluvia', unidad: 'mm', alto: 'el mes más lluvioso', bajo: 'el más seco' })}
@@ -36,6 +37,7 @@ export function GraficasClima({ mensual, fuente }: { mensual: MesClima[]; fuente
 
     <MarcoGrafica titulo="Temperaturas de cada mes" tipo="historico" fuente={fuente}
       descripcion="Temperatura mínima (noche), media y máxima (día) promedio de cada mes, medidas a 2 m del suelo."
+      lecturaRapida="Cada línea sigue una temperatura: máxima, media o mínima. Más arriba significa más calor; más abajo, más frío. La mínima permite reconocer los meses habitualmente más fríos, sin confirmar heladas en tu terreno."
       ejeVertical="Temperatura en grados Celsius (°C)" ejeHorizontal="Meses del año"
       leyenda={[{ color: COLORES_VARIABLE.temperaturaMaxima, texto: 'Máxima (°C)', trazo: 'punteada' }, { color: COLORES_VARIABLE.temperaturaMedia, texto: 'Media (°C)', trazo: 'linea' }, { color: COLORES_VARIABLE.temperaturaMinima, texto: 'Mínima (°C)', trazo: 'discontinua' }, { color: '#a3492a', texto: 'Límite de riesgo alto de helada: 2 °C', trazo: 'referencia' }]}
       resumen={resumirMinimas(serie('t_min'), 2)}
@@ -56,6 +58,7 @@ export function GraficasClima({ mensual, fuente }: { mensual: MesClima[]; fuente
 
     <MarcoGrafica titulo="Humedad del suelo de cada mes" tipo="historico" fuente={fuente}
       descripcion="Qué tan húmedo está en promedio el suelo en la zona de las raíces, según el modelo de NASA POWER."
+      lecturaRapida="Cada barra es un mes: cerca de 1, el modelo indica suelo más húmedo en la zona de raíces; cerca de 0, más seco. Compara meses de la zona; no mide el agua de tu parcela."
       ejeVertical="Índice de humedad del suelo, de 0 (seco) a 1 (saturado de agua)" ejeHorizontal="Meses del año"
       leyenda={[{ color: COLORES_VARIABLE.humedadSuelo, texto: 'Humedad en la zona de raíces (índice 0–1)', trazo: 'barra' }]}
       resumen={resumirSerie(serie('humedad_suelo'), { nombre: 'humedad del suelo', unidad: '', alto: 'el mes con el suelo más húmedo', bajo: 'el más seco', decimales: 2 })}
