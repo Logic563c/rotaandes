@@ -1,4 +1,5 @@
 import type { Prisma } from '../generated/prisma/client.js';
+import { DIAS_POR_MES, IDS_CULTIVOS_NUEVOS, obtenerPerfil } from './perfilesAgronomicos.js';
 
 type FilaCultivo = [id: string, nombre: string, familia: string, altitudMin: number, altitudMax: number,
   cicloMeses: number, mesesSiembra: number[], lluviaMinMensualMm: number, demandaAgua: number,
@@ -26,8 +27,31 @@ export const cultivosReferenciales: Prisma.CultivoCreateInput[] = filas.map(([id
   toleranciaHelada, toleranciaSequia, fijaNitrogeno, aporteMateriaOrganica, proteccionErosion, valorForraje, valorMercado, descripcion: null,
 }));
 
+// Ampliación solicitada por el cliente (15-11-2026). Solo se guardan valores con fuente o derivados de ella:
+// familia botánica, ciclo en meses (máximo documentado / 30,44 días), ventana anual cuando INIAP (2011) indica que la
+// hortaliza puede sembrarse todo el año, rango de altitud documentado (melloco) y fijación de nitrógeno de la leguminosa.
+// Los índices de rotación (agua, helada, sequía, materia orgánica, erosión, forraje y mercado) no tienen fuente: quedan
+// en NULL y el comparador de rotaciones los muestra como no determinados. No se inventan puntuaciones.
+export const cultivosAmpliados: Prisma.CultivoCreateInput[] = IDS_CULTIVOS_NUEVOS.map((id) => {
+  const perfil = obtenerPerfil(id);
+  if (!perfil) throw new Error(`Falta el perfil agronómico de ${id}.`);
+  return {
+    id, nombre: perfil.nombre, familia: perfil.familia_botanica,
+    altitudMin: perfil.altitud_documentada_m?.min ?? null, altitudMax: perfil.altitud_documentada_m?.max ?? null,
+    cicloMeses: Math.min(12, Math.ceil(perfil.ciclo_dias.max / DIAS_POR_MES)),
+    mesesSiembra: perfil.siembra_todo_el_anio_iniap ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] : [],
+    lluviaMinMensualMm: null, demandaAgua: null, toleranciaHelada: null, toleranciaSequia: null,
+    fijaNitrogeno: perfil.familia_botanica === 'Fabaceae',
+    aporteMateriaOrganica: null, proteccionErosion: null, valorForraje: null, valorMercado: null,
+    descripcion: `${perfil.nombre_cientifico}. Parámetros agronómicos con fuente en el perfil del calendario; índices de rotación sin fuente verificada (no determinados).`,
+  };
+});
+
+/** Catálogo completo autorizado: los 10 cultivos originales y los 19 de la ampliación. */
+export const catalogoCompleto: Prisma.CultivoCreateInput[] = [...cultivosReferenciales, ...cultivosAmpliados];
+
 export async function cargarCultivos(base: Pick<Prisma.TransactionClient, 'cultivo'>): Promise<void> {
-  for (const cultivo of cultivosReferenciales) {
+  for (const cultivo of catalogoCompleto) {
     await base.cultivo.upsert({ where: { id: cultivo.id }, create: cultivo, update: cultivo });
   }
 }

@@ -8,21 +8,22 @@ const numero = z.number().finite();
 const escala = numero.int().min(1).max(5).nullable().default(null);
 const cultivo = z.object({ id: z.enum(IDS_CULTIVOS_CALENDARIO), nombre: z.string().min(1), familia: z.string().min(1).nullable().default(null),
   altitudMin: numero.int().nullable().default(null), altitudMax: numero.int().nullable().default(null), cicloMeses: numero.int().min(1).max(36).nullable().default(null),
-  mesesSiembra: z.array(numero.int().min(1).max(12)).min(1).max(12).refine((meses) => new Set(meses).size === meses.length).nullable().default(null),
+  mesesSiembra: z.array(numero.int().min(1).max(12)).max(12).refine((meses) => new Set(meses).size === meses.length).nullable().default(null),
   lluviaMinMensualMm: numero.min(0).nullable().default(null), toleranciaHelada: escala, toleranciaSequia: escala, demandaAgua: escala,
   fijaNitrogeno: z.boolean().nullable().default(null), aporteMateriaOrganica: escala, proteccionErosion: escala, valorMercado: escala,
 }).refine((valor) => valor.altitudMin === null || valor.altitudMax === null || valor.altitudMin <= valor.altitudMax);
-const mes = z.object({ mes: numero.int().min(1).max(12), t_min: numero.min(-100).max(70).nullable(), t_max: numero.min(-100).max(70).nullable(),
+const mes = z.object({ mes: numero.int().min(1).max(12), t_min: numero.min(-100).max(70).nullable(), t_max: numero.min(-100).max(70).nullable(), t_med: numero.min(-100).max(70).nullable().default(null),
   lluvia_mm: numero.min(0).max(62000).nullable(), riesgo_helada: z.enum(['alto', 'medio', 'bajo']).nullable() }).refine((valor) => valor.t_min === null || valor.t_max === null || valor.t_min <= valor.t_max);
 const fecha = z.iso.date().refine((valor) => !valor.startsWith('0000'));
 const esquemaEntrada = z.object({
   terreno: z.object({ altitudM: numero.int().min(-12000).max(9000).nullable(), tieneRiego: z.boolean().nullable(), areaHa: numero.positive().max(999999.99).nullable() }),
   prioridades: z.object({ agua: escala, suelo: escala, ingresos: escala }),
-  cultivos: z.array(cultivo).max(10).refine((valores) => new Set(valores.map((valor) => valor.id)).size === valores.length),
+  cultivos: z.array(cultivo).max(IDS_CULTIVOS_CALENDARIO.length).refine((valores) => new Set(valores.map((valor) => valor.id)).size === valores.length),
   plantillas: z.array(z.object({ id: z.string(), nombre: z.string().min(1), secuencia: z.array(z.string()).length(3) })).max(8).refine((valores) => new Set(valores.map((valor) => valor.id)).size === valores.length),
   historial: z.array(z.object({ id: z.string().min(1), cultivoId: z.string().min(1), fechaSiembra: fecha, fechaCosecha: fecha.nullable() }).refine((valor) => valor.fechaCosecha === null || valor.fechaCosecha >= valor.fechaSiembra)).max(10000),
   mensual: z.array(mes).max(12).refine((valores) => new Set(valores.map((valor) => valor.mes)).size === valores.length),
   inicio: fecha.refine((valor) => valor.endsWith('-01')), escenario: esquemaEscenarioCalendario.default({ lluviaPct: 0, tempDelta: 0 }),
+  elevacionCeldaM: numero.min(-500).max(9000).nullable().default(null),
 });
 type CultivoRotacion = z.infer<typeof cultivo>;
 export interface PasoRotacion { cultivo_id: string; nombre: string; inicio_estimado: string | null; fin_estimado: string | null; ciclo_meses: number | null; espera_meses: number | null; estado: EstadoCalendario; motivo: string }
@@ -72,8 +73,9 @@ export function compararRotaciones(entrada: unknown) {
   const mensual = aplicarEscenarioCalendario(datos.mensual, datos.terreno.altitudM, datos.escenario);
   const meses = new Map(mensual.map((valor) => [valor.mes, valor]));
   // El calendario es la única autoridad de ventanas/altitud/heladas sensibles/brócoli.
-  const evaluables = datos.cultivos.filter((valor) => valor.altitudMin !== null && valor.altitudMax !== null && valor.mesesSiembra !== null && valor.lluviaMinMensualMm !== null && valor.toleranciaHelada !== null);
-  const calendario = evaluables.length ? calcularCalendario({ terreno: datos.terreno, cultivos: evaluables, mensual: datos.mensual, escenario: datos.escenario }) : [];
+  // Todos los cultivos con ciclo y ventana pasan al calendario; los datos ausentes se resuelven allí como no determinados.
+  const evaluables = datos.cultivos.filter((valor) => valor.cicloMeses !== null && valor.mesesSiembra !== null);
+  const calendario = evaluables.length ? calcularCalendario({ terreno: datos.terreno, cultivos: evaluables, mensual: datos.mensual, escenario: datos.escenario, elevacionCeldaM: datos.elevacionCeldaM }) : [];
   const vaciosBase = ['No hay análisis de suelo, caudal de riego ni validación agronómica local. Climatología regional, sin observación del microclima.',
     'El horizonte es hipotético: ciclos del catálogo, no cosechas futuras observadas; no se confirma disponibilidad de la parcela.'];
   if (ultimas.length < 3) vaciosBase.push(ultimas.length ? `Solo hay ${ultimas.length} siembras: se repite el último cultivo para completar el patrón actual; no se inventan registros históricos.` : 'Historial vacío: no se conoce la estrategia actual ni su cultivo predecesor.');
@@ -89,14 +91,18 @@ export function compararRotaciones(entrada: unknown) {
       const valor = catalogo.get(cultivoId);
       let elegido: { fecha: string; espera: number; celda: typeof calendario[number] } | undefined;
       const celdas = calendario.filter((celda) => celda.cultivo_id === cultivoId);
-      if (siguiente && valor?.cicloMeses) for (let espera = 0; espera < 12; espera++) {
-        const candidata = sumarMesesRotacion(siguiente, espera); if (!candidata) break;
-        const celda = celdas.find((celda) => celda.mes === Number(candidata.slice(5, 7)));
-        if (celda && (celda.estado === 'recomendado' || celda.estado === 'posible_con_cuidado')) { elegido = { fecha: candidata, espera, celda }; break; }
+      // Primero el mes recomendado más cercano (12 meses); solo si no existe, el más cercano con precaución.
+      if (siguiente && valor?.cicloMeses) for (const aceptado of ['recomendado', 'posible_con_cuidado'] as const) {
+        for (let espera = 0; espera < 12 && !elegido; espera++) {
+          const candidata = sumarMesesRotacion(siguiente, espera); if (!candidata) break;
+          const celda = celdas.find((valorCelda) => valorCelda.mes === Number(candidata.slice(5, 7)));
+          if (celda?.estado === aceptado) elegido = { fecha: candidata, espera, celda };
+        }
+        if (elegido) break;
       }
       const bloqueado = celdas.length === 12 && celdas.every((celda) => celda.estado === 'no_recomendado');
       const fin = elegido && valor?.cicloMeses ? sumarMesesRotacion(elegido.fecha, valor.cicloMeses) : null;
-      const motivo = elegido?.celda.motivo ?? (bloqueado ? `${valor?.nombre ?? cultivoId}: todos los meses están excluidos por el calendario en estas condiciones.` : `${valor?.nombre ?? cultivoId}: faltan datos verificables o el paso anterior no puede programarse; no se asignan fechas.`);
+      const motivo = elegido?.celda.motivo ?? (bloqueado ? `${valor?.nombre ?? cultivoId}: todos los meses están excluidos por el calendario en estas condiciones. ${celdas[0]?.resumen ?? ''}`.trim() : `${valor?.nombre ?? cultivoId}: faltan datos verificables o el paso anterior no puede programarse; no se asignan fechas.`);
       pasos.push({ cultivo_id: cultivoId, nombre: valor?.nombre ?? cultivoId, inicio_estimado: elegido?.fecha ?? null, fin_estimado: fin, ciclo_meses: valor?.cicloMeses ?? null,
         espera_meses: elegido?.espera ?? null, estado: elegido?.celda.estado ?? (bloqueado ? 'no_recomendado' : 'no_determinado'), motivo });
       siguiente = fin;

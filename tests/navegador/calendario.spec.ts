@@ -35,7 +35,11 @@ test('calendario calculado, explicación accesible y aislamiento con PostgreSQL'
     const region = page.getByRole('region', { name: 'Calendario de siembra', exact: true }); const matriz = region.getByRole('region', { name: 'Matriz mensual de siembra' });
     await expect(region.getByRole('columnheader')).toHaveCount(13); await expect(region.getByRole('rowheader')).toHaveCount(10); await expect(region.getByText(/Prueba automatizada:/)).toBeVisible();
     const celda = region.getByRole('button', { name: 'Papa, Enero: No determinado', exact: true }); await celda.focus(); await page.keyboard.press('Enter');
-    const dialogo = page.getByRole('dialog', { name: 'Papa · Enero' }); await expect(dialogo).toBeVisible(); await expect(dialogo.getByText(calculada?.motivo ?? 'Fixture incompleta', { exact: true })).toBeVisible();
+    const dialogo = page.getByRole('dialog', { name: 'Papa · Enero' }); await expect(dialogo).toBeVisible();
+    // v2: el diálogo presenta el resumen y cada criterio del motivo calculado por el servidor, sin alterar su texto.
+    const lineas = (calculada?.motivo ?? 'Fixture incompleta').split('\n'); await expect(dialogo.getByText(lineas[0] ?? '', { exact: true })).toBeVisible();
+    const criterios = lineas.filter((linea) => linea.startsWith('• ')); expect(criterios.length).toBeGreaterThanOrEqual(5);
+    for (const linea of criterios) { const [nombre, ...resto] = linea.slice(2).split(': '); await expect(dialogo.getByRole('listitem').filter({ hasText: `${nombre}:` }).filter({ hasText: resto.join(': ').slice(0, 60) }).first()).toBeVisible(); }
     await dialogo.screenshot({ path: informacion.outputPath('explicacion.png'), animations: 'disabled' }); await page.keyboard.press('Escape'); await expect(dialogo).toHaveCount(0);
     await matriz.evaluate((elemento) => { elemento.scrollTop = 0; elemento.scrollLeft = 0; });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true); await region.screenshot({ path: informacion.outputPath('calendario.png'), animations: 'disabled' });

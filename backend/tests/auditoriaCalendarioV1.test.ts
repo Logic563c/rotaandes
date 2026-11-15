@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { calcularCalendario } from '../src/services/calendario.js';
+import { calcularCalendarioV1 as calcularCalendario } from '../src/services/calendarioV1.js';
 import { construirMensual } from '../src/services/nasaPower.js';
 import { cultivosReferenciales } from '../src/data/catalogoCultivos.js';
 import { crearBasePrueba } from './fixtures/nasaPruebas.js';
 
-describe('Auditoría independiente de las 120 celdas con respuesta NASA archivada', () => {
+describe('Auditoría v1 (antes): 120 celdas con respuesta NASA archivada, base de la comparación', () => {
   it('coincide con una matriz esperada revisada manualmente, sin derivarla del motor', () => {
     // Altitud de escenario de prueba, no afirmación sobre una parcela. R=recomendado, C=cuidado, N=no.
     const esperado: Record<string, string> = {

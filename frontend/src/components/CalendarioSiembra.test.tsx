@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContextoSesion } from '../lib/useSesion';
 import type { EstadoCalendario, RespuestaCalendario, UsuarioPublico } from '../types/api';
 import { CalendarioSiembra } from './CalendarioSiembra';
+import { completarCalendario } from '../tests/calendarioPruebas';
 
 Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute('open', ''); } });
 Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function (this: HTMLDialogElement) { this.removeAttribute('open'); } });
@@ -12,10 +13,10 @@ Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true
 function datosPrueba(): RespuestaCalendario {
   const estados: EstadoCalendario[] = ['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado'];
   const cultivos = [{ id: 'papa', nombre: 'Papa', altitud_min: 2700, altitud_max: 3800 }, { id: 'vicia_avena', nombre: 'Vicia + avena (abono verde)', altitud_min: 2700, altitud_max: 3800 }];
-  return { cultivos, celdas: cultivos.flatMap((cultivo) => Array.from({ length: 12 }, (_valor, indice) => ({ cultivo_id: cultivo.id, mes: indice + 1, estado: estados[indice % 4] ?? 'no_determinado', motivo: `Explicación sintética de prueba para ${cultivo.nombre}, mes ${indice + 1}. NASA y catálogo referencial; no es una garantía.` }))),
+  return completarCalendario({ cultivos, celdas: cultivos.flatMap((cultivo) => Array.from({ length: 12 }, (_valor, indice) => ({ cultivo_id: cultivo.id, mes: indice + 1, estado: estados[indice % 4] ?? 'no_determinado', motivo: `Explicación sintética de prueba para ${cultivo.nombre}, mes ${indice + 1}. NASA y catálogo referencial; no es una garantía.` }))),
     terreno: { altitud_m: 3000, area_ha: 1, tiene_riego: false }, escenario: { lluvia_pct: 0, temp_delta: 0 },
     clima: { fuente: 'NASA POWER', resolucion: 'Cuadrícula regional de prueba.', periodo: { inicio: 2001, fin: 2025 }, actualizado_en: '2026-11-08T05:00:00Z', estado_datos: 'cache', desactualizado: false, advertencias: ['Fixture solo para pruebas.'] },
-    aviso: 'No reemplaza el criterio del agricultor ni del técnico. Catálogo referencial sin validación agronómica local.' };
+    aviso: 'No reemplaza el criterio del agricultor ni del técnico. Catálogo referencial sin validación agronómica local.' });
 }
 const clientes: QueryClient[] = [];
 function mostrar() {
@@ -54,9 +55,40 @@ describe('Calendario: matriz, explicaciones y separación de sesiones', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(entrada)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('formato esperado'); expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
-  it('informa que no hay cultivos aptos por altitud sin mostrar una tabla vacía engañosa', async () => {
+  // v2: el servidor evalúa todos los cultivos (fuera del rango de altitud es precaución explicada), así que la interfaz no los
+  // oculta; una tabla vacía solo puede deberse a los filtros, y entonces se explica en lugar de mostrarla.
+  it('muestra todos los cultivos evaluados aunque estén fuera del rango de altitud y no deja una tabla vacía engañosa al filtrar', async () => {
     const datos = datosPrueba(); datos.terreno.altitud_m = 5000; vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
-    expect(await screen.findByText(/No hay cultivos del catálogo aptos/)).toBeInTheDocument(); expect(screen.getByText(/Fuera del rango de altitud referencial/)).toHaveTextContent('Papa'); expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument(); expect(screen.getByRole('rowheader', { name: /Papa/ })).toBeInTheDocument();
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar cultivo' }), 'inexistente');
+    expect(screen.getByText('Ningún cultivo coincide con los filtros elegidos.')).toBeInTheDocument(); expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar filtros' })); expect(screen.getByRole('table')).toBeInTheDocument();
+  });
+  it('agrupa por categoría, filtra hortalizas y ciclos cortos, y explica el ciclo y las fuentes del cultivo', async () => {
+    const datos = datosPrueba();
+    datos.cultivos = [
+      { ...datos.cultivos[0]!, categoria: 'tuberculo', categoria_nombre: 'Tubérculos andinos', es_hortaliza: false, ciclo_dias_min: 183, ciclo_dias_max: 183, ciclo_corto: false },
+      { ...datos.cultivos[1]!, id: 'rabano', nombre: 'Rábano', nombre_cientifico: 'Raphanus sativus var. radicula', categoria: 'raiz', categoria_nombre: 'Hortalizas de raíz', es_hortaliza: true, ciclo_dias_min: 35, ciclo_dias_max: 45, ciclo_corto: true,
+        establecimiento: 'siembra_directa', fuentes: [{ cita: 'INIAP (Yugsi, 2011)', referencia: 'Producción limpia de hortalizas.', url: 'https://repositorio.iniap.gob.ec/items/cc17f928-17fa-4ff8-a44e-ed9dfc740196' }], pendientes: ['Validación local.'] },
+    ];
+    datos.celdas = datos.celdas.map((celda) => celda.cultivo_id === 'vicia_avena' ? { ...celda, cultivo_id: 'rabano', resumen: 'Resumen sintético del rábano.', motivo: 'Resumen sintético del rábano.\n• Agua: con riego declarado.\n• Heladas: riesgo bajo.' } : celda);
+    datos.categorias = [{ id: 'raiz', nombre: 'Hortalizas de raíz', orden: 3, es_hortaliza: true }, { id: 'tuberculo', nombre: 'Tubérculos andinos', orden: 8, es_hortaliza: false }];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
+    const tabla = await screen.findByRole('table'); expect(within(tabla).getByText('Hortalizas de raíz (1)')).toBeInTheDocument(); expect(within(tabla).getByText('Tubérculos andinos (1)')).toBeInTheDocument();
+    expect(within(tabla).getByText('Ciclo aprox. 35-45 días · Siembra directa')).toBeInTheDocument();
+    for (const etiqueta of ['Recomendado', 'Posible con precaución', 'No recomendado', 'No determinado']) expect(within(screen.getByLabelText('Leyenda del calendario')).getByText(new RegExp(etiqueta))).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Solo ciclos de hasta 4 meses' })); expect(within(screen.getByRole('table')).queryByText('Papa')).not.toBeInTheDocument(); expect(screen.getByText(/Mostrando 1 de 2 cultivos/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Solo ciclos de hasta 4 meses' })); await userEvent.click(screen.getByRole('checkbox', { name: 'Solo hortalizas' }));
+    expect(within(screen.getByRole('table')).queryByText('Papa')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Rábano, Febrero: Posible con precaución' }));
+    const dialogo = screen.getByRole('dialog'); expect(within(dialogo).getByText('Resumen sintético del rábano.')).toBeInTheDocument(); expect(within(dialogo).getByText('Raphanus sativus var. radicula')).toBeInTheDocument();
+    expect(within(dialogo).getByText(/Ciclo aprox. 35-45 días\./)).toBeInTheDocument(); expect(within(dialogo).getByRole('link', { name: 'INIAP (Yugsi, 2011)' })).toHaveAttribute('href', expect.stringContaining('repositorio.iniap.gob.ec'));
+    expect(within(dialogo).getByText('Agua:')).toBeInTheDocument(); expect(within(dialogo).getByText('Validación local.')).toBeInTheDocument();
+  });
+  it('advierte cuando las hortalizas quedan sin determinar por falta de riego', async () => {
+    const datos = datosPrueba(); datos.cultivos = datos.cultivos.map((cultivo) => ({ ...cultivo, es_hortaliza: true }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
+    expect(await screen.findByText(/tu terreno no tiene riego/)).toBeInTheDocument();
   });
   it('no muestra una respuesta tardía al cerrar sesión', async () => {
     const pendiente = Promise.withResolvers<Response>(); vi.stubGlobal('fetch', vi.fn().mockReturnValue(pendiente.promise)); const sesion = mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' })); sesion.cerrar();

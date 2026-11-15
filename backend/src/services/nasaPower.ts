@@ -9,6 +9,8 @@ export const esquemaClimatologiaBase = z.object({
   periodo: z.object({ inicio: z.number().int().min(1900).max(9999), fin: z.number().int().min(1900).max(9999) }).refine((valor) => valor.inicio <= valor.fin && valor.fin - valor.inicio <= 200),
   consultado_en: z.iso.datetime(), version_api: z.string(), fuentes: z.array(z.string()), advertencias: z.array(z.string()),
   parametros: z.record(z.enum(PARAMETROS_NASA), z.object({ unidad: z.string(), valores: z.array(numero.nullable()).length(12) })),
+  // Altitud media de la celda MERRA-2 que NASA devuelve como tercera coordenada. Opcional: la caché anterior no la guardaba.
+  elevacion_celda_m: numero.min(-500).max(9000).nullable().optional(),
 });
 export type ClimatologiaBase = z.infer<typeof esquemaClimatologiaBase>;
 export type MotivoErrorClima = 'sin_dato' | 'limite_local' | 'tiempo_agotado' | 'red' | 'http_transitorio' | 'http_rechazo' | 'contenido' | 'tamano' | 'estructura';
@@ -46,7 +48,7 @@ export function procesarRespuestaNasa(entrada: unknown, latitud: number, longitu
   const lectura = esquemaRespuesta.safeParse(entrada);
   if (!lectura.success) throw new ErrorClima();
   const respuesta = lectura.data;
-  const [longitudDevuelta, latitudDevuelta] = respuesta.geometry.coordinates;
+  const [longitudDevuelta, latitudDevuelta, elevacionDevuelta] = respuesta.geometry.coordinates;
   // En la comprobación real NASA devolvió centésimas para coordenadas con seis decimales.
   // Admitir solo el mismo valor o ese redondeo, nunca una ubicación regional alternativa.
   if (!coincideCoordenadaNasa(longitudDevuelta, longitud) || !coincideCoordenadaNasa(latitudDevuelta, latitud)) throw new ErrorClima();
@@ -88,7 +90,8 @@ export function procesarRespuestaNasa(entrada: unknown, latitud: number, longitu
     return parametro !== undefined && parametros[parametro].valores.some((valor) => valor !== null);
   })) throw new ErrorClima();
   const resultado = esquemaClimatologiaBase.safeParse({ version: 1, latitud, longitud, periodo: { inicio, fin }, consultado_en: consultadoEn,
-    version_api: respuesta.header.api.version, fuentes: respuesta.header.sources, parametros, advertencias });
+    version_api: respuesta.header.api.version, fuentes: respuesta.header.sources, parametros, advertencias,
+    elevacion_celda_m: elevacionDevuelta !== undefined && elevacionDevuelta >= -500 && elevacionDevuelta <= 9000 ? elevacionDevuelta : null });
   if (!resultado.success) throw new ErrorClima();
   return resultado.data;
 }

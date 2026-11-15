@@ -188,19 +188,19 @@ create table cultivos (              -- catálogo (seed)
   id text primary key,
   nombre text not null,
   familia text not null,
-  altitud_min integer not null,
-  altitud_max integer not null,
+  altitud_min integer,                     -- null: sin rango documentado (migración 20261115000100_catalogo_ampliado)
+  altitud_max integer,
   ciclo_meses smallint not null,
-  meses_siembra smallint[] not null,
-  lluvia_min_mensual_mm integer not null,
-  demanda_agua smallint not null,          -- 1..5
-  tolerancia_helada smallint not null,     -- 1..5
-  tolerancia_sequia smallint not null,     -- 1..5
+  meses_siembra smallint[] not null,       -- vacío: sin época documentada
+  lluvia_min_mensual_mm integer,           -- los valores sin fuente se guardan como null ("no determinado")
+  demanda_agua smallint,                   -- 1..5
+  tolerancia_helada smallint,              -- 1..5
+  tolerancia_sequia smallint,              -- 1..5
   fija_nitrogeno boolean not null default false,
-  aporte_materia_organica smallint not null,
-  proteccion_erosion smallint not null,
-  valor_forraje smallint not null,
-  valor_mercado smallint not null,
+  aporte_materia_organica smallint,
+  proteccion_erosion smallint,
+  valor_forraje smallint,
+  valor_mercado smallint,
   descripcion text
 );
 
@@ -292,13 +292,17 @@ GET https://api.open-meteo.com/v1/elevation?latitude=-0.93&longitude=-78.62
 - `T2M_MIN` ≤ 2 °C → **alto** · 2–5 °C → **medio** · > 5 °C → **bajo**.
 - Si `altitud_m` ≥ 3.400, se sube un nivel (el dato NASA promedia zonas más bajas).
 
-### 7.2 Calendario de siembra (cultivo × mes)
-Para cada cultivo apto por altitud y cada mes `m`:
-- 🟢 **Recomendado:** `m` está en `meses_siembra`, la lluvia es ≥ `lluvia_min_mensual_mm` (o hay riego) y, si `tolerancia_helada` ≤ 2, el riesgo de helada es bajo en `m`, `m+1` y `m+2`.
-- 🟡 **Posible con cuidado:** cumple solo parte de las condiciones.
-- 🔴 **No recomendado:** fuera de la ventana o con helada alta para un cultivo sensible.
+### 7.2 Calendario de siembra (cultivo × mes) — versión `calendario_ciclo_v2` (15-11-2026)
+Para cada cultivo del catálogo y cada mes `m` de siembra o trasplante se evalúan **todos los meses del ciclo** (`ciclo_meses` desde `m`, cruzando el año) con cinco criterios, cada uno con su fuente (detalle en `backend/src/data/perfilesAgronomicos.ts` y `docs/INFORME_CALENDARIO_AGRONOMICO.md`):
+1. **Época:** `meses_siembra` del catálogo (referencial). Fuera de ella → precaución, no exclusión. INIAP (2011) indica que las hortalizas pueden sembrarse todo el año. Sin época documentada → informativo.
+2. **Altitud:** rango del catálogo o documentado; fuera → precaución. Sin altitud del terreno → no determinado.
+3. **Temperatura media del ciclo** (FAO EcoCrop), estimada para la altitud del terreno desde la altitud de la celda NASA con 6,9 °C/km (Córdova et al., 2016). Fuera del rango de crecimiento → no recomendado; si un rango de altitud local lo admite → precaución por conflicto de fuentes.
+4. **Heladas:** riesgo §7.1 de cada mes del ciclo, nunca menor que el de la mínima estimada a la altitud del terreno (5,5 °C/km). Tolerancia 1 → alto excluye; tolerancia 2 → alto con precaución; ≥ 3 → informativo; hortalizas INIAP → alto con precaución; sin fuente → alto no determinado.
+5. **Agua:** con riego se cumple (sin calcular volumen). Sin riego: necesidad por ciclo FAO (1986, Tabla 14) frente a la lluvia del ciclo (bajo el mínimo → no recomendado; entre mínimo y máximo → precaución); si no hay, `lluvia_min_mensual_mm` mes a mes (precaución); si no hay ninguna → no determinado. El berro necesita agua permanente.
 
-Cada celda incluye el **motivo** en texto, por ejemplo: *"Lluvia promedio de 35 mm en julio; la papa necesita al menos 60 mm si no hay riego."*
+Estado: 🔴 **No recomendado** si un criterio excluye; si no, ⚪ **No determinado** si falta un dato o una fuente; si no, 🟡 **Posible con precaución** si hay un riesgo manejable; si no, 🟢 **Recomendado**. Un dato ausente nunca se convierte en favorable ni en desfavorable.
+
+Cada celda incluye `resumen` (una frase) y `motivo` (criterios con datos y fuentes). NASA aporta el clima; la recomendación es una regla de RotaAndes, referencial y pendiente de validación local. El motor anterior se conserva en `calendarioV1.ts` solo para comparar.
 
 ### 7.3 Motor de rotaciones (explicable)
 **Estrategias:**
@@ -360,7 +364,7 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 | POST | `/api/auth/login` | `{ email, password }` → `{ token, usuario }` |
 | GET | `/api/auth/yo` | Usuario actual |
 | PUT | `/api/perfil` | Actualiza nombre, parroquia, teléfono y prioridades |
-| GET | `/api/cultivos` | Catálogo de cultivos |
+| GET | `/api/cultivos` | Catálogo de cultivos (incluye `nombre_cientifico`, `categoria` y `categoria_nombre`; los valores sin fuente son `null`) |
 | GET / POST | `/api/terrenos` | Listar / crear (calcula `altitud_m` automáticamente) |
 | GET / PUT / DELETE | `/api/terrenos/:id` | Detalle / editar / borrar. Las respuestas de terreno incluyen `poligono` (GeoJSON o `null`) y `area_poligono_m2` (derivado, solo lectura) |
 | PUT / DELETE | `/api/terrenos/:id/delimitacion` | Solo el agricultor propietario: guarda `{ poligono }` (GeoJSON Polygon validado) / elimina la delimitación |
@@ -369,7 +373,7 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 | GET | `/api/terrenos/:id/clima` | Climatología mensual: `[{ mes, t_min, t_max, t_med, lluvia_mm, humedad_suelo, riesgo_helada }]`, `fuente`, `resolucion` |
 | GET | `/api/terrenos/:id/tendencia` | Serie 2005–2024 de lluvia anual, temperatura mínima y días de helada |
 | GET | `/api/terrenos/:id/pronostico` | 7 días + `alertas: [{ fecha, tipo, mensaje }]` |
-| GET | `/api/terrenos/:id/calendario?lluvia_pct=&temp_delta=` | `{ celdas: [{ cultivo_id, mes, estado, motivo }] }` |
+| GET | `/api/terrenos/:id/calendario?lluvia_pct=&temp_delta=` | `{ celdas: [{ cultivo_id, mes, estado, resumen, motivo }], cultivos: [{ id, nombre, nombre_cientifico, categoria, categoria_nombre, es_hortaliza, ciclo_dias_min, ciclo_dias_max, ciclo_meses_evaluados, ciclo_corto, establecimiento, cosecha, fuentes, … }], categorias, version }` |
 | GET | `/api/terrenos/:id/rotaciones?lluvia_pct=&temp_delta=` | `{ estrategias: [actual, sugerida1, sugerida2], cambios_vs_base? }` |
 | GET | `/api/terrenos/:id/reporte.pdf` | PDF del terreno |
 | GET | `/api/capas/:tipo?mes=` | `tipo` = `ndvi` \| `humedad_suelo` → GeoJSON + leyenda |
@@ -418,6 +422,31 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 | brocoli | Brócoli | Brassicaceae | 2600–3200 | 4 | 1..12 (con riego) | 80 | 5 | 2 | 1 | no | 2 | 2 | 1 | 5 |
 | oca | Oca | Oxalidaceae | 3000–3900 | 7 | 10,11,12 | 50 | 3 | 4 | 2 | no | 2 | 2 | 1 | 2 |
 | vicia_avena | Vicia + avena (abono verde) | Fabaceae/Poaceae | 2700–3800 | 4 | 10,11,12,1,2 | 40 | 2 | 4 | 3 | sí | 5 | 5 | 5 | 1 |
+
+### Ampliación del catálogo (15-11-2026, solicitada por el cliente)
+19 cultivos nuevos. Sus parámetros agronómicos con fuente están en `backend/src/data/perfilesAgronomicos.ts` (INIAP 2011; FAO 1986; FAO-56; FAO EcoCrop; Naranjo et al. 2018). Los índices de rotación sin fuente (agua, helada, sequía, MO, erosión, forraje, mercado) son `null`: no se inventan.
+
+| id | nombre | especie | categoría | ciclo de referencia (días) | época |
+|---|---|---|---|---|---|
+| col | Col | *Brassica oleracea* var. *capitata* | hoja | 120–140 | todo el año (INIAP) |
+| remolacha | Remolacha | *Beta vulgaris* | raíz | 70–90 | todo el año (INIAP) |
+| lechuga | Lechuga | *Lactuca sativa* | hoja | 75–140 | todo el año (INIAP) |
+| cilantro | Cilantro | *Coriandrum sativum* | hoja | 35–140 | todo el año (INIAP) |
+| apio | Apio | *Apium graveolens* var. *dulce* | hoja | 125–210 | sin dato |
+| perejil | Perejil | *Petroselinum crispum* | hoja | 70–365 | sin dato |
+| zanahoria | Zanahoria | *Daucus carota* | raíz | 100–150 | todo el año (INIAP) |
+| cebolla_colorada | Cebolla colorada | *Allium cepa* (bulbo) | cebolla | 150–210 | todo el año (INIAP) |
+| cebolla_blanca | Cebolla blanca | *Allium fistulosum* | cebolla | 60–160 | todo el año (INIAP) |
+| coliflor | Coliflor | *Brassica oleracea* var. *botrytis* | flor | 60–120 | todo el año (INIAP) |
+| papa_nabo | Papa nabo | *Brassica rapa* subsp. *rapa* | raíz | 40–80 | todo el año (INIAP) |
+| col_china | Col china | *Brassica rapa* subsp. *pekinensis/chinensis* | hoja | 40–90 | sin dato |
+| rabano | Rábano | *Raphanus sativus* var. *radicula* | raíz | 35–45 | todo el año (INIAP) |
+| frejol | Fréjol | *Phaseolus vulgaris* | leguminosa | 95–110 | sin dato |
+| zapallo | Zapallo | *Cucurbita maxima* | fruto | 100–120 | sin dato |
+| zambo | Zambo | *Cucurbita ficifolia* | fruto | 40–120 | sin dato |
+| berro | Berro | *Nasturtium officinale* | hoja | 40–80 | sin dato |
+| acelga | Acelga | *Beta vulgaris* var. *cicla* | hoja | 50–150 | todo el año (INIAP) |
+| melloco | Melloco | *Ullucus tuberosus* | tubérculo | 120–270 | sin dato |
 
 ### Plantillas de rotación (seed)
 | id | secuencia |

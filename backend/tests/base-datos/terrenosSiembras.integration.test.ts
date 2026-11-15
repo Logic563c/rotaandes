@@ -37,7 +37,8 @@ describe('Terrenos y siembras HTTP / PostgreSQL aislado', () => {
     await cargarCultivos(tx);
     expect(await tx.cultivo.findMany({ orderBy: { id: 'asc' } })).toEqual(antes);
     const respuesta = await request(app).get('/api/cultivos').expect(200);
-    expect(respuesta.body).toHaveLength(10);
+    expect(respuesta.body).toHaveLength(29);
+    expect(respuesta.body.find((cultivo: { id: string }) => cultivo.id === 'melloco')).toMatchObject({ familia: 'Basellaceae', valor_mercado: null, demanda_agua: null, altitud_min: 1800, altitud_max: 3800 });
     expect(respuesta.body.find((cultivo: { id: string }) => cultivo.id === 'vicia_avena').fija_nitrogeno).toBe(true);
     expect(await tx.terreno.count()).toBe(0);
     expect(await tx.plantillaRotacion.count()).toBe(0);

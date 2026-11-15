@@ -137,10 +137,13 @@ const esquemaTerreno = z.object({
   area_poligono_m2: numero.nonnegative().nullable().optional().transform((valor) => valor ?? null),
 });
 const esquemaSiembra = z.object({ id: z.uuid(), terreno_id: z.uuid(), cultivo_id: z.string(), fecha_siembra: z.iso.date(), fecha_cosecha: z.iso.date().nullable(), notas: z.string().nullable(), creado_en: z.string().nullable() });
-const esquemaCultivo = z.object({ id: z.string(), nombre: z.string(), familia: z.string(), altitud_min: numero.int(), altitud_max: numero.int(),
-  ciclo_meses: numero.int(), meses_siembra: z.array(numero.int().min(1).max(12)), lluvia_min_mensual_mm: numero,
-  demanda_agua: numero, tolerancia_helada: numero, tolerancia_sequia: numero, fija_nitrogeno: z.boolean(), aporte_materia_organica: numero,
-  proteccion_erosion: numero, valor_forraje: numero, valor_mercado: numero, descripcion: z.string().nullable() });
+// Valores sin fuente llegan como null; los campos descriptivos son opcionales para aceptar un servidor anterior.
+const opcional = <T extends z.ZodType>(esquema: T) => esquema.nullable().optional().transform((valor) => valor ?? null);
+const esquemaCultivo = z.object({ id: z.string(), nombre: z.string(), familia: z.string(), altitud_min: numero.int().nullable(), altitud_max: numero.int().nullable(),
+  ciclo_meses: numero.int(), meses_siembra: z.array(numero.int().min(1).max(12)), lluvia_min_mensual_mm: numero.nullable(),
+  demanda_agua: numero.nullable(), tolerancia_helada: numero.nullable(), tolerancia_sequia: numero.nullable(), fija_nitrogeno: z.boolean(), aporte_materia_organica: numero.nullable(),
+  proteccion_erosion: numero.nullable(), valor_forraje: numero.nullable(), valor_mercado: numero.nullable(), descripcion: z.string().nullable(),
+  nombre_cientifico: opcional(z.string()), categoria: opcional(z.string()), categoria_nombre: opcional(z.string()) });
 function comprobarRespuesta<T>(esquema: z.ZodType<T>, datos: unknown): T {
   const resultado = esquema.safeParse(datos);
   if (!resultado.success) throw new ErrorApi('La respuesta del servicio no tiene el formato esperado.');
@@ -152,6 +155,13 @@ export async function guardarTerreno(token: string, datos: DatosTerreno, id?: st
 export async function guardarDelimitacion(token: string, id: string, poligono: PoligonoGeoJson): Promise<Terreno> { return comprobarRespuesta(esquemaTerreno, await solicitar(`/terrenos/${encodeURIComponent(id)}/delimitacion`, 'PUT', token, { poligono })); }
 export async function eliminarDelimitacion(token: string, id: string): Promise<Terreno> { return comprobarRespuesta(esquemaTerreno, await solicitar(`/terrenos/${encodeURIComponent(id)}/delimitacion`, 'DELETE', token)); }
 export async function eliminarTerreno(token: string, id: string): Promise<void> { await solicitar(`/terrenos/${encodeURIComponent(id)}`, 'DELETE', token); }
+/** Agrupa el catálogo por categoría para listas desplegables (orden de llegada de las categorías). */
+export function agruparCultivos(cultivos: Cultivo[]) {
+  return cultivos.reduce<{ nombre: string; cultivos: Cultivo[] }[]>((lista, cultivo) => {
+    const nombre = cultivo.categoria_nombre ?? 'Otros cultivos'; const grupo = lista.find((valor) => valor.nombre === nombre);
+    if (grupo) grupo.cultivos.push(cultivo); else lista.push({ nombre, cultivos: [cultivo] }); return lista;
+  }, []).map((grupo) => ({ ...grupo, cultivos: [...grupo.cultivos].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')) })).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+}
 export async function listarCultivos(signal?: AbortSignal): Promise<Cultivo[]> { return comprobarRespuesta(z.array(esquemaCultivo), await solicitar('/cultivos', 'GET', undefined, undefined, signal)); }
 export async function listarSiembras(token: string, terrenoId: string, signal?: AbortSignal): Promise<Siembra[]> { return comprobarRespuesta(z.array(esquemaSiembra), await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/siembras`, 'GET', token, undefined, signal)); }
 export async function guardarSiembra(token: string, terrenoId: string, datos: DatosSiembra, id?: string): Promise<Siembra> { return comprobarRespuesta(esquemaSiembra, await solicitar(id ? `/siembras/${encodeURIComponent(id)}` : `/terrenos/${encodeURIComponent(terrenoId)}/siembras`, id ? 'PUT' : 'POST', token, datos)); }
@@ -200,10 +210,20 @@ export async function obtenerPronostico(token: string, terrenoId: string, signal
   return comprobarRespuesta(esquemaPronostico, await solicitar(`/terrenos/${encodeURIComponent(terrenoId)}/pronostico`, 'GET', token, undefined, signal));
 }
 
+const MAXIMO_CULTIVOS = 40;
 const esquemaEscenarioCalendario = z.object({ lluvia_pct: numero.min(-30).max(30), temp_delta: numero.min(-2).max(2) });
 const esquemaCalendario = z.object({
-  celdas: z.array(z.object({ cultivo_id: z.string().min(1), mes: numero.int().min(1).max(12), estado: z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']), motivo: z.string().min(1) })).max(120),
-  cultivos: z.array(z.object({ id: z.string().min(1), nombre: z.string().min(1), altitud_min: numero.int(), altitud_max: numero.int() })).max(10),
+  celdas: z.array(z.object({ cultivo_id: z.string().min(1), mes: numero.int().min(1).max(12), estado: z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']), motivo: z.string().min(1),
+    resumen: opcional(z.string().min(1)) })).max(12 * MAXIMO_CULTIVOS),
+  cultivos: z.array(z.object({ id: z.string().min(1), nombre: z.string().min(1), altitud_min: numero.int().nullable(), altitud_max: numero.int().nullable(),
+    nombre_cientifico: opcional(z.string()), nota_denominacion: opcional(z.string()), categoria: opcional(z.string()), categoria_nombre: opcional(z.string()), es_hortaliza: opcional(z.boolean()),
+    ciclo_dias_min: opcional(numero.int().positive()), ciclo_dias_max: opcional(numero.int().positive()), ciclo_meses_evaluados: opcional(numero.int().min(1).max(12)), ciclo_corto: opcional(z.boolean()),
+    establecimiento: opcional(z.enum(['siembra_directa', 'trasplante', 'no_documentado'])), cosecha: opcional(z.string()), origen: opcional(z.enum(['catalogo_original', 'ampliacion_2026'])),
+    fuentes: z.array(z.object({ cita: z.string().min(1), referencia: z.string().min(1), url: z.string().min(1) })).max(20).optional().transform((valor) => valor ?? []),
+    consideraciones_rotacion: z.array(z.string()).max(20).optional().transform((valor) => valor ?? []), pendientes: z.array(z.string()).max(20).optional().transform((valor) => valor ?? []),
+  })).max(MAXIMO_CULTIVOS),
+  categorias: z.array(z.object({ id: z.string().min(1), nombre: z.string().min(1), orden: numero.int(), es_hortaliza: z.boolean() })).max(20).optional().transform((valor) => valor ?? []),
+  version: opcional(z.string()),
   terreno: z.object({ altitud_m: numero.int().nullable(), tiene_riego: z.boolean().nullable(), area_ha: numero.positive().nullable() }), escenario: esquemaEscenarioCalendario,
   clima: esquemaClima.pick({ fuente: true, resolucion: true, periodo: true, actualizado_en: true, estado_datos: true, desactualizado: true, advertencias: true }), aviso: z.string().min(1),
 }).refine((datos) => {

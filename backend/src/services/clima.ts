@@ -53,7 +53,7 @@ export function crearServicioClima(obtenerCache: ObtenerCacheClima, consultar = 
       resolucion: 'Meteorología: 0,5° × 0,625° (aprox. 50–70 km); radiación solar: 1° × 1°. Representa la zona, no el microclima del lote.',
       periodo: base.periodo, actualizado_en: base.consultado_en, estado_datos: origen,
       desactualizado: reloj().getTime() - Date.parse(base.consultado_en) >= VIGENCIA_CLIMA_MS,
-      coordenadas: { latitud, longitud }, parametros: base.parametros,
+      coordenadas: { latitud, longitud }, parametros: base.parametros, elevacion_celda_m: base.elevacion_celda_m ?? null,
       advertencias: [...base.advertencias, ...(altitudM === null ? ['Altitud del terreno desconocida: no se aplicó el ajuste de riesgo por altura.'] : [])],
       metodologia: 'Lluvia mensual estimada: mm/día × días medios del mes en el periodo (incluye bisiestos). Humedad del suelo: GWETROOT, índice 0–1, no porcentaje volumétrico. Riesgo heurístico según T2M_MIN y altitud; no son días de helada observados ni pronóstico.',
     };
