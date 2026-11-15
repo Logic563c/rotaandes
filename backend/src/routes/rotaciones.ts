@@ -41,9 +41,9 @@ export function crearRutasRotaciones(obtenerBase: ObtenerBaseAgricola, autentica
       const resultado = compararRotaciones({ terreno: { altitudM: terreno.altitudM, tieneRiego: terreno.tieneRiego, areaHa: terreno.areaHa?.toNumber() ?? null },
         prioridades: { agua: terreno.usuario.prioridadAgua, suelo: terreno.usuario.prioridadSuelo, ingresos: terreno.usuario.prioridadIngresos }, cultivos, plantillas,
         historial: terreno.siembras.map((siembra) => ({ id: siembra.id, cultivoId: siembra.cultivoId, fechaSiembra: siembra.fechaSiembra.toISOString().slice(0, 10), fechaCosecha: siembra.fechaCosecha?.toISOString().slice(0, 10) ?? null })),
-        inicio, mensual: clima?.mensual ?? [], escenario });
+        inicio, mensual: clima?.mensual ?? [], escenario, elevacionCeldaM: clima?.elevacion_celda_m ?? null });
       respuesta.json({ ...resultado, clima: clima ? { fuente: clima.fuente, resolucion: clima.resolucion, periodo: clima.periodo, actualizado_en: clima.actualizado_en, estado_datos: clima.estado_datos, desactualizado: clima.desactualizado, advertencias: clima.advertencias } : null,
-        advertencias: [...(clima ? [] : ['NASA no disponible sin dato fiable del mismo punto: no se determina el ranking.']), ...(cultivos.length < 10 ? ['Catálogo incompleto: no se presuponen características de cultivos ausentes.'] : [])] });
+        advertencias: [...(clima ? [] : ['NASA no disponible sin dato fiable del mismo punto: no se determina el ranking.']), ...(cultivos.length < IDS_CULTIVOS_CALENDARIO.length ? ['Catálogo incompleto: no se presuponen características de cultivos ausentes.'] : [])] });
     } catch (error: unknown) { if (error instanceof ErrorRotaciones) throw new ErrorHttp(500, error.message); throw error; }
   });
   return rutas;

@@ -9,7 +9,7 @@ import { crearAplicacion } from '../../src/aplicacion.js';
 import { obtenerConfiguracion } from '../../src/configuracion.js';
 import { firmarToken } from '../../src/services/autenticacion.js';
 import { crearServicioClima } from '../../src/services/clima.js';
-import { ErrorClima } from '../../src/services/nasaPower.js';
+import { construirMensual, ErrorClima } from '../../src/services/nasaPower.js';
 import { cargarCultivos } from '../../src/data/catalogoCultivos.js';
 import { crearBasePrueba } from '../fixtures/nasaPruebas.js';
 
@@ -31,12 +31,18 @@ async function preparar(tx: Prisma.TransactionClient) {
 }
 afterAll(async () => { await prisma.$disconnect(); });
 describe('Calendario HTTP con catálogo PostgreSQL y clima controlado, rollback aislado', () => {
-  it('calcula 120 celdas con catálogo SQL y comparte caché con /clima sin duplicar proveedor', async () => probar(async (tx) => {
+  it('calcula 348 celdas (29 cultivos) con catálogo SQL y comparte caché con /clima sin duplicar proveedor', async () => probar(async (tx) => {
     const { app, proveedor, terreno, token } = await preparar(tx);
     const antes = await tx.terreno.findUniqueOrThrow({ where: { id: terreno.id } });
     const resultado = await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(200);
-    expect(resultado.body.celdas).toHaveLength(120); expect(resultado.body.cultivos).toHaveLength(10); expect(resultado.body.escenario).toEqual({ lluvia_pct: 0, temp_delta: 0 });
-    expect(resultado.body.celdas.find((celda: { cultivo_id: string; mes: number }) => celda.cultivo_id === 'papa' && celda.mes === 1)).toMatchObject({ estado: 'posible_con_cuidado', motivo: expect.stringContaining('124 mm') });
+    expect(resultado.body.celdas).toHaveLength(348); expect(resultado.body.cultivos).toHaveLength(29); expect(resultado.body.escenario).toEqual({ lluvia_pct: 0, temp_delta: 0 });
+    expect(resultado.body.version).toBe('calendario_ciclo_v2'); expect(resultado.body.categorias.map((categoria: { id: string }) => categoria.id)).toContain('hoja');
+    // Lluvia del ciclo de la papa (enero-junio) calculada aparte con el mismo servicio NASA, sin usar el motor del calendario.
+    const lluviaCiclo = construirMensual(crearBasePrueba(), 3000).filter((mes) => mes.mes <= 6).reduce((suma, mes) => suma + (mes.lluvia_mm ?? 0), 0);
+    const papa = resultado.body.celdas.find((celda: { cultivo_id: string; mes: number }) => celda.cultivo_id === 'papa' && celda.mes === 1);
+    expect(papa.motivo).toContain(`Lluvia promedio del ciclo (6 meses, NASA): ${Math.round(lluviaCiclo).toLocaleString('es-EC')} mm`);
+    expect(papa.estado).toBe(lluviaCiclo < 500 ? 'no_recomendado' : 'posible_con_cuidado');
+    expect(resultado.body.cultivos.find((cultivo: { id: string }) => cultivo.id === 'lechuga')).toMatchObject({ nombre_cientifico: 'Lactuca sativa', categoria: 'hoja', establecimiento: 'trasplante', origen: 'ampliacion_2026' });
     await request(app).get(`/api/terrenos/${terreno.id}/clima`).auth(token, { type: 'bearer' }).expect(200);
     expect(proveedor).toHaveBeenCalledOnce(); expect(await tx.terreno.findUniqueOrThrow({ where: { id: terreno.id } })).toEqual(antes);
     expect(await tx.climaCache.count()).toBe(1);
@@ -64,7 +70,14 @@ describe('Calendario HTTP con catálogo PostgreSQL y clima controlado, rollback 
     const fallo = await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(503); expect(Object.keys(fallo.body)).toEqual(['error']);
     await tx.cultivo.delete({ where: { id: 'papa' } });
     await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(500);
-    expect(await tx.cultivo.count()).toBe(9); expect(proveedor).toHaveBeenCalledOnce();
+    expect(await tx.cultivo.count()).toBe(28); expect(proveedor).toHaveBeenCalledOnce();
+  }));
+  it('con los 10 originales y parte de la ampliación evalúa los cultivos presentes, sin suponer los ausentes', async () => probar(async (tx) => {
+    const { app, terreno, token } = await preparar(tx);
+    await tx.cultivo.deleteMany({ where: { id: { in: ['lechuga', 'melloco'] } } });
+    const resultado = await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(200);
+    expect(resultado.body.cultivos).toHaveLength(27); expect(resultado.body.celdas).toHaveLength(324);
+    expect(resultado.body.celdas.some((celda: { cultivo_id: string }) => celda.cultivo_id === 'lechuga' || celda.cultivo_id === 'melloco')).toBe(false);
   }));
   it('con altitud nula y lluvia ausente no fabrica recomendaciones favorables', async () => probar(async (tx) => {
     const { app, proveedor, terreno, token } = await preparar(tx); const incompleta = crearBasePrueba(); incompleta.parametros.PRECTOTCORR.valores.fill(null);

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Marco } from '../components/Marco';
 import { MapaDiferido } from '../components/MapaDiferido';
 import { EstadoConsulta } from '../components/EstadoConsulta';
-import { listarCultivos, obtenerPanelTecnico } from '../lib/api';
+import { agruparCultivos, listarCultivos, obtenerPanelTecnico } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import type { HeladaTecnico } from '../types/tecnico';
 import type { CSSProperties } from 'react';
@@ -38,7 +38,7 @@ export function PanelTecnico() {
     <p className="mt-5 max-w-3xl leading-relaxed text-crema/90">Consulta terrenos registrados y su historial, sin cambiar información de los agricultores. La parroquia corresponde al perfil del propietario y puede no ser la ubicación del lote.</p></BannerFoto>
     <form aria-label="Filtros de terrenos" className="tarjeta tarjeta--acento mt-7 grid items-end gap-4 p-5 sm:grid-cols-2" onSubmit={(evento) => { evento.preventDefault(); actualizar(); }}>
       <div className="min-w-0"><label htmlFor="parroquia-tecnico" className="block text-sm font-semibold">Parroquia del perfil</label><select id="parroquia-tecnico" className="mt-2 w-full" value={parroquia} onChange={(e) => { establecerParroquia(e.target.value); establecerPagina(1); }}><option value="">Todas las parroquias</option>{(datos?.parroquias ?? (parroquia ? [parroquia] : [])).map((p) => <option key={p}>{p}</option>)}</select></div>
-      <div className="min-w-0"><label htmlFor="cultivo-tecnico" className="block text-sm font-semibold">Cultivo en el historial</label><select id="cultivo-tecnico" className="mt-2 w-full" value={cultivo} disabled={catalogo.isPending || catalogo.isError} onChange={(e) => { establecerCultivo(e.target.value); establecerPagina(1); }}><option value="">Todos los cultivos</option>{catalogo.data?.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
+      <div className="min-w-0"><label htmlFor="cultivo-tecnico" className="block text-sm font-semibold">Cultivo en el historial</label><select id="cultivo-tecnico" className="mt-2 w-full" value={cultivo} disabled={catalogo.isPending || catalogo.isError} onChange={(e) => { establecerCultivo(e.target.value); establecerPagina(1); }}><option value="">Todos los cultivos</option>{agruparCultivos(catalogo.data ?? []).map((grupo) => <optgroup key={grupo.nombre} label={grupo.nombre}>{grupo.cultivos.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</optgroup>)}</select></div>
       <button type="button" className="boton-secundario" onClick={() => { establecerParroquia(''); establecerCultivo(''); establecerPagina(1); }}>Limpiar filtros</button><button className="boton-primario" disabled={consulta.isFetching} type="submit">Revisar datos guardados</button>
     </form>
     {catalogo.isError && <div className="mt-3 text-sm"><p role="alert">No se pudo cargar el catálogo para filtrar.</p><button className="enlace-nav underline" onClick={() => { void catalogo.refetch(); }}>Reintentar catálogo</button></div>}

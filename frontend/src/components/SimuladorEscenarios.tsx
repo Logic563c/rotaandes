@@ -27,7 +27,7 @@ function ExplicacionEscenario({ original, modificado, cultivo, alCerrar }: { ori
 }
 
 function MatrizEscenarios({ original, modificado }: { original: ResultadosEscenario; modificado: ResultadosEscenario }) {
-  const [seleccion, establecerSeleccion] = useState<{ cultivo: string; mes: number } | null>(null);
+  const [seleccion, establecerSeleccion] = useState<{ cultivo: string; mes: number } | null>(null); const [soloCambios, establecerSoloCambios] = useState(false);
   const bases = new Map(original.calendario.celdas.map((celda) => [`${celda.cultivo_id}:${celda.mes}`, celda]));
   const nuevas = new Map(modificado.calendario.celdas.map((celda) => [`${celda.cultivo_id}:${celda.mes}`, celda]));
   const clave = seleccion ? `${seleccion.cultivo}:${seleccion.mes}` : '';
@@ -36,10 +36,11 @@ function MatrizEscenarios({ original, modificado }: { original: ResultadosEscena
     <div className="mt-8 flex flex-wrap items-center gap-3"><h3 className="font-campo text-2xl">Calendario: original frente a simulado</h3><TipoDato tipo="hipotetico" /></div>
     <ul aria-label="Leyenda del simulador" className="mt-4 flex flex-wrap gap-3 text-xs">{Object.values(ESTADOS_ESCENARIO).map((estado) => <li key={estado.texto} className={`rounded-lg border px-3 py-2 font-semibold ${estado.estilo}`}>{estado.simbolo} {estado.texto}</li>)}</ul>
     <p className="mt-4 text-sm text-oliva">Cada celda muestra ambos estados; selecciona una para leer los dos motivos. Se incluyen todos los cultivos evaluados, también los incompatibles. Desliza la tabla para ver diciembre; con teclado usa Tab y Enter.</p>
+    <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={soloCambios} onChange={(evento) => establecerSoloCambios(evento.target.checked)} />Mostrar solo cultivos con algún cambio de estado</label>
     <div role="region" aria-label="Calendario comparado de escenarios" tabIndex={0} className="mt-5 max-h-[34rem] max-w-full overflow-auto rounded-2xl border border-pino/20">
       <table className="w-full min-w-[1900px] table-fixed border-collapse text-left text-xs"><caption className="sr-only">Doce meses y cultivos referenciales: estado original y simulado, con explicaciones.</caption>
         <thead><tr><th scope="col" className="sticky left-0 top-0 z-20 w-36 border-b border-pino/15 bg-arena p-3">Cultivo</th>{MESES_ESCENARIO.map((mes) => <th key={mes} scope="col" className="sticky top-0 z-10 border-b border-pino/15 bg-arena p-3">{mes}</th>)}</tr></thead>
-        <tbody>{modificado.calendario.cultivos.map((cultivo) => <tr key={cultivo.id}><th scope="row" className="sticky left-0 z-10 border-b border-pino/15 bg-crema p-3 text-sm">{cultivo.nombre}</th>{MESES_ESCENARIO.map((mes, indice) => {
+        <tbody>{modificado.calendario.cultivos.filter((cultivo) => !soloCambios || MESES_ESCENARIO.some((_mes, indice) => bases.get(`${cultivo.id}:${indice + 1}`)?.estado !== nuevas.get(`${cultivo.id}:${indice + 1}`)?.estado)).map((cultivo) => <tr key={cultivo.id}><th scope="row" className="sticky left-0 z-10 border-b border-pino/15 bg-crema p-3 text-sm">{cultivo.nombre}</th>{MESES_ESCENARIO.map((mes, indice) => {
           const anterior = bases.get(`${cultivo.id}:${indice + 1}`); const actual = nuevas.get(`${cultivo.id}:${indice + 1}`);
           return <td key={mes} className="border-b border-pino/10 bg-white/70 p-1.5">{anterior && actual && <button type="button" className="min-h-28 w-full rounded-lg p-1 text-left focus-visible:outline-offset-2" aria-label={`${cultivo.nombre}, ${mes}. Original: ${ESTADOS_ESCENARIO[anterior.estado].texto}. Simulado: ${ESTADOS_ESCENARIO[actual.estado].texto}`} onClick={() => establecerSeleccion({ cultivo: cultivo.id, mes: actual.mes })}>
             <span className="block rounded border border-stone-300 bg-white p-2">Original: {ESTADOS_ESCENARIO[anterior.estado].simbolo} {ESTADOS_ESCENARIO[anterior.estado].texto}</span>

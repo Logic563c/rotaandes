@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import type { DatosReporte } from './reportes.js';
 import { MESES_CALENDARIO } from './calendario.js';
+import type { CeldaCalendario } from './calendario.js';
 
 export const MAX_BYTES_PDF = 4 * 1024 * 1024;
 export const MAX_PAGINAS_PDF = 80;
@@ -270,7 +271,7 @@ function resumenAgricultor(c: Compositor, datos: DatosReporte) {
       { titulo: `${nombreMes(mes)} · Recomendado`, valor: listar(nombres(mes, 'recomendado')), fondo: CLAROS.cultivo, acento: CULTIVO },
       { titulo: `${nombreMes(mes)} · Posible con cuidado`, valor: listar(nombres(mes, 'posible_con_cuidado')), fondo: CLAROS.maiz, acento: MAIZ },
     ]), 2);
-    c.fuente('Según el calendario del sistema (escenario original) con catálogo referencial y clima regional. Los demás cultivos están fuera de ventana, de altitud o sin información; los motivos de cada celda están en la sección 4.');
+    c.fuente('Según el calendario del sistema (escenario original), que evalúa el ciclo completo de cada cultivo con clima regional NASA y parámetros de INIAP y FAO. Los demás cultivos no se recomiendan o no pueden determinarse; los motivos están en la sección 4.');
   } else c.recuadro('Calendario no disponible con los datos verificables actuales. No se proponen cultivos sin información.', CLAROS.gris, GRIS);
 
   c.subtitulo('Rotaciones en una mirada', TERRACOTA);
@@ -366,14 +367,43 @@ export async function generarPdfTerreno(datos: DatosReporte): Promise<Buffer> {
         for (const aviso of pronostico.advertencias) c.fuente(aviso); c.p(pronostico.aviso, 9.5);
       } else c.recuadro('Pronóstico vigente no disponible. Estado de heladas desconocido; no significa sin riesgo.', CLAROS.gris, GRIS, 10);
 
-      c.titulo('4. Calendario de siembra', CULTIVO); c.p('R = recomendado; C = posible con cuidado; N = no recomendado; ? = no determinado. Son reglas del sistema con catálogo referencial y clima regional, no garantías agronómicas. Escenario original 0 % / 0 °C.');
+      c.titulo('4. Calendario de siembra', CULTIVO);
+      c.p('R = recomendado; C = posible con precaución; N = no recomendado; ? = no determinado (faltan datos o fuentes). Cada mes evalúa el ciclo completo del cultivo: época, altitud, temperatura media, heladas y agua. Son reglas de RotaAndes con clima regional NASA y parámetros de INIAP y FAO, no garantías agronómicas. Escenario original 0 % / 0 °C.');
       if (datos.calendario) {
         const calendario = datos.calendario;
-        const estadoDe = (fila: number, columna: number) => columna === 0 ? undefined : calendario.find((d) => d.cultivo_id === datos.cultivos[fila]?.id && d.mes === columna)?.estado;
-        c.tabla(['Cultivo', ...MESES_CALENDARIO.map((m) => m.slice(0, 3))], datos.cultivos.map((cultivo) => [cultivo.nombre, ...Array.from({ length: 12 }, (_, i) => { const celda = calendario.find((d) => d.cultivo_id === cultivo.id && d.mes === i + 1); return celda ? MARCAS[celda.estado] : '?'; })]), [91.28, ...Array.from({ length: 12 }, () => 34)],
-          { color: CULTIVO, fondoCelda: (fila, columna) => { const estado = estadoDe(fila, columna); return columna === 0 ? null : COLOR_ESTADO[estado ?? 'no_determinado']; } });
-        c.subtitulo('Motivos completos por cultivo y mes', CULTIVO);
-        for (const cultivo of datos.cultivos) { c.reservar(80); c.p(cultivo.nombre, 12.5, true, CULTIVO); for (const celda of calendario.filter((d) => d.cultivo_id === cultivo.id)) { c.reservar(50); c.p(`${MESES_CALENDARIO[celda.mes - 1]}: ${ETIQUETAS[celda.estado]}`, 9.5, true); c.p(celda.motivo, 9, false, BOSQUE, 10); } }
+        // Filas agrupadas por categoría: una fila de título por categoría y una por cultivo.
+        const ordenados = [...datos.cultivos].sort((a, b) => a.categoria_nombre.localeCompare(b.categoria_nombre, 'es') || a.nombre.localeCompare(b.nombre, 'es'));
+        const filas: ({ tipo: 'categoria'; nombre: string } | { tipo: 'cultivo'; id: string; nombre: string })[] = [];
+        for (const cultivo of ordenados) {
+          if (filas.every((fila) => fila.tipo !== 'categoria' || fila.nombre !== cultivo.categoria_nombre)) filas.push({ tipo: 'categoria', nombre: cultivo.categoria_nombre });
+          filas.push({ tipo: 'cultivo', id: cultivo.id, nombre: cultivo.nombre });
+        }
+        const estadoDe = (fila: number, columna: number) => { const valor = filas[fila]; return columna === 0 || valor?.tipo !== 'cultivo' ? undefined : calendario.find((d) => d.cultivo_id === valor.id && d.mes === columna)?.estado; };
+        c.tabla(['Cultivo', ...MESES_CALENDARIO.map((m) => m.slice(0, 3))], filas.map((fila) => fila.tipo === 'categoria' ? [fila.nombre.toUpperCase(), ...Array.from({ length: 12 }, () => '')]
+          : [fila.nombre, ...Array.from({ length: 12 }, (_, i) => { const celda = calendario.find((d) => d.cultivo_id === fila.id && d.mes === i + 1); return celda ? MARCAS[celda.estado] : '?'; })]), [91.28, ...Array.from({ length: 12 }, () => 34)],
+          { color: CULTIVO, fondoCelda: (fila, columna) => { if (filas[fila]?.tipo === 'categoria') return CLAROS.gris; const estado = estadoDe(fila, columna); return columna === 0 ? null : COLOR_ESTADO[estado ?? 'no_determinado']; } });
+        c.subtitulo('Motivos por cultivo', CULTIVO);
+        c.p('Los meses seguidos con el mismo resultado y motivo se agrupan. Los tramos recomendados o con precaución incluyen todos sus criterios; los demás, su motivo principal. La explicación completa de cada mes está en la aplicación.', 9.5, false, GRIS);
+        for (const cultivo of ordenados) {
+          c.reservar(90); c.p(`${cultivo.nombre} (${cultivo.nombre_cientifico}) · ${cultivo.categoria_nombre}`, 12.5, true, CULTIVO);
+          const ciclo = cultivo.ciclo_dias_min === cultivo.ciclo_dias_max ? `${cultivo.ciclo_dias_max} días` : `${cultivo.ciclo_dias_min}-${cultivo.ciclo_dias_max} días`;
+          const manejo = cultivo.establecimiento === 'trasplante' ? ' Trasplante (INIAP).' : cultivo.establecimiento === 'siembra_directa' ? ' Siembra directa (INIAP).' : '';
+          c.p(`Ciclo de referencia: ${ciclo}; se evalúan ${cultivo.ciclo_meses_evaluados} meses.${manejo} Fuentes: ${cultivo.fuentes.map((f) => f.cita).join('; ')}.`, 9, false, GRIS);
+          const celdas = calendario.filter((d) => d.cultivo_id === cultivo.id).sort((a, b) => a.mes - b.mes);
+          const clave = (x: CeldaCalendario) => `${x.estado}|${x.resumen.split(': ').slice(1).join(': ')}`;
+          const tramos: { desde: number; hasta: number; celda: CeldaCalendario }[] = [];
+          for (const celda of celdas) {
+            const ultimo = tramos.at(-1);
+            if (ultimo && clave(ultimo.celda) === clave(celda) && ultimo.hasta === celda.mes - 1) ultimo.hasta = celda.mes; else tramos.push({ desde: celda.mes, hasta: celda.mes, celda });
+          }
+          for (const tramo of tramos) {
+            c.reservar(50);
+            const periodo = tramo.desde === tramo.hasta ? MESES_CALENDARIO[tramo.desde - 1] : `${MESES_CALENDARIO[tramo.desde - 1]} a ${MESES_CALENDARIO[tramo.hasta - 1]}`;
+            c.p(`${periodo}: ${ETIQUETAS[tramo.celda.estado]}. ${tramo.celda.resumen}`, 9.5, true);
+            if (tramo.celda.estado === 'recomendado' || tramo.celda.estado === 'posible_con_cuidado') c.p(tramo.celda.motivo.split('\n').filter((linea) => linea.startsWith('• ') && !linea.startsWith('• Ciclo')).join('\n'), 8.5, false, BOSQUE, 10);
+          }
+        }
+        c.fuente('NASA describe una zona y un periodo histórico, no el microclima del lote ni el tiempo futuro; NASA no evalúa cultivos. Los parámetros agronómicos son referenciales y están pendientes de validación local (MAG/INIAP).');
       } else c.recuadro('Calendario no disponible con el catálogo y los datos verificables actuales.', CLAROS.gris, GRIS, 10);
 
       c.titulo('5. Comparación de tres estrategias', TERRACOTA); const rotaciones = datos.rotaciones;

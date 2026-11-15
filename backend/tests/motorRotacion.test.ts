@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { calcularCalendario } from '../src/services/calendario.js';
 import { describe, expect, it } from 'vitest';
 import { compararRotaciones, sumarMesesRotacion } from '../src/services/motorRotacion.js';
 import { plantillasReferenciales } from '../src/data/catalogoPlantillas.js';
@@ -52,34 +53,58 @@ describe('Rotaciones: heurística autorizada, explicable y determinista', () => 
     const resultado = compararRotaciones(entrada); expect(resultado.estrategias[0]?.puntajes.total).toBeNull();
     expect(resultado.estrategias.slice(1).every((valor) => valor.id === null && valor.puntajes.total === null)).toBe(true);
   });
-  it('no selecciona plantillas fuera de altitud ni sustituye una segunda alternativa inexistente', () => {
-    const entrada = crearEntradaRotaciones(); entrada.terreno.altitudM = 3900;
+  // v2: el rango de altitud del catálogo es referencial (precaución); la exclusión la decide la temperatura con fuente.
+  it('no selecciona plantillas con temperatura incompatible ni sustituye una segunda alternativa inexistente', () => {
+    const entrada = crearEntradaRotaciones(); entrada.terreno.altitudM = 3900; entrada.elevacionCeldaM = 3900;
+    entrada.mensual.forEach((mes) => { mes.t_min = -2; mes.t_med = 1; mes.t_max = 6; mes.riesgo_helada = 'alto'; });
     const resultado = compararRotaciones(entrada); expect(resultado.estrategias.slice(1).every((valor) => valor.id === null)).toBe(true);
     expect(resultado.estrategias[0]?.estado).toBe('no_recomendado');
+    expect(resultado.estrategias[0]?.planificacion[0]?.motivo).toContain('demasiado frío');
   });
-  it('con una sola plantilla apta conserva una posición sin determinar, en vez de ampliar rangos', () => {
-    const entrada = crearEntradaRotaciones(); entrada.terreno.altitudM = 2775;
+  it('fuera del rango de altitud referencial programa con precaución y lo explica, sin excluir por ese solo motivo', () => {
+    const entrada = crearEntradaRotaciones(); entrada.terreno.altitudM = 3900; entrada.elevacionCeldaM = 3900;
+    const actual = compararRotaciones(entrada).estrategias[0];
+    expect(actual?.planificacion.every((paso) => paso.estado === 'posible_con_cuidado')).toBe(true);
+    expect(actual?.planificacion[0]?.motivo).toContain('fuera del rango referencial del catálogo del proyecto: 2700-3800 m');
+  });
+  it('con una sola plantilla evaluable conserva una posición sin determinar, en vez de inventar otra', () => {
+    const entrada = crearEntradaRotaciones(); entrada.plantillas = entrada.plantillas.filter((plantilla) => plantilla.id === 'papa-vicia-papa');
     expect(compararRotaciones(entrada).estrategias.map((valor) => valor.id)).toEqual(['actual', 'papa-vicia-papa', null]);
   });
-  it('brócoli requiere riego aunque llueva y el cultivo combinado comparte ambas familias', () => {
+  // v2: el requisito «brócoli solo con riego» no tenía fuente; ahora se compara la lluvia con el mínimo del catálogo (80 mm/mes).
+  it('brócoli sin riego depende del mínimo de lluvia del catálogo y el cultivo combinado comparte ambas familias', () => {
     const entrada = crearEntradaRotaciones();
-    expect(compararRotaciones(entrada).candidatas.find((valor) => valor.id === 'brocoli-haba-avena')?.total).toBeNull();
-    entrada.terreno.tieneRiego = true;
+    expect(compararRotaciones(entrada).candidatas.find((valor) => valor.id === 'brocoli-haba-avena')?.total).not.toBeNull();
+    entrada.mensual.forEach((mes) => { mes.lluvia_mm = 60; });
+    // Con 60 mm/mes el brócoli queda con precaución por su mínimo del catálogo; la plantilla se excluye por la avena,
+    // cuya necesidad FAO (450-650 mm por ciclo) no se cubre con 300 mm sin riego.
+    const brocoli = calcularCalendario({ terreno: entrada.terreno, cultivos: entrada.cultivos, mensual: entrada.mensual, escenario: entrada.escenario, elevacionCeldaM: entrada.elevacionCeldaM })
+      .find((celda) => celda.cultivo_id === 'brocoli' && celda.mes === 1);
+    expect(brocoli?.estado).toBe('posible_con_cuidado'); expect(brocoli?.motivo).toContain('mínimo referencial del catálogo (80 mm/mes)');
+    expect(compararRotaciones(entrada).candidatas.find((valor) => valor.id === 'brocoli-haba-avena')?.estado).toBe('no_recomendado');
+    entrada.mensual.forEach((mes) => { mes.lluvia_mm = 100; }); entrada.terreno.tieneRiego = true;
     expect(compararRotaciones(entrada).candidatas.find((valor) => valor.id === 'brocoli-haba-avena')?.total).not.toBeNull();
     entrada.historial[0] = { id: '1', cultivoId: 'vicia_avena', fechaSiembra: '2025-01-01', fechaCosecha: null };
     const actual = compararRotaciones(entrada).estrategias[0]; expect(actual?.puntajes.suelo).toBe(75); expect(actual?.riesgos.join(' ')).toContain('familias compartidas');
   });
   it('los ciclos y las esperas cruzan años sin acortar duraciones ni programar meses rojos', () => {
-    const actual = compararRotaciones(crearEntradaRotaciones()).estrategias[0];
+    // 120 mm/mes: la papa alcanza la necesidad FAO del ciclo (720 mm ≥ 700) y sus meses de época quedan recomendados.
+    const entrada = crearEntradaRotaciones(); entrada.mensual.forEach((mes) => { mes.lluvia_mm = 120; });
+    const actual = compararRotaciones(entrada).estrategias[0];
+    expect(actual?.planificacion.every((paso) => paso.estado === 'recomendado')).toBe(true);
     expect(actual?.planificacion.map((paso) => [paso.inicio_estimado, paso.fin_estimado, paso.espera_meses])).toEqual([
       ['2030-12-01', '2031-06-01', 0], ['2031-10-01', '2032-04-01', 4], ['2032-10-01', '2033-04-01', 6],
     ]);
     expect(sumarMesesRotacion('2030-12-01', 2)).toBe('2031-02-01'); expect(sumarMesesRotacion('9999-12-01', 1)).toBeNull();
   });
-  it('si el calendario excluye todos los meses por heladas no recomienda una secuencia sensible', () => {
+  // v2: con riesgo alto todo el año, la papa (tolerancia 2/5) queda con precaución y el maíz (sensible, 1/5) excluido.
+  it('si el riesgo de helada es alto todo el año excluye los cultivos sensibles y advierte en los moderados', () => {
     const entrada = crearEntradaRotaciones(); entrada.mensual.forEach((mes) => { mes.t_min = 0; mes.riesgo_helada = 'alto'; });
-    const resultado = compararRotaciones(entrada); expect(resultado.estrategias[0]?.estado).toBe('no_recomendado');
-    expect(resultado.estrategias.slice(1).every((estrategia) => !estrategia.secuencia.includes('papa') && !estrategia.secuencia.includes('maiz') && !estrategia.secuencia.includes('brocoli'))).toBe(true);
+    const resultado = compararRotaciones(entrada); expect(resultado.estrategias[0]?.estado).toBe('posible_con_cuidado');
+    expect(resultado.estrategias[0]?.riesgos.join(' ')).toContain('Papa: calendario con precaución');
+    expect(resultado.estrategias[0]?.planificacion[0]?.motivo).toContain('riesgo alto de helada en el ciclo');
+    expect(resultado.estrategias.slice(1).every((estrategia) => !estrategia.secuencia.includes('maiz'))).toBe(true);
+    expect(resultado.candidatas.find((valor) => valor.id === 'maiz-haba-cebada')?.estado).toBe('no_recomendado');
   });
   it.each([[-30, -2], [0, 0], [30, 2]])('es determinista, no muta entradas y conserva escenarios (%s, %s)', (lluviaPct, tempDelta) => {
     const entrada = crearEntradaRotaciones(); entrada.escenario = { lluviaPct, tempDelta }; const antes = structuredClone(entrada);

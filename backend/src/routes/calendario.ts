@@ -8,7 +8,8 @@ import type { ObtenerBaseAgricola } from '../services/datosAgricolas.js';
 import type { ServicioClima } from '../services/clima.js';
 import { validarId } from '../services/validacionAgricola.js';
 import { ErrorClima } from '../services/nasaPower.js';
-import { calcularCalendario, ErrorCalendario, IDS_CULTIVOS_CALENDARIO, esquemaCultivosCalendario, validarConsultaCalendario } from '../services/calendario.js';
+import { calcularCalendario, describirCultivos, ErrorCalendario, IDS_CULTIVOS_CALENDARIO, esquemaCultivosCalendario, validarConsultaCalendario, VERSION_CALENDARIO } from '../services/calendario.js';
+import { CATEGORIAS_CULTIVO, IDS_CULTIVOS_ORIGINALES } from '../data/perfilesAgronomicos.js';
 import type { EscenarioCalendario } from '../services/calendario.js';
 
 export function crearRutasCalendario(obtenerBase: ObtenerBaseAgricola, autenticar: RequestHandler, consultarClima: ServicioClima): Router {
@@ -24,14 +25,16 @@ export function crearRutasCalendario(obtenerBase: ObtenerBaseAgricola, autentica
     try {
       const filas = await obtenerBase().cultivo.findMany({ where: { id: { in: [...IDS_CULTIVOS_CALENDARIO] } }, orderBy: { id: 'asc' } });
       const catalogo = esquemaCultivosCalendario.safeParse(filas);
-      if (!catalogo.success || catalogo.data.length !== IDS_CULTIVOS_CALENDARIO.length) throw new ErrorCalendario();
+      // Los 10 cultivos originales son obligatorios; los de la ampliación se evalúan si ya están en el catálogo.
+      if (!catalogo.success || !IDS_CULTIVOS_ORIGINALES.every((id) => catalogo.data.some((cultivo) => cultivo.id === id))) throw new ErrorCalendario();
       const clima = await consultarClima(terreno.latitud, terreno.longitud, terreno.altitudM);
       const contexto = { altitudM: terreno.altitudM, tieneRiego: terreno.tieneRiego, areaHa: terreno.areaHa?.toNumber() ?? null };
-      const celdas = calcularCalendario({ terreno: contexto, cultivos: catalogo.data, mensual: clima.mensual, escenario });
-      respuesta.json({ celdas, cultivos: catalogo.data.map((cultivo) => ({ id: cultivo.id, nombre: cultivo.nombre, altitud_min: cultivo.altitudMin, altitud_max: cultivo.altitudMax })),
+      const celdas = calcularCalendario({ terreno: contexto, cultivos: catalogo.data, mensual: clima.mensual, escenario, elevacionCeldaM: clima.elevacion_celda_m });
+      respuesta.json({ celdas, cultivos: describirCultivos(catalogo.data), version: VERSION_CALENDARIO,
+        categorias: Object.entries(CATEGORIAS_CULTIVO).map(([id, categoria]) => ({ id, ...categoria })).sort((a, b) => a.orden - b.orden),
         terreno: { altitud_m: contexto.altitudM, tiene_riego: contexto.tieneRiego, area_ha: contexto.areaHa }, escenario: { lluvia_pct: escenario.lluviaPct, temp_delta: escenario.tempDelta },
         clima: { fuente: clima.fuente, resolucion: clima.resolucion, periodo: clima.periodo, actualizado_en: clima.actualizado_en, estado_datos: clima.estado_datos, desactualizado: clima.desactualizado, advertencias: clima.advertencias },
-        aviso: 'Calendario orientativo con cultivos referenciales, sin validación agronómica local. No reemplaza el criterio del agricultor o del técnico. El área declarada no modifica estas reglas; no se calcula capacidad de riego ni volumen de agua. No es un pronóstico.' });
+        aviso: 'Calendario orientativo: evalúa el ciclo completo de cada cultivo con clima regional NASA y parámetros agronómicos de fuentes citadas (INIAP, FAO), sin validación agronómica local. NASA aporta datos climáticos; la recomendación es una regla de RotaAndes. No reemplaza el criterio del agricultor o del técnico. El área declarada no modifica estas reglas; no se calcula capacidad de riego ni volumen de agua. No es un pronóstico.' });
     } catch (error: unknown) { if (error instanceof ErrorClima) throw new ErrorHttp(503, error.message); if (error instanceof ErrorCalendario) throw new ErrorHttp(500, error.message); throw error; }
   });
   return rutas;

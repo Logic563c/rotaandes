@@ -42,7 +42,7 @@ describe('Simulación integrada en PostgreSQL aislado, sin modificar historial n
     for (const lluvia of [-30, 0, 30]) for (const temperatura of [-2, 0, 2]) {
       const calendario = await consultar('calendario', lluvia, temperatura); const rotaciones = await consultar('rotaciones', lluvia, temperatura);
       expect(calendario.body.escenario).toEqual({ lluvia_pct: lluvia, temp_delta: temperatura }); expect(rotaciones.body.escenario).toEqual(calendario.body.escenario);
-      expect(calendario.body.celdas).toHaveLength(120); expect(rotaciones.body.estrategias).toHaveLength(3);
+      expect(calendario.body.celdas).toHaveLength(348); expect(rotaciones.body.estrategias).toHaveLength(3);
       expect((await consultar('calendario', lluvia, temperatura)).body.celdas).toEqual(calendario.body.celdas);
       expect((await consultar('rotaciones', lluvia, temperatura)).body.estrategias).toEqual(rotaciones.body.estrategias);
       hayCambios ||= JSON.stringify(calendario.body.celdas) !== JSON.stringify(baseCalendario.body.celdas);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { listarCultivos, listarSiembras, guardarSiembra, eliminarSiembra } from '../lib/api';
+import { agruparCultivos, listarCultivos, listarSiembras, guardarSiembra, eliminarSiembra } from '../lib/api';
 import { useAgricultura } from '../lib/useAgricultura';
 import type { DatosSiembra, Siembra } from '../types/api';
 import { EstadoConsulta } from './EstadoConsulta';
@@ -57,7 +57,7 @@ export function SiembrasTerreno({ terrenoId }: { terrenoId: string }) {
         <div className="mt-5"><EstadoConsulta cargando={catalogo.isPending} error={catalogo.error} alReintentar={() => { void catalogo.refetch(); }} /></div>
         {catalogo.isSuccess && (catalogo.data.length === 0 ? <p role="status" className="text-sm text-oliva">El catálogo todavía no tiene cultivos. No se puede registrar una siembra hasta que esté preparado.</p> : <form ref={formularioActual} key={editando?.id ?? 'nueva'} onSubmit={manejarGuardado} className="mt-5" aria-busy={guardar.isPending} aria-describedby={errorLocal || guardar.isError ? 'error-siembra' : undefined}>
           <fieldset className="min-w-0 space-y-5" disabled={guardar.isPending}>
-            <div className="campo"><label htmlFor="cultivo-siembra">Cultivo *</label><select id="cultivo-siembra" name="cultivo_id" required defaultValue={editando?.cultivo_id ?? ''}><option value="" disabled>Selecciona un cultivo</option>{catalogo.data.map((cultivo) => <option key={cultivo.id} value={cultivo.id}>{cultivo.nombre}</option>)}</select></div>
+            <div className="campo"><label htmlFor="cultivo-siembra">Cultivo *</label><select id="cultivo-siembra" name="cultivo_id" required defaultValue={editando?.cultivo_id ?? ''}><option value="" disabled>Selecciona un cultivo</option>{agruparCultivos(catalogo.data).map((grupo) => <optgroup key={grupo.nombre} label={grupo.nombre}>{grupo.cultivos.map((cultivo) => <option key={cultivo.id} value={cultivo.id}>{cultivo.nombre}</option>)}</optgroup>)}</select></div>
             <label className="campo">Fecha de siembra *<input name="fecha_siembra" type="date" min="0001-01-01" max="9999-12-31" required defaultValue={editando?.fecha_siembra ?? ''} /></label>
             <label className="campo">Fecha de cosecha (opcional)<input name="fecha_cosecha" type="date" min="0001-01-01" max="9999-12-31" defaultValue={editando?.fecha_cosecha ?? ''} /></label>
             <label className="campo">Notas (opcional)<textarea name="notas" maxLength={2000} rows={3} defaultValue={editando?.notas ?? ''} /></label>

@@ -50,19 +50,19 @@ model Cultivo {
   id                    String    @id @db.Text
   nombre                String    @db.Text
   familia               String    @db.Text
-  altitudMin            Int       @map("altitud_min")
-  altitudMax            Int       @map("altitud_max")
+  altitudMin            Int?       @map("altitud_min")
+  altitudMax            Int?       @map("altitud_max")
   cicloMeses            Int       @map("ciclo_meses") @db.SmallInt
   mesesSiembra          Int[]     @map("meses_siembra") @db.SmallInt
-  lluviaMinMensualMm    Int       @map("lluvia_min_mensual_mm")
-  demandaAgua           Int       @map("demanda_agua") @db.SmallInt
-  toleranciaHelada      Int       @map("tolerancia_helada") @db.SmallInt
-  toleranciaSequia      Int       @map("tolerancia_sequia") @db.SmallInt
+  lluviaMinMensualMm    Int?       @map("lluvia_min_mensual_mm")
+  demandaAgua           Int?       @map("demanda_agua") @db.SmallInt
+  toleranciaHelada      Int?       @map("tolerancia_helada") @db.SmallInt
+  toleranciaSequia      Int?       @map("tolerancia_sequia") @db.SmallInt
   fijaNitrogeno         Boolean   @default(false) @map("fija_nitrogeno")
-  aporteMateriaOrganica Int       @map("aporte_materia_organica") @db.SmallInt
-  proteccionErosion     Int       @map("proteccion_erosion") @db.SmallInt
-  valorForraje          Int       @map("valor_forraje") @db.SmallInt
-  valorMercado          Int       @map("valor_mercado") @db.SmallInt
+  aporteMateriaOrganica Int?       @map("aporte_materia_organica") @db.SmallInt
+  proteccionErosion     Int?       @map("proteccion_erosion") @db.SmallInt
+  valorForraje          Int?       @map("valor_forraje") @db.SmallInt
+  valorMercado          Int?       @map("valor_mercado") @db.SmallInt
   descripcion           String?   @db.Text
   siembras              Siembra[]
 

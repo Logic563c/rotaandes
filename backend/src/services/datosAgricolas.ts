@@ -1,6 +1,7 @@
 import type { Cultivo, Terreno, Siembra, PrismaClient } from '../generated/prisma/client.js';
 import type { UsuarioPublico } from './autenticacion.js';
 import { areaPoligonoM2, leerPoligonoGuardado } from './geometriaTerreno.js';
+import { CATEGORIAS_CULTIVO, obtenerPerfil } from '../data/perfilesAgronomicos.js';
 
 export type BaseAgricola = Pick<PrismaClient, 'terreno' | 'siembra' | 'cultivo' | 'plantillaRotacion'>;
 export type ObtenerBaseAgricola = () => BaseAgricola;
@@ -31,5 +32,7 @@ export function publicarCultivo(cultivo: Cultivo) {
     lluvia_min_mensual_mm: cultivo.lluviaMinMensualMm, demanda_agua: cultivo.demandaAgua,
     tolerancia_helada: cultivo.toleranciaHelada, tolerancia_sequia: cultivo.toleranciaSequia, fija_nitrogeno: cultivo.fijaNitrogeno,
     aporte_materia_organica: cultivo.aporteMateriaOrganica, proteccion_erosion: cultivo.proteccionErosion,
-    valor_forraje: cultivo.valorForraje, valor_mercado: cultivo.valorMercado, descripcion: cultivo.descripcion };
+    valor_forraje: cultivo.valorForraje, valor_mercado: cultivo.valorMercado, descripcion: cultivo.descripcion,
+    // Datos descriptivos del perfil agronómico (con fuente); null si el cultivo no tiene perfil registrado.
+    ...((perfil) => ({ nombre_cientifico: perfil?.nombre_cientifico ?? null, categoria: perfil?.categoria ?? null, categoria_nombre: perfil ? CATEGORIAS_CULTIVO[perfil.categoria].nombre : null }))(obtenerPerfil(cultivo.id)) };
 }
