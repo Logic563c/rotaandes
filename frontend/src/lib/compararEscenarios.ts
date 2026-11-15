@@ -4,7 +4,7 @@ export interface ResultadosEscenario { calendario: RespuestaCalendario; rotacion
 export const MESES_ESCENARIO = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 export const ESTADOS_ESCENARIO: Record<EstadoCalendario, { texto: string; simbolo: string; estilo: string }> = {
   recomendado: { texto: 'Recomendado', simbolo: '✓', estilo: 'border-cultivo/50 bg-cultivo-claro text-[#1f5a2f]' },
-  posible_con_cuidado: { texto: 'Posible con cuidado', simbolo: '!', estilo: 'border-maiz bg-maiz-claro text-maiz-oscuro' },
+  posible_con_cuidado: { texto: 'Posible con precaución', simbolo: '!', estilo: 'border-maiz bg-maiz-claro text-maiz-oscuro' },
   no_recomendado: { texto: 'No recomendado', simbolo: '×', estilo: 'border-arcilla/40 bg-arcilla-claro text-[#85391f]' },
   no_determinado: { texto: 'No determinado', simbolo: '?', estilo: 'border-stone-400 bg-stone-100 text-stone-700' },
 };

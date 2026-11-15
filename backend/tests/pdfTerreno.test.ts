@@ -12,6 +12,14 @@ describe('PDF auténtico, contenido, español y diseño', () => {
     expect(leido.texto.includes(datos.rotaciones?.estrategias[0]?.puntajes.total?.toLocaleString('es-EC') ?? 'Sin dato')).toBe(true);
     for (const [i, pagina] of leido.paginas.entries()) { expect(pagina.ancho).toBeCloseTo(595.28, 1); expect(pagina.alto).toBeCloseTo(841.89, 1); expect(pagina.texto).toContain(`Página ${i + 1} de ${leido.paginas.length}`); expect(pagina.posiciones.every((p) => p.x >= 40 && p.x <= 550 && p.y >= 25 && p.y <= 820)).toBe(true); }
   }, 15000);
+  it('incluye el calendario de 29 cultivos agrupado, rótulos unificados, lectura de las barras y acciones sugeridas', async () => {
+    const datos = reportePrueba(); const leido = await leerPdf(await generarPdfTerreno(datos)); const texto = leido.texto.replace(/\s+/g, ' ');
+    expect(datos.cultivos).toHaveLength(29); expect(leido.paginas.length).toBeLessThanOrEqual(80);
+    for (const grupo of ['HORTALIZAS DE HOJA', 'HORTALIZAS DE RAÍZ', 'CEBOLLAS', 'TUBÉRCULOS ANDINOS', 'LEGUMINOSAS']) expect(texto).toContain(grupo);
+    for (const cultivo of ['Lechuga (Lactuca sativa)', 'Melloco (Ullucus tuberosus)', 'Papa nabo (Brassica rapa subsp. rapa)']) expect(texto).toContain(cultivo);
+    expect(texto).toContain('Posible con precaución'); expect(texto).not.toContain('Posible con cuidado');
+    expect(texto).toContain('Para leerla: cada barra es un mes'); expect(texto).toContain('Qué puedes hacer:');
+  }, 20000);
   it('abre con un resumen para el agricultor derivado solo de los datos del informe', async () => {
     const datos = reportePrueba(); const { paginas } = await leerPdf(await generarPdfTerreno(datos));
     const resumen = paginas.slice(1, 4).map((p) => p.texto).join(' ');

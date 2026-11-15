@@ -11,7 +11,7 @@ export class ErrorPdf extends Error { constructor() { super('No se pudo construi
 const BOSQUE = '#1d4636'; const CULTIVO = '#2f7d43'; const CIELO = '#1f6391'; const MAIZ = '#e6b33c'; const TERRACOTA = '#a3492a';
 const CREMA = '#f8f6ef'; const GRIS = '#4b5d49'; const LINEA = '#d9dfd2';
 const CLAROS = { cultivo: '#e3f1e1', cielo: '#e2eff8', maiz: '#fbf0d0', terracota: '#f8e6dc', gris: '#eeece6' };
-const ETIQUETAS = { recomendado: 'Recomendado', posible_con_cuidado: 'Posible con cuidado', no_recomendado: 'No recomendado', no_determinado: 'No determinado' };
+const ETIQUETAS = { recomendado: 'Recomendado', posible_con_cuidado: 'Posible con precaución', no_recomendado: 'No recomendado', no_determinado: 'No determinado' };
 const MARCAS = { recomendado: 'R', posible_con_cuidado: 'C', no_recomendado: 'N', no_determinado: '?' };
 const COLOR_ESTADO = { recomendado: CLAROS.cultivo, posible_con_cuidado: CLAROS.maiz, no_recomendado: CLAROS.terracota, no_determinado: CLAROS.gris };
 const RIESGO = { alto: { letra: 'A', fondo: CLAROS.terracota, texto: '#85391f' }, medio: { letra: 'M', fondo: CLAROS.maiz, texto: '#6b4a0e' }, bajo: { letra: 'B', fondo: CLAROS.cultivo, texto: '#1f5a2f' } };
@@ -126,8 +126,8 @@ class Compositor {
     });
     this.y += 14;
   }
-  barras(titulo: string, datos: { etiqueta: string; valor: number | null }[], unidad: string, color = CIELO) {
-    this.reservar(230); this.subtitulo(titulo, color);
+  barras(titulo: string, datos: { etiqueta: string; valor: number | null }[], unidad: string, color = CIELO, lectura?: string) {
+    this.reservar(250); this.subtitulo(titulo, color); if (lectura) this.p(`Para leerla: ${lectura}`, 9, false, BOSQUE);
     const validos = datos.flatMap((d) => d.valor === null ? [] : [d.valor]); if (!validos.length) { this.p('Sin datos válidos para graficar.'); return; }
     const maximo = Math.max(1, ...validos); const superior = this.y + 4; const alto = 135; const paso = (this.ancho - 35) / datos.length;
     this.doc.roundedRect(X, superior - 8, this.ancho, alto + 42, 8).fill(CREMA);
@@ -350,7 +350,7 @@ export async function generarPdfTerreno(datos: DatosReporte): Promise<Buffer> {
         c.recuadro(`Fuente: ${clima.fuente}. Periodo ${clima.periodo.inicio}-${clima.periodo.fin}. Consulta: ${clima.actualizado_en}. Origen: ${clima.estado_datos}. ${clima.desactualizado ? 'DATOS DESACTUALIZADOS.' : 'Caché/consulta con vigencia verificada por el servicio.'} ${clima.resolucion}`, CLAROS.cielo, CIELO, 8.5);
         c.p(clima.metodologia, 9.5);
         for (const aviso of clima.advertencias) c.fuente(aviso);
-        c.barras('Lluvia mensual de referencia', clima.mensual.map((m) => ({ etiqueta: MESES_CALENDARIO[m.mes - 1]?.slice(0, 3) ?? '', valor: m.lluvia_mm })), 'mm/mes');
+        c.barras('Lluvia mensual de referencia', clima.mensual.map((m) => ({ etiqueta: MESES_CALENDARIO[m.mes - 1]?.slice(0, 3) ?? '', valor: m.lluvia_mm })), 'mm/mes', CIELO, 'cada barra es un mes: más alta significa más lluvia habitual y más baja, menos. Sirve para comparar meses lluviosos y secos; no indica cuánto lloverá este año.');
         c.tabla(['Mes', 'Mín. °C', 'Media °C', 'Máx. °C', 'Lluvia mm', 'GWETROOT 0-1', 'Riesgo heurístico'], clima.mensual.map((m) => [MESES_CALENDARIO[m.mes - 1] ?? '', numero(m.t_min), numero(m.t_med), numero(m.t_max), numero(m.lluvia_mm), numero(m.humedad_suelo, 3), m.riesgo_helada ?? 'Sin dato']), [73, 52, 55, 52, 68, 89, 110.28],
           { color: CIELO, fondoCelda: (fila, columna) => { const riesgo = clima.mensual[fila]?.riesgo_helada; return columna === 6 && riesgo ? RIESGO[riesgo].fondo : null; } });
         c.fuente('Precipitación original PRECTOTCORR en mm/día convertida por el servicio a mm mensuales de referencia. T2M_MIN/MAX preservan extremos del producto; no son medias de mínimas diarias. Riesgo histórico heurístico no equivale a días observados de helada ni a pronóstico.');
@@ -401,6 +401,7 @@ export async function generarPdfTerreno(datos: DatosReporte): Promise<Buffer> {
             const periodo = tramo.desde === tramo.hasta ? MESES_CALENDARIO[tramo.desde - 1] : `${MESES_CALENDARIO[tramo.desde - 1]} a ${MESES_CALENDARIO[tramo.hasta - 1]}`;
             c.p(`${periodo}: ${ETIQUETAS[tramo.celda.estado]}. ${tramo.celda.resumen}`, 9.5, true);
             if (tramo.celda.estado === 'recomendado' || tramo.celda.estado === 'posible_con_cuidado') c.p(tramo.celda.motivo.split('\n').filter((linea) => linea.startsWith('• ') && !linea.startsWith('• Ciclo')).join('\n'), 8.5, false, BOSQUE, 10);
+            else { const accion = tramo.celda.motivo.split('\n').find((linea) => linea.startsWith('• Qué puedes hacer:')); if (accion) c.p(accion.slice(2), 8.5, false, BOSQUE, 10); }
           }
         }
         c.fuente('NASA describe una zona y un periodo histórico, no el microclima del lote ni el tiempo futuro; NASA no evalúa cultivos. Los parámetros agronómicos son referenciales y están pendientes de validación local (MAG/INIAP).');
@@ -426,7 +427,7 @@ export async function generarPdfTerreno(datos: DatosReporte): Promise<Buffer> {
       if (tendencia) {
         c.recuadro(`Fuente: ${tendencia.fuente}. ${tendencia.resolucion}`, CLAROS.cielo, CIELO, 8.5);
         for (const [tipo, fuente] of Object.entries(tendencia.fuentes)) c.fuente(`${tipo}: ${fuente.estado_datos}; consulta ${fuente.actualizado_en ?? 'no disponible'}. ${fuente.desactualizado ? 'Desactualizado.' : ''}`);
-        c.barras('Precipitación anual', tendencia.anual.map((a) => ({ etiqueta: String(a.anio), valor: a.lluvia_mm })), 'mm/año');
+        c.barras('Precipitación anual', tendencia.anual.map((a) => ({ etiqueta: String(a.anio), valor: a.lluvia_mm })), 'mm/año', CIELO, 'cada barra es un año completo: más alta significa más lluvia y más baja, menos. Un solo año no demuestra una tendencia ni predice los siguientes.');
         c.tabla(['Año', 'Lluvia mm/año', 'Menor mínima mensual °C', 'Heladas modeladas (días)', 'Días válidos/esperados'], tendencia.anual.map((a) => [String(a.anio), numero(a.lluvia_mm), numero(a.t_min), numero(a.dias_helada), `${a.cobertura.dias_temperatura}/${a.cobertura.dias_esperados}`]), [50, 104, 120, 117, 108.28], { color: CIELO });
         for (const [variable, resumen] of Object.entries(tendencia.tendencias)) { c.p(`${variable}: ${resumen.n} años completos; ${resumen.direccion}. Pendiente anual ${numero(resumen.pendiente_anual, 6)}, por década ${numero(resumen.pendiente_decada, 6)}. Diferencia 2024-2005: ${numero(resumen.diferencia_2005_2024, 6)}. Años excluidos: ${resumen.anios_excluidos.join(', ') || 'ninguno'}.`, 9); }
         c.fuente('Unidades de pendientes: cambios del total anual en mm, temperatura en °C, conteo en días e índice GWETTOP adimensional, por año o por década según se indica. GWETTOP no es humedad relativa ni humedad SMAP.');

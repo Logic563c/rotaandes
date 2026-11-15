@@ -47,6 +47,29 @@ export interface CeldaCalendario { cultivo_id: string; mes: number; estado: Esta
 type Efecto = 'favorable' | 'informativo' | 'precaucion' | 'indeterminado' | 'excluye';
 type Criterio = 'epoca' | 'altitud' | 'temperatura' | 'helada' | 'agua';
 interface Factor { criterio: Criterio; efecto: Efecto; texto: string; breve: string }
+/** Acción práctica sugerida para cada motivo breve de precaución o de dato faltante; no altera el estado. */
+const ACCIONES: Record<string, string> = {
+  'altitud del terreno desconocida': 'revisa la ubicación del terreno en el mapa para estimar su altitud',
+  'altitud desconocida': 'revisa la ubicación del terreno en el mapa para estimar su altitud',
+  'temperatura NASA sin dato': 'vuelve a consultar más tarde; si continúa, pide apoyo a un técnico',
+  'rango de temperatura sin fuente': 'pregunta a un técnico si el cultivo se adapta a tu zona',
+  'riesgo de helada sin dato': 'vuelve a consultar más tarde',
+  'no se sabe cuánto resiste las heladas': 'pregunta a un técnico o al MAG/INIAP si hay variedades resistentes a heladas, o elige un mes cuyo ciclo no tenga riesgo alto',
+  'no se sabe si el terreno tiene riego': 'indica al editar el terreno si tiene riego',
+  'no se sabe cuánta agua necesita sin riego': 'si puedes regar, indícalo en el terreno; si no, consulta a un técnico cuánta agua necesita este cultivo',
+  'no se sabe cuánta agua necesita': 'si puedes regar, indícalo en el terreno; si no, consulta a un técnico cuánta agua necesita este cultivo',
+  'lluvia NASA sin dato': 'vuelve a consultar más tarde',
+  'fuera de la época referencial': 'confirma la época de siembra con un técnico o con agricultores de tu zona',
+  'altitud fuera del rango referencial': 'usa una variedad adaptada a tu altitud',
+  'fuentes de temperatura y altitud no coinciden': 'usa una variedad adaptada a tu altitud y confírmala con un técnico',
+  'temperatura en el límite (sin ajuste por altitud)': 'vuelve a consultar en unos días, cuando se actualicen los datos de NASA',
+  'temperatura sin ajuste por altitud': 'vuelve a consultar en unos días, cuando se actualicen los datos de NASA',
+  'riesgo alto de helada en el ciclo': 'protege el cultivo en noches frías, prefiere variedades tolerantes o elige otro mes',
+  'riesgo medio de helada': 'vigila las noches frías y protege el cultivo si hace falta',
+  'lluvia justa para el ciclo': 'prepara riego de apoyo por si el año es seco',
+  'meses secos en el ciclo': 'prepara riego de apoyo para los meses secos',
+  'necesita agua permanente': 'asegura agua limpia y constante durante todo el ciclo',
+};
 const ETIQUETA_CRITERIO: Record<Criterio, string> = { epoca: 'Época', altitud: 'Altitud', temperatura: 'Temperatura', helada: 'Heladas', agua: 'Agua' };
 
 export function aplicarEscenarioCalendario(mensual: MesCalendario[], altitudM: number | null, escenario: EscenarioCalendario): MesNormalizado[] {
@@ -175,7 +198,7 @@ function evaluarHelada(cultivo: CultivoCalendario, perfil: PerfilAgronomico, cic
   } else if (clase === 'tolerante') {
     if (hayAlto || sinDato) return { criterio: 'helada', efecto: 'informativo', breve: 'vigilar heladas fuertes', texto: texto('El catálogo lo considera tolerante; vigilar heladas fuertes.') };
   } else {
-    if (hayAlto) return { criterio: 'helada', efecto: 'indeterminado', breve: 'tolerancia a heladas sin fuente', texto: texto(`Hay riesgo alto en ${mesesAlto} y no se conoce cuánto resiste el cultivo: no se determina.`) };
+    if (hayAlto) return { criterio: 'helada', efecto: 'indeterminado', breve: 'no se sabe cuánto resiste las heladas', texto: texto(`Hay riesgo alto en ${mesesAlto} y no se conoce cuánto resiste el cultivo: no se determina.`) };
     if (hayMedio) return { criterio: 'helada', efecto: 'precaucion', breve: 'riesgo medio de helada', texto: texto('Riesgo medio con tolerancia desconocida: precaución.') };
   }
   return { criterio: 'helada', efecto: 'favorable', breve: 'riesgo de helada bajo', texto: texto(hayMedio ? 'El riesgo medio no limita a este cultivo según su tolerancia referencial.' : 'Riesgo bajo en todo el ciclo.') };
@@ -198,7 +221,7 @@ function evaluarAgua(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo
   if (perfil.requiere_agua_permanente) {
     factores.unshift(riego === true ? { criterio: 'agua', efecto: 'precaucion', breve: 'necesita agua permanente', texto: 'Necesita agua corriente o suelo saturado durante todo el ciclo (EcoCrop: drenaje pobre, suelo saturado más de la mitad del año). Verifique que el riego lo permita y que el agua sea limpia.' }
       : riego === false ? { criterio: 'agua', efecto: 'excluye', breve: 'necesita agua permanente', texto: 'Necesita agua corriente o suelo saturado durante todo el ciclo (EcoCrop); la lluvia no lo sustituye y el terreno declara que no tiene riego.' }
-        : { criterio: 'agua', efecto: 'indeterminado', breve: 'riego desconocido', texto: 'Necesita agua permanente y no se conoce si el terreno tiene riego.' });
+        : { criterio: 'agua', efecto: 'indeterminado', breve: 'no se sabe si el terreno tiene riego', texto: 'Necesita agua permanente y no se conoce si el terreno tiene riego.' });
     return factores;
   }
   if (riego === true) {
@@ -214,7 +237,7 @@ function evaluarAgua(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo
     if (lluvia >= necesidad.max) factores.unshift({ criterio: 'agua', efecto: 'favorable', breve: 'lluvia suficiente', texto: `${base} La lluvia promedio cubre la necesidad máxima (${sinRiego}); en años secos puede faltar.` });
     else if (lluvia >= necesidad.min) factores.unshift({ criterio: 'agua', efecto: 'precaucion', breve: 'lluvia justa para el ciclo', texto: `${base} Cubre el mínimo, no el máximo, y ${sinRiego}: posible falta de agua.` });
     else factores.unshift(riego === false ? { criterio: 'agua', efecto: 'excluye', breve: 'lluvia insuficiente sin riego', texto: `${base} No alcanza el mínimo y ${sinRiego}.` }
-      : { criterio: 'agua', efecto: 'indeterminado', breve: 'riego desconocido', texto: `${base} No alcanza el mínimo y ${sinRiego}.` });
+      : { criterio: 'agua', efecto: 'indeterminado', breve: 'no se sabe si el terreno tiene riego', texto: `${base} No alcanza el mínimo y ${sinRiego}.` });
     return factores;
   }
   if (cultivo.lluviaMinMensualMm !== null) {
@@ -223,11 +246,11 @@ function evaluarAgua(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo
     const base = `Lluvia mensual NASA en el ciclo frente al mínimo referencial del catálogo (${minimo} mm/mes):`;
     if (!faltan.length) factores.unshift({ criterio: 'agua', efecto: 'favorable', breve: 'lluvia suficiente', texto: `${base} alcanza el mínimo todos los meses (${sinRiego}).` });
     else factores.unshift(riego === false ? { criterio: 'agua', efecto: 'precaucion', breve: 'meses secos en el ciclo', texto: `${base} no lo alcanza en ${faltan.map(nombreMes).join(', ')} y ${sinRiego}.` }
-      : { criterio: 'agua', efecto: 'indeterminado', breve: 'riego desconocido', texto: `${base} no lo alcanza en ${faltan.map(nombreMes).join(', ')} y ${sinRiego}.` });
+      : { criterio: 'agua', efecto: 'indeterminado', breve: 'no se sabe si el terreno tiene riego', texto: `${base} no lo alcanza en ${faltan.map(nombreMes).join(', ')} y ${sinRiego}.` });
     if (cultivo.id === 'brocoli') factores.push({ criterio: 'agua', efecto: 'informativo', breve: 'planteado con riego', texto: 'El catálogo del proyecto planteó el brócoli con riego; sin riego dependa solo de la lluvia con precaución.' });
     return factores;
   }
-  factores.unshift({ criterio: 'agua', efecto: 'indeterminado', breve: perfil.riego_en_manejo_iniap ? 'sin riego, necesidad de agua sin dato' : 'necesidad de agua sin fuente',
+  factores.unshift({ criterio: 'agua', efecto: 'indeterminado', breve: perfil.riego_en_manejo_iniap ? 'no se sabe cuánta agua necesita sin riego' : 'no se sabe cuánta agua necesita',
     texto: `${perfil.riego_en_manejo_iniap ? 'INIAP (2011) maneja esta hortaliza con riego durante todo el cultivo. ' : ''}No hay una necesidad de agua por ciclo con fuente para compararla con la lluvia (${mostrarNumero(lluvia, 0)} mm en el ciclo) y ${sinRiego}.` });
   return factores;
 }
@@ -263,8 +286,11 @@ export function calcularCalendario(entrada: unknown): CeldaCalendario[] {
       const estado = decidir(factores);
       const cicloTexto = esOriginal(cultivo.id) ? `${cultivo.cicloMeses} meses según el catálogo del proyecto (FAO/EcoCrop: ${perfil.ciclo_dias.min}-${perfil.ciclo_dias.max} días en otros climas)`
         : `${perfil.ciclo_dias.min}-${perfil.ciclo_dias.max} días (${citar(perfil.fuente_ciclo)}); se evalúan ${cultivo.cicloMeses} meses porque en clima frío el ciclo se alarga`;
+      const acciones = estado === 'recomendado' ? [] : estado === 'no_recomendado' ? ['revisa otros meses u otros cultivos con resultado recomendado o posible']
+        : [...new Set(factores.filter((factor) => factor.efecto === (estado === 'no_determinado' ? 'indeterminado' : 'precaucion')).flatMap((factor) => ACCIONES[factor.breve] ?? []))];
       const lineas = [resumir(estado, factores, perfil.nombre, mes),
         ...factores.map((factor) => `• ${ETIQUETA_CRITERIO[factor.criterio]}: ${factor.texto}`),
+        ...(acciones.length ? [`• Qué puedes hacer: ${acciones.map((accion, indice) => indice === 0 ? accion.charAt(0).toUpperCase() + accion.slice(1) : accion).join('; ')}.`] : []),
         `• Ciclo: ${cicloTexto}. Meses evaluados: ${listaMeses(ciclo)}.${perfil.establecimiento === 'trasplante' ? ' Cultivo de trasplante (INIAP 2011): el mes indica el trasplante al terreno; el semillero se prepara unas semanas antes.' : perfil.establecimiento === 'siembra_directa' ? ' Siembra directa en el terreno (INIAP 2011).' : ''}`];
       if (escenario.lluviaPct !== 0 || escenario.tempDelta !== 0) lineas.push(`• Escenario hipotético aplicado, no observación NASA: lluvia ${mostrarNumero(escenario.lluviaPct, 6)} % y temperatura ${mostrarNumero(escenario.tempDelta, 6)} °C; no modifica los datos base.`);
       lineas.push(`Fuentes agronómicas: ${citar(...perfil.fuentes)}. NASA describe una zona y un periodo histórico, no el microclima del lote ni el tiempo futuro; NASA no evalúa cultivos. Los parámetros son referenciales y están pendientes de validación local.`);

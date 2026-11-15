@@ -83,7 +83,7 @@ describe('Calendario v2: cuatro estados con motivo', () => {
   it('no determina cuando falta información y no la interpreta como desfavorable', () => {
     const entrada = crearEntradaCalendario();
     const lechuga = celda(calcularCalendario(entrada), 'lechuga', 1);
-    expect(lechuga?.estado).toBe('no_determinado'); expect(lechuga?.resumen).toContain('sin riego, necesidad de agua sin dato');
+    expect(lechuga?.estado).toBe('no_determinado'); expect(lechuga?.resumen).toContain('no se sabe cuánta agua necesita sin riego');
     entrada.terreno.tieneRiego = true; expect(celda(calcularCalendario(entrada), 'lechuga', 1)?.estado).toBe('recomendado');
   });
   it('sin altitud no produce verde ni amarillo y conserva exclusiones justificadas', () => {
@@ -166,6 +166,26 @@ describe('Calendario v2: heladas y altitud', () => {
     const entrada = crearEntradaCalendario(); entrada.terreno.tieneRiego = true; entrada.elevacionCeldaM = null; entrada.mensual.forEach((mes) => { mes.t_min = 3; mes.t_med = 5; mes.t_max = 9; mes.riesgo_helada = 'medio'; });
     const zapallo = celda(calcularCalendario(entrada), 'zapallo', 1);
     expect(zapallo?.estado).toBe('posible_con_cuidado'); expect(zapallo?.motivo).toContain('sin ajuste por altitud');
+  });
+});
+
+describe('Calendario v2: qué puede hacer el agricultor', () => {
+  it('cuando falta información explica qué se desconoce y qué puede hacer, sin cambiar el estado', () => {
+    const entrada = crearEntradaCalendario(); const lechuga = celda(calcularCalendario(entrada), 'lechuga', 1);
+    expect(lechuga?.estado).toBe('no_determinado'); expect(lechuga?.motivo).toContain('No hay una necesidad de agua por ciclo con fuente');
+    expect(lechuga?.motivo).toContain('• Qué puedes hacer: Si puedes regar, indícalo en el terreno');
+    entrada.terreno.tieneRiego = null; entrada.mensual.forEach((mes) => { mes.lluvia_mm = 40; });
+    expect(celda(calcularCalendario(entrada), 'cebolla_colorada', 1)?.motivo).toContain('indica al editar el terreno si tiene riego'.replace(/^./, (letra) => letra.toUpperCase()));
+    const sinAltitud = crearEntradaCalendario(); sinAltitud.terreno.altitudM = null;
+    expect(celda(calcularCalendario(sinAltitud), 'papa', 10)?.motivo).toContain('Revisa la ubicación del terreno en el mapa');
+  });
+  it('en precaución sugiere acciones del riesgo concreto; en recomendado no añade acciones', () => {
+    const entrada = crearEntradaCalendario(); entrada.mensual.forEach((mes) => { mes.lluvia_mm = 120; });
+    const junio = celda(calcularCalendario(entrada), 'papa', 6); const octubre = celda(calcularCalendario(entrada), 'papa', 10);
+    expect(junio?.estado).toBe('posible_con_cuidado'); expect(junio?.motivo).toContain('Qué puedes hacer: Confirma la época de siembra');
+    expect(octubre?.estado).toBe('recomendado'); expect(octubre?.motivo).not.toContain('Qué puedes hacer');
+    const conHelada = crearEntradaCalendario(); conHelada.terreno.tieneRiego = true; conHelada.mensual.forEach((mes) => { mes.t_min = 1; mes.riesgo_helada = 'alto'; });
+    expect(celda(calcularCalendario(conHelada), 'lechuga', 1)?.motivo).toContain('Protege el cultivo en noches frías');
   });
 });
 

@@ -9,7 +9,7 @@ import { CabeceraModulo, Icono } from './Iconos';
 import { AyudaGrafica, LecturaRapidaGrafica, TipoDato } from './AyudaGrafica';
 import type { NombreIcono } from './Iconos';
 
-const ESTADOS: Record<EstadoCalendario, string> = { recomendado: '✓ Compatible según la regla referencial', posible_con_cuidado: '! Posible con cuidado', no_recomendado: '× Restricción comprobada', no_determinado: '? Información insuficiente' };
+const ESTADOS: Record<EstadoCalendario, string> = { recomendado: '✓ Recomendado', posible_con_cuidado: '! Posible con precaución', no_recomendado: '× No recomendado', no_determinado: '? No determinado (faltan datos)' };
 const INDICADORES: readonly { clave: 'agua' | 'suelo' | 'riesgo' | 'ingresos' | 'total'; nombre: string; icono: NombreIcono; color: string }[] = [
   { clave: 'agua', nombre: 'Agua', icono: 'gota', color: '#1f6391' }, { clave: 'suelo', nombre: 'Suelo', icono: 'hoja', color: '#2f7d43' },
   { clave: 'riesgo', nombre: 'Compatibilidad climática', icono: 'copo', color: '#c8921f' }, { clave: 'ingresos', nombre: 'Valor de mercado referencial', icono: 'moneda', color: '#a3492a' },
@@ -32,7 +32,7 @@ export function TarjetaEstrategia({ estrategia, posicion }: { estrategia: Estrat
       <p className="mt-1 text-xs text-oliva">Ciclo referencial: {paso.ciclo_meses ?? 'sin dato'} meses. {paso.espera_meses === null ? 'Espera no determinada.' : `Espera previa: ${paso.espera_meses} meses.`}</p>
       <details className="mt-2"><summary className="cursor-pointer py-2 font-semibold">Ver criterio del calendario</summary><p className="mt-2 leading-relaxed text-oliva">{paso.motivo}</p></details>
     </li>)}</ol> : <p className="mt-5 text-sm text-oliva">No hay una secuencia verificable para esta posición. No se ha completado con cultivos inventados.</p>}
-    <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-oliva"><TipoDato tipo="indice" /><span>Escala de 0 a 100: barra más larga = más favorable dentro del modelo.</span></div>
+    <div className="mt-6 flex flex-wrap items-center gap-2 text-xs text-oliva"><TipoDato tipo="indice" /><span>Escala de 0 a 100.</span></div>
     <LecturaRapidaGrafica id={lecturaId} texto="Compara la misma fila entre opciones: una barra más larga es más favorable en el modelo, también en compatibilidad climática; más corta, menos. Son puntajes, no cosechas ni dinero. «No determinado» significa que faltan datos." />
     <dl aria-describedby={lecturaId} className="mt-3 space-y-4 rounded-2xl bg-crema/70 p-4">{INDICADORES.map(({ clave, nombre, icono, color }) => {
       const valor = estrategia.puntajes[clave];

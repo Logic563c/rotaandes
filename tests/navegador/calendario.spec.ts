@@ -38,7 +38,7 @@ test('calendario calculado, explicación accesible y aislamiento con PostgreSQL'
     const dialogo = page.getByRole('dialog', { name: 'Papa · Enero' }); await expect(dialogo).toBeVisible();
     // v2: el diálogo presenta el resumen y cada criterio del motivo calculado por el servidor, sin alterar su texto.
     const lineas = (calculada?.motivo ?? 'Fixture incompleta').split('\n'); await expect(dialogo.getByText(lineas[0] ?? '', { exact: true })).toBeVisible();
-    const criterios = lineas.filter((linea) => linea.startsWith('• ')); expect(criterios.length).toBeGreaterThanOrEqual(5);
+    const criterios = lineas.filter((linea) => linea.startsWith('• ') && !linea.startsWith('• Qué puedes hacer:')); const accion = lineas.find((linea) => linea.startsWith('• Qué puedes hacer:')); if (accion) await expect(dialogo.getByText(accion.slice('• Qué puedes hacer: '.length))).toBeVisible(); expect(criterios.length).toBeGreaterThanOrEqual(5);
     for (const linea of criterios) { const [nombre, ...resto] = linea.slice(2).split(': '); await expect(dialogo.getByRole('listitem').filter({ hasText: `${nombre}:` }).filter({ hasText: resto.join(': ').slice(0, 60) }).first()).toBeVisible(); }
     await dialogo.screenshot({ path: informacion.outputPath('explicacion.png'), animations: 'disabled' }); await page.keyboard.press('Escape'); await expect(dialogo).toHaveCount(0);
     await matriz.evaluate((elemento) => { elemento.scrollTop = 0; elemento.scrollLeft = 0; });

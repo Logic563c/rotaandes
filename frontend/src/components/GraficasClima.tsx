@@ -15,11 +15,12 @@ export function GraficasClima({ mensual, fuente }: { mensual: MesClima[]; fuente
   const hayTemperatura = mensual.some((mes) => mes.t_min !== null || mes.t_med !== null || mes.t_max !== null);
   const hayHumedad = mensual.some((mes) => mes.humedad_suelo !== null);
   const tooltip = (series: SerieTooltip[], nota?: string) => <Tooltip cursor={{ fill: '#1f639114', stroke: '#1d463655' }} content={({ active, label }) => <TooltipGrafica activo={active} etiqueta={label} filas={filas} claveEtiqueta="nombre" claveTitulo="nombreLargo" series={series} {...(nota && { nota })} />} />;
-  const ejeX = <XAxis dataKey="nombre" tick={{ fontSize: 10 }} interval={0} tickMargin={4} />;
+  // En pantallas estrechas se omiten meses que no caben; el valor exacto sigue en el cuadro emergente.
+  const ejeX = <XAxis dataKey="nombre" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={4} tickMargin={4} />;
   const sinDatos = (texto: string) => <p className="py-12 text-sm text-oliva">{texto}</p>;
   return <div className="mt-7 grid min-w-0 gap-6 xl:grid-cols-2">
     <MarcoGrafica titulo="Lluvia de cada mes" tipo="historico" fuente={fuente}
-      descripcion="Cuánta lluvia cae en promedio en cada mes en tu zona. Cada barra es un mes."
+      descripcion="Cuánta lluvia cae en promedio en cada mes en tu zona."
       lecturaRapida="Cada barra es un mes: más alta significa más lluvia y más baja, menos, cuando hay datos. Compara los meses habitualmente más lluviosos o secos; no indica cuánto lloverá este año."
       ejeVertical="Lluvia en milímetros (mm) por mes" ejeHorizontal="Meses del año"
       leyenda={[{ color: COLORES_VARIABLE.lluvia, texto: 'Lluvia promedio del mes (mm)', trazo: 'barra' }]}

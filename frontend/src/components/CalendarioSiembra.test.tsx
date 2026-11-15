@@ -71,7 +71,7 @@ describe('Calendario: matriz, explicaciones y separación de sesiones', () => {
       { ...datos.cultivos[1]!, id: 'rabano', nombre: 'Rábano', nombre_cientifico: 'Raphanus sativus var. radicula', categoria: 'raiz', categoria_nombre: 'Hortalizas de raíz', es_hortaliza: true, ciclo_dias_min: 35, ciclo_dias_max: 45, ciclo_corto: true,
         establecimiento: 'siembra_directa', fuentes: [{ cita: 'INIAP (Yugsi, 2011)', referencia: 'Producción limpia de hortalizas.', url: 'https://repositorio.iniap.gob.ec/items/cc17f928-17fa-4ff8-a44e-ed9dfc740196' }], pendientes: ['Validación local.'] },
     ];
-    datos.celdas = datos.celdas.map((celda) => celda.cultivo_id === 'vicia_avena' ? { ...celda, cultivo_id: 'rabano', resumen: 'Resumen sintético del rábano.', motivo: 'Resumen sintético del rábano.\n• Agua: con riego declarado.\n• Heladas: riesgo bajo.' } : celda);
+    datos.celdas = datos.celdas.map((celda) => celda.cultivo_id === 'vicia_avena' ? { ...celda, cultivo_id: 'rabano', resumen: 'Resumen sintético del rábano.', motivo: 'Resumen sintético del rábano.\n• Agua: con riego declarado.\n• Heladas: riesgo bajo.\n• Qué puedes hacer: Vigila las noches frías.' } : celda);
     datos.categorias = [{ id: 'raiz', nombre: 'Hortalizas de raíz', orden: 3, es_hortaliza: true }, { id: 'tuberculo', nombre: 'Tubérculos andinos', orden: 8, es_hortaliza: false }];
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(datos)))); mostrar(); await userEvent.click(screen.getByRole('button', { name: 'Ver calendario de siembra' }));
     const tabla = await screen.findByRole('table'); expect(within(tabla).getByText('Hortalizas de raíz (1)')).toBeInTheDocument(); expect(within(tabla).getByText('Tubérculos andinos (1)')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('Calendario: matriz, explicaciones y separación de sesiones', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Rábano, Febrero: Posible con precaución' }));
     const dialogo = screen.getByRole('dialog'); expect(within(dialogo).getByText('Resumen sintético del rábano.')).toBeInTheDocument(); expect(within(dialogo).getByText('Raphanus sativus var. radicula')).toBeInTheDocument();
     expect(within(dialogo).getByText(/Ciclo aprox. 35-45 días\./)).toBeInTheDocument(); expect(within(dialogo).getByRole('link', { name: 'INIAP (Yugsi, 2011)' })).toHaveAttribute('href', expect.stringContaining('repositorio.iniap.gob.ec'));
-    expect(within(dialogo).getByText('Agua:')).toBeInTheDocument(); expect(within(dialogo).getByText('Validación local.')).toBeInTheDocument();
+    expect(within(dialogo).getByText('Agua:')).toBeInTheDocument(); expect(within(dialogo).getByText(/Qué puedes hacer:/).closest('p')).toHaveTextContent('Vigila las noches frías.'); expect(within(dialogo).getByText('Validación local.')).toBeInTheDocument();
   });
   it('advierte cuando las hortalizas quedan sin determinar por falta de riego', async () => {
     const datos = datosPrueba(); datos.cultivos = datos.cultivos.map((cultivo) => ({ ...cultivo, es_hortaliza: true }));

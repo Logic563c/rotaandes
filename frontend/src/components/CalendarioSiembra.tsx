@@ -32,7 +32,8 @@ function ExplicacionCelda({ celda, cultivo, clima, alCerrar }: { celda: CeldaCal
   useEffect(() => { const dialogo = referencia.current; dialogo?.showModal(); encabezado.current?.focus(); if (dialogo) dialogo.scrollTop = 0; return () => dialogo?.close(); }, []);
   const lineas = celda.motivo.split('\n');
   const resumen = celda.resumen ?? (lineas.length > 1 ? lineas[0] : null);
-  const criterios = lineas.filter((linea) => linea.startsWith('• '));
+  const accion = lineas.find((linea) => linea.startsWith('• Qué puedes hacer: '))?.slice('• Qué puedes hacer: '.length) ?? null;
+  const criterios = lineas.filter((linea) => linea.startsWith('• ') && !linea.startsWith('• Qué puedes hacer: '));
   const otras = lineas.filter((linea) => !linea.startsWith('• ') && linea !== resumen);
   const nombre = cultivo?.nombre ?? celda.cultivo_id; const ciclo = cultivo ? describirCiclo(cultivo) : null;
   return <dialog ref={referencia} aria-labelledby={titulo} className="dialogo-confirmacion w-full" onCancel={(evento) => { evento.preventDefault(); alCerrar(); }}>
@@ -40,6 +41,8 @@ function ExplicacionCelda({ celda, cultivo, clima, alCerrar }: { celda: CeldaCal
     {cultivo?.nombre_cientifico && <p className="mt-1 text-sm italic text-oliva">{cultivo.nombre_cientifico}</p>}
     <p className={`mt-4 rounded-lg border p-3 font-semibold ${ESTADOS[celda.estado].estilo}`}>{ESTADOS[celda.estado].simbolo} {ESTADOS[celda.estado].etiqueta}</p>
     {resumen && <p className="mt-4 text-base font-semibold leading-relaxed">{resumen}</p>}
+    {accion && <p className="mt-4 rounded-lg border-2 border-cultivo/50 bg-cultivo-claro/60 p-3 text-sm leading-relaxed"><span className="font-semibold text-pino">Qué puedes hacer:</span> {accion}</p>}
+    {criterios.length > 0 && <h4 className="mt-5 font-semibold">Detalle de cada criterio</h4>}
     {criterios.length > 0 ? <ul className="mt-4 space-y-3 text-sm leading-relaxed text-oliva">{criterios.map((linea) => {
       const [criterio, ...resto] = linea.slice(2).split(': ');
       return <li key={linea} className="rounded-lg border border-pino/10 bg-white/80 p-3"><span className="font-semibold text-pino">{criterio}:</span> {resto.join(': ')}</li>;
