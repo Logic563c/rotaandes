@@ -1,5 +1,7 @@
 # INFORME DE ENTREGA FINAL - ROTAANDES
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 9 de noviembre de 2026
 Estado: publicado y verificado en producción (9 de noviembre de 2026).
 

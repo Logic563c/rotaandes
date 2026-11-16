@@ -1,5 +1,7 @@
 # Corrección de riesgos del calendario (15-11-2026)
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual. Esta comparación corresponde a v3, anterior a la regla de dependencia del riego de v4.
+
 ## Diagnóstico previo a los cambios
 
 Base publicada: `500077b`. Rama de corrección: `feat/calendario-riesgos-justificados`.

@@ -1,5 +1,7 @@
 # Simulador de escenarios climáticos — Prompt 14
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 8 de noviembre de 2026. Rama `feat/escenarios-climaticos`, creada desde `749c67280f3b9f015b8bf8eef834e15b0001a2cb` con Git limpio. La versión pública permanece sin actualizar: aplicación `ec413ca`, cierre documental `749c672`. Esta fase termina con commit local, sin push, merge o despliegue.
 
 ## Implementación y datos
@@ -81,7 +83,7 @@ La meteorología/altitud de las pruebas nuevas son **controladas y etiquetadas**
 
 Cada tamaño genera controles-escenarios.png, calendario-comparado.png, explicacion-escenarios.png, simulador-escenarios.png y escenario-no-disponible.png en `test-results/escenarios/`. evidencia-escenarios.json registra parámetros, número de cambios y puntuaciones sin contraseñas ni JWT. Son evidencias locales ignoradas por Git, con datos controlados.
 
-Se conservaron copias fuera del directorio que Playwright limpia, en `.tmp/evidencias-escenarios/`: [escritorio](../.tmp/evidencias-escenarios/escritorio-simulador-escenarios.png), [celular](../.tmp/evidencias-escenarios/celular-simulador-escenarios.png) y controles/explicaciones de ambos tamaños. En ambos recorridos, −30 % de lluvia y +2 °C cambiaron **cinco de las 120 celdas** para la fixture utilizada. No es un resultado universal ni una predicción para una parcela real. El registro final informa cero errores de página/consola y ninguna escritura HTTP de simulación; el fallo HTTP deliberado y el 404 ajeno forman parte de las verificaciones.
+Se conservaron copias fuera del directorio que Playwright limpia, en `.tmp/evidencias-escenarios/`: escritorio (`../.tmp/evidencias-escenarios/escritorio-simulador-escenarios.png`, artefacto local no versionado), celular (`../.tmp/evidencias-escenarios/celular-simulador-escenarios.png`, artefacto local no versionado) y controles/explicaciones de ambos tamaños. En ambos recorridos, −30 % de lluvia y +2 °C cambiaron **cinco de las 120 celdas** para la fixture utilizada. No es un resultado universal ni una predicción para una parcela real. El registro final informa cero errores de página/consola y ninguna escritura HTTP de simulación; el fallo HTTP deliberado y el 404 ajeno forman parte de las verificaciones.
 
 Las cuentas tienen correos/contraseñas aleatorios. El `finally` elimina únicamente esas cuentas, filas de catálogo/plantillas insertadas por el recorrido y restaura su clave de caché anterior. No se borran bases, alteran contraseñas o tocan registros de terceros. Las pruebas SQL usan rollback. Desarrollo y producción no reciben los datos de estas pruebas.
 

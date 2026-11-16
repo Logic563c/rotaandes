@@ -1,5 +1,7 @@
 # Informe: mejora fotográfica de la interfaz
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 13 de noviembre de 2026 · Rama local: `feat/fotografia-visual`, creada desde `release/publicacion` (`0c2253d`, la versión publicada y documentada).
 
 **Alcance:** solo diseño visual. No se modificaron fórmulas, algoritmos, reglas, API, modelos de Prisma, migraciones, datos, contratos, credenciales ni variables de entorno. Tampoco se modificaron PostgreSQL, Railway ni Vercel, y no se hizo push ni despliegue.

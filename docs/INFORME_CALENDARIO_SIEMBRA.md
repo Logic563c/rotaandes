@@ -1,5 +1,7 @@
 # Informe del calendario de siembra — Prompt 10
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 ## Resultado y alcance
 
 Fase implementada sobre `f7c8fc87ede624ce733b724abe81e2d45ccd3843`, rama `feat/base-datos-autenticacion`. La auditoría inicial confirmó el commit indicado y Git limpio. Se revisaron completos los documentos rectores y los informes de persistencia, autenticación, terrenos, NASA POWER y pronóstico, además de rutas, servicios, catálogo, caché, Prisma y sesión.
@@ -119,12 +121,12 @@ No hay dependencia de Internet en las pruebas nuevas habituales. La verificació
 
 Capturas generadas y revisadas visualmente, ignoradas por Git; **son datos controlados de pruebas, no recomendaciones reales**:
 
-- [Matriz en escritorio](../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-escritorio/calendario.png).
-- [Matriz en celular](../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-celular/calendario.png).
-- [Explicación en escritorio](../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-escritorio/explicacion.png).
-- [Explicación en celular](../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-celular/explicacion.png).
-- [Indisponibilidad en escritorio](../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-escritorio/calendario-no-disponible.png).
-- [Indisponibilidad en celular](../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-celular/calendario-no-disponible.png).
+- Matriz en escritorio (`../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-escritorio/calendario.png`, artefacto local no versionado).
+- Matriz en celular (`../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-celular/calendario.png`, artefacto local no versionado).
+- Explicación en escritorio (`../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-escritorio/explicacion.png`, artefacto local no versionado).
+- Explicación en celular (`../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-celular/explicacion.png`, artefacto local no versionado).
+- Indisponibilidad en escritorio (`../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-escritorio/calendario-no-disponible.png`, artefacto local no versionado).
+- Indisponibilidad en celular (`../test-results/calendario-calendario-calc-65ed2--aislamiento-con-PostgreSQL-celular/calendario-no-disponible.png`, artefacto local no versionado).
 
 ## PostgreSQL, seguridad y Git
 

@@ -1,5 +1,7 @@
 # Informe de terrenos, cultivos y siembras — Fase 2
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Estado: fase implementada, comprobada y lista para revisión en `feat/base-datos-autenticacion`, sobre `b28051b0631dd5695677721ce8474dd5d93dbd71`. Se continuaron los archivos de la fase interrumpida, sin rehacer autenticación ni persistencia. El cierre utiliza el mensaje `Implementar gestion de terrenos y siembras`; su hash se entrega al finalizar y se consulta con `git log -1 --oneline`.
 
 ## Rutas implementadas y comprobadas

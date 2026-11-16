@@ -1,5 +1,7 @@
 # Publicación de RotaAndes
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 ## Actualización de escenarios y capas — 8 de noviembre de 2026
 
 La versión pública actual es **`012d6be4ebd2df22dfb3062b8645dfe1c95ec017`**, rama `release/publicacion`, enviada y desplegada tras autorización expresa. URLs: [frontend](https://rotaandes.vercel.app) y [backend/salud](https://backend-production-954a9.up.railway.app/api/health). Railway ejecuta `022133e1-d1e1-4d86-9c40-595f8e300cd8`; Vercel publica `dpl_4PLbbQ3ZQoNbYJrixBBSbYq4ws5q`.

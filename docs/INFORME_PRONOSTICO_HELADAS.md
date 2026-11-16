@@ -1,5 +1,7 @@
 # Informe de pronóstico y alertas preventivas de heladas — Prompt 09
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 ## Alcance y continuidad
 
 Implementación sobre `2fb472ee187ac19ccc9c6f6b9b98e56f18a4113d`, en `feat/base-datos-autenticacion`. La auditoría inicial confirmó Git limpio y la rama indicada. Se leyeron `PROYECTO.md`, `AGENTS.md` y los informes previos de persistencia, autenticación, terrenos/siembras y clima NASA.
@@ -109,10 +111,10 @@ Las pruebas normales de pronóstico no consultan Internet. Usan datos **sintéti
 
 Capturas locales generadas y revisadas, excluidas de Git. **Ilustran datos de pruebas, no la respuesta meteorológica real de la tabla anterior**:
 
-- [Pronóstico en escritorio](../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-escritorio/pronostico.png).
-- [Pronóstico en celular](../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-celular/pronostico.png).
-- [Fallo en escritorio](../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-escritorio/pronostico-no-disponible.png).
-- [Fallo en celular](../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-celular/pronostico-no-disponible.png).
+- Pronóstico en escritorio (`../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-escritorio/pronostico.png`, artefacto local no versionado).
+- Pronóstico en celular (`../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-celular/pronostico.png`, artefacto local no versionado).
+- Fallo en escritorio (`../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-escritorio/pronostico-no-disponible.png`, artefacto local no versionado).
+- Fallo en celular (`../test-results/pronostico-pronóstico-y-al-29087-ilidad-sin-datos-inventados-celular/pronostico-no-disponible.png`, artefacto local no versionado).
 
 ## Atribución y limitaciones
 

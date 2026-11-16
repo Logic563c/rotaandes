@@ -1,5 +1,7 @@
 # Informes PDF de terrenos — RotaAndes
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha de cierre: 9 de noviembre de 2026, Ecuador continental. Implementación local en `feat/reportes-pdf`, desde `109355f0059ddb28238b0105a8c0e858f66e6d59`. No se ha enviado ni desplegado esta actualización.
 
 ## Resultado y contrato
@@ -134,8 +136,8 @@ Consulta de solo lectura del **9 de noviembre de 2026 a las 05:32 UTC**: Railway
 
 ## Archivos de esta fase
 
-- Backend: `src/routes/reportes.ts`, `src/services/reportes.ts`, `src/services/pdfTerreno.ts`, `src/aplicacion.ts`, `src/routes/rotaciones.ts`, `src/services/motorRotacion.ts`, `scripts/verificarPdf.ts`, `package.json`.
-- Pruebas backend: `tests/pdfTerreno.test.ts`, `tests/base-datos/reportes.integration.test.ts`, `tests/fixtures/leerPdf.ts`, `tests/fixtures/reportePruebas.ts`.
+- Backend: `src/routes/reportes.ts`, `src/services/reportes.ts`, `src/services/pdfTerreno.ts`, `src/aplicacion.ts`, `src/routes/rotaciones.ts`, `src/services/motorRotacion.ts`, `backend/scripts/verificarPdf.ts`, `package.json`.
+- Pruebas backend: `backend/tests/pdfTerreno.test.ts`, `backend/tests/base-datos/reportes.integration.test.ts`, `backend/tests/fixtures/leerPdf.ts`, `backend/tests/fixtures/reportePruebas.ts`.
 - Frontend: `src/components/DescargarReporte.tsx`, su prueba, `src/lib/api.ts`, `src/lib/reportePdf.test.ts`, `src/pages/DetalleTerreno.tsx`.
 - Infraestructura local de pruebas: `playwright.pdf.config.ts`, `playwright.config.ts`, `tests/navegador/reportesPdf.spec.ts`, `package.json`, `package-lock.json`.
 - Documentación: `README.md`, `docs/DECISIONES.md`, este informe.

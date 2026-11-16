@@ -1,5 +1,7 @@
 # Informe: gráficas comprensibles y delimitación de la zona de cultivo
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 12 de noviembre de 2026 · Rama: `feat/graficas-delimitacion` · Base: `release/publicacion` (`8761912`).
 
 Solicitud del cliente: «En la parte de cómo interpretar las gráficas, hay diagramas de barras que no se entienden del todo». Además pidió marcar en el mapa la zona exacta del terreno.

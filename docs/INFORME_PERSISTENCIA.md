@@ -1,5 +1,7 @@
 # Informe de persistencia de RotaAndes
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Estado: fase implementada y verificada en `feat/base-datos-autenticacion`, lista para revisión. El commit de cierre utiliza el mensaje `Implementar persistencia PostgreSQL con Prisma.`. No se realizaron despliegues ni push. `main`, `PROYECTO.md`, `AGENTS.md` y el frontend existente permanecen sin cambios respecto a `ee4f8c8`.
 
 ## Resultado

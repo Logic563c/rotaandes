@@ -1,5 +1,7 @@
 # Demostración local de la primera entrega
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual. Para demostrar la aplicación actual, usar [RECORRIDO_DEMOSTRACION.md](RECORRIDO_DEMOSTRACION.md).
+
 Esta guía presenta el núcleo existente de RotaAndes: cuenta, perfil, terrenos, siembras, climatología, pronóstico y calendario. No presenta el producto completo de `PROYECTO.md`. El resultado de la auditoría está en [INFORME_PRIMERA_ENTREGA.md](INFORME_PRIMERA_ENTREGA.md).
 
 ## Antes de presentar

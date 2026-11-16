@@ -1,5 +1,7 @@
 # Publicación de escenarios y capas satelitales
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 8 de noviembre de 2026. Prompt 16. **Publicación autorizada y verificada en Internet**, revisión `012d6be4ebd2df22dfb3062b8645dfe1c95ec017`. La batería local y el recorrido público real se documentan por separado.
 
 ## Resultado de producción

@@ -1,5 +1,7 @@
 # Informe de climatología histórica NASA POWER — Prompt 08
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 ## Alcance y estado
 
 Implementación sobre `209f70d36b47a1d173729ec7c49d65c7841c0f58`, en `feat/base-datos-autenticacion`. Se incorpora climatología histórica al detalle del terreno existente, con autenticación, autorización, validación científica, caché PostgreSQL y gráficas responsive. Se conservan registro, acceso, perfil, terrenos, siembras, mapa y catálogo.
@@ -117,10 +119,10 @@ Las E2E climáticas usan backend y PostgreSQL reales, usuario efímero y caché 
 
 Capturas producidas por Playwright y revisadas visualmente (ignoradas por Git):
 
-- [Climatología en escritorio](../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-escritorio/climatologia.png).
-- [Climatología en celular](../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-celular/climatologia.png).
-- [Indisponibilidad en escritorio](../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-escritorio/clima-no-disponible.png).
-- [Indisponibilidad en celular](../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-celular/clima-no-disponible.png).
+- Climatología en escritorio (`../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-escritorio/climatologia.png`, artefacto local no versionado).
+- Climatología en celular (`../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-celular/climatologia.png`, artefacto local no versionado).
+- Indisponibilidad en escritorio (`../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-escritorio/clima-no-disponible.png`, artefacto local no versionado).
+- Indisponibilidad en celular (`../test-results/clima-climatología-con-cac-b5814-onibilidad-sin-datos-falsos-celular/clima-no-disponible.png`, artefacto local no versionado).
 
 Las capturas ilustran la fixture E2E identificada, no una consulta NASA en vivo. Se regeneran al ejecutar la suite y no quedan almacenadas en el commit.
 

@@ -1,10 +1,12 @@
 # Informe: corrección agronómica del calendario y nuevos cultivos (15-11-2026)
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual. Las tablas y comparaciones siguientes corresponden a `calendario_ciclo_v2`; no describen las reglas ni los totales de v4. El catálogo de 29 cultivos se conserva.
+
 Rama local `feat/calendario-agronomico`, en un worktree independiente, creada desde `69f925b` (versión publicada). No se hizo push ni despliegue, y no se tocaron Railway, Vercel ni PostgreSQL de producción. El trabajo sin confirmar de `feat/comprension-graficas` quedó intacto en su carpeta, con una copia de seguridad del parche fuera de Git.
 
 ## 1. Causa de los excesivos «No recomendado»
 
-Con la respuesta NASA POWER archivada de Latacunga y un terreno a 3000 m sin riego, el calendario anterior daba **88 de 120 casillas en rojo** (`tests/auditoriaCalendarioV1.test.ts`). Los datos no faltaban: Latacunga, Pujilí, Saquisilí y Salcedo comparten la misma celda NASA, con lluvia ≥ 52 mm todos los meses y mínimas medias de 1,9 a 5,1 °C. Las causas estaban en las reglas:
+Con la respuesta NASA POWER archivada de Latacunga y un terreno a 3000 m sin riego, el calendario anterior daba **88 de 120 casillas en rojo** (`backend/tests/auditoriaCalendarioV1.test.ts`). Los datos no faltaban: Latacunga, Pujilí, Saquisilí y Salcedo comparten la misma celda NASA, con lluvia ≥ 52 mm todos los meses y mínimas medias de 1,9 a 5,1 °C. Las causas estaban en las reglas:
 
 1. **La ventana de siembra excluía.** Cualquier mes fuera de `meses_siembra` era rojo. Las ventanas de §10 duran 3 a 5 meses, son aproximadas y no están validadas. Así, el haba tenía 9 meses rojos por definición, sin mirar el clima.
 2. **La altitud excluía por pocos metros.** Un terreno a 2750 m quedaba sin cebada, chocho ni avena (mínimo de 2800 m en §10), a pesar de tener temperatura y lluvia compatibles.
@@ -190,7 +192,7 @@ Tomadas en `.tmp/capturas-calendario/` (fuera de Git) sobre la compilación loca
 | Área | Archivos |
 | --- | --- |
 | Datos y motor (backend) | `backend/src/data/perfilesAgronomicos.ts` (nuevo), `catalogoCultivos.ts`, `services/calendario.ts` (reescrito), `services/calendarioV1.ts` (motor anterior conservado), `motorRotacion.ts`, `nasaPower.ts`, `clima.ts`, `datosAgricolas.ts`, `reportes.ts`, `pdfTerreno.ts` |
-| Rutas y scripts | `routes/calendario.ts`, `routes/rotaciones.ts`, `scripts/compararCalendario.ts` (nuevo), `scripts/verificarCalendario.ts` |
+| Rutas y scripts | `routes/calendario.ts`, `routes/rotaciones.ts`, `backend/scripts/compararCalendario.ts` (nuevo), `backend/scripts/verificarCalendario.ts` |
 | Base de datos | `prisma/schema.prisma`, `prisma/migrations/20261115000100_catalogo_ampliado/migration.sql`, `prisma/reversiones/20261115000100_catalogo_ampliado.revertir.sql` |
 | Frontend | `components/CalendarioSiembra.tsx`, `ResumenCalendario.tsx`, `SimuladorEscenarios.tsx`, `SiembrasTerreno.tsx`, `pages/PanelTecnico.tsx`, `lib/api.ts`, `types/api.ts` |
 | Pruebas | Nuevas: `backend/tests/calendario.test.ts`, `base-datos/catalogoAmpliado.integration.test.ts` y `frontend/src/tests/calendarioPruebas.ts`. El motor v1 conserva sus pruebas en `calendarioV1.test.ts` y `auditoriaCalendarioV1.test.ts`. Se ajustaron las pruebas de rotaciones, calendario, escenarios, persistencia, terrenos y siembras, resumen y simulador. |

@@ -1,5 +1,7 @@
 # Ambientación fotográfica global de RotaAndes
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 13 de noviembre de 2026 · Desarrollo local en `feat/ambientacion-global`, desde `c8f663d729263f5f38c5f0f6d822308a51837dd5`.
 
 ## Alcance y trabajo previo

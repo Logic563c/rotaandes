@@ -1,5 +1,7 @@
 # Comparador de tres estrategias de rotación agrícola
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: **8 de noviembre de 2026**. Rama: `feat/rotaciones`. Base: `92a7d2f53ede7fe524cd45e5bd7f8d4e454dd3e9`.
 
 ## 1. Hito protegido y alcance
@@ -216,10 +218,10 @@ Se mantuvieron cero errores de página/consola de aplicación y cero errores HTT
 
 Evidencias **locales e ignoradas por Git**, en las carpetas de escritorio/celular del segundo proceso Playwright:
 
-- [Resumen de escritorio](../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-escritorio/comparador-resumen.png).
-- [Resumen de celular emulado](../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-celular/comparador-resumen.png).
-- [Evidencia expandida de escritorio](../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-escritorio/comparador-rotaciones.png).
-- [Evidencia expandida de celular](../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-celular/comparador-rotaciones.png).
+- Resumen de escritorio (`../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-escritorio/comparador-resumen.png`, artefacto local no versionado).
+- Resumen de celular emulado (`../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-celular/comparador-resumen.png`, artefacto local no versionado).
+- Evidencia expandida de escritorio (`../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-escritorio/comparador-rotaciones.png`, artefacto local no versionado).
+- Evidencia expandida de celular (`../test-results/integral/rotaciones-rotaciones-inte-fdd16-dario-preferencias-y-sesión-celular/comparador-rotaciones.png`, artefacto local no versionado).
 
 Cada carpeta incluye `evidencia-rotaciones.json`, sin credenciales, con las tres puntuaciones obtenidas y controles de errores. Las capturas identifican la climatología controlada. Los correos son aleatorios y las claves no aparecen en documentos; las trazas de navegador permanecen deshabilitadas.
 

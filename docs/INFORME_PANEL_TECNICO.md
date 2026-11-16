@@ -1,5 +1,7 @@
 # Panel de técnicos agrícolas — Prompt 18
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha de trabajo: 8 de noviembre de 2026, Ecuador continental (UTC−5). Rama `feat/panel-tecnico`, creada desde `32ccaccb6cbde3f3ebd5388034541cecc04cc6f0` con Git limpio. Conserva simulador, imágenes GIBS, tendencias y los módulos anteriores. La publicación continúa en `012d6be`; esta fase es exclusivamente local.
 
 ## Endpoint, autorización y privacidad
@@ -110,6 +112,6 @@ Consulta de producción **solo en lectura**, 2026-11-09T04:37:18.408Z (8 de novi
 
 ## Archivos y protección
 
-Backend: `routes/tecnico.ts`, `services/panelTecnico.ts`, `services/aprovisionarTecnico.ts`, `scripts/aprovisionarTecnico.ts`, integración en `aplicacion.ts` y pruebas unitarias/SQL. Asistente Windows y auxiliares de prueba en `scripts/` y `tests/scripts/`. Frontend: `pages/PanelTecnico.tsx`, tipos/validación de panel, API central, rutas/navegación/regreso del detalle, adaptación mínima de datos del mapa y centrado de marcadores, fixtures/tests. Navegador: `panelTecnico.spec.ts`, nueva configuración y sexto grupo añadido a scripts/check. Documentación: README, DECISIONES y este informe.
+Backend: `routes/tecnico.ts`, `services/panelTecnico.ts`, `services/aprovisionarTecnico.ts`, `backend/scripts/aprovisionarTecnico.ts`, integración en `aplicacion.ts` y pruebas unitarias/SQL. Asistente Windows y auxiliares de prueba en `scripts/` y `tests/scripts/`. Frontend: `pages/PanelTecnico.tsx`, tipos/validación de panel, API central, rutas/navegación/regreso del detalle, adaptación mínima de datos del mapa y centrado de marcadores, fixtures/tests. Navegador: `panelTecnico.spec.ts`, nueva configuración y sexto grupo añadido a scripts/check. Documentación: README, DECISIONES y este informe.
 
 Sin migraciones, dependencias nuevas, secretos, datos privados o artefactos versionados. PROYECTO.md, AGENTS.md, main, release/publicacion y etiqueta original se conservan. No se modifica PostgreSQL de producción, crean servicios, publican cambios ni inicia PDF/landing/glosario. El hash del commit local y el estado final de Git se entregan al concluir, evitando autorreferencia en el propio commit.

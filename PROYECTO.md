@@ -5,6 +5,8 @@
 >
 > *"RotaAndes" es un nombre provisional. Se puede cambiar si el equipo de Nicole define otro.*
 
+> **Lectura vigente (15-11-2026):** el código estable publicado es `4a2055e71d159fbcf18f7eb98416bf9b359dacdd`, con motor `calendario_ciclo_v4`, 29 cultivos y 348 casillas. El [estado actual](docs/ESTADO_ACTUAL.md) identifica por separado GitHub, backend Railway y frontend Vercel, con evidencias y límites. Las fechas, fases y casillas sin marcar del plan original se conservan como planificación histórica; no son un registro actualizado de aceptación ni autorizan trabajo adicional. §5, §7.2 y §8 describen el modelo, las reglas y el contrato implementados. Las excepciones de alcance se explicitan abajo.
+
 ---
 
 ## 0. Resumen rápido (léelo primero)
@@ -44,7 +46,9 @@
 
 Una web donde el agricultor se registra, marca su terreno en un mapa, registra lo que siembra y recibe: (a) el clima histórico y el pronóstico de su zona, (b) un calendario que indica qué meses conviene sembrar cada cultivo, (c) una comparación de 3 rotaciones con puntajes y explicaciones, y (d) mapas satelitales de su zona. Los técnicos agrícolas tienen un panel para ver todos los terrenos.
 
-### Ejemplo de uso (historia de la demo)
+### Ejemplo de uso (historia prevista en el plan original)
+Esta historia es ilustrativa: sus colores, meses y puntajes no son resultados vigentes calculados para un terreno. El guion actualizado está en `docs/RECORRIDO_DEMOSTRACION.md`.
+
 1. Don Luis, agricultor de Pujilí, crea su cuenta.
 2. Marca su lote en el mapa. La app detecta que está a 3.150 m.
 3. Registra que en 2024 y 2025 sembró papa.
@@ -71,7 +75,7 @@ Una web donde el agricultor se registra, marca su terreno en un mapa, registra l
 - [ ] CRUD de **siembras** por terreno (historial).
 - [ ] **Clima histórico** del terreno con NASA POWER (lluvia, temperatura máxima, mínima y media, humedad del suelo, riesgo de helada), con gráficas.
 - [ ] **Pronóstico de 7 días** (Open-Meteo) con **alerta de helada** si la temperatura mínima es ≤ 2 °C.
-- [ ] **Calendario de siembra**: matriz cultivo × mes con colores verde / amarillo / rojo y el motivo de cada celda.
+- [ ] **Calendario de siembra**: matriz cultivo × mes con cuatro estados (verde / amarillo / rojo / gris), resumen y motivo de cada celda. Diseño inicial ampliado en §7.2.
 
 ### Fase 2: avanzado (listo el domingo 8)
 - [ ] **Comparador de rotaciones**: 3 estrategias (actual + 2 sugeridas) con puntajes, por qué, evidencia, beneficios, vacíos, riesgos y aviso.
@@ -95,6 +99,8 @@ Una web donde el agricultor se registra, marca su terreno en un mapa, registra l
 - Modelos de machine learning entrenados. Usamos **reglas + puntajes explicables**, que además son más fáciles de defender frente al jurado.
 - Precios de mercado en tiempo real.
 
+**Resultado del alcance satelital:** está implementado el visor de imágenes MODIS/SMAP mediante NASA GIBS, no el procesamiento analítico GeoJSON ni los promedios mensuales previstos originalmente. Se conserva la limitación en §6.3 y §8. Los demás módulos implementados se enumeran en [ESTADO_ACTUAL.md](docs/ESTADO_ACTUAL.md); su presencia no acredita validación agronómica local.
+
 ---
 
 ## 4. Arquitectura y stack
@@ -113,13 +119,13 @@ Una web donde el agricultor se registra, marca su terreno en un mapa, registra l
           - Prisma ORM sobre PostgreSQL (Railway)
           - Proxy y caché de NASA POWER y Open-Meteo
           - Lógica: calendario, rotaciones y escenarios
-          - Generación de PDF (pdfkit o puppeteer)
-          - Sirve las capas NDVI/SMAP precargadas (GeoJSON)
+          - Generación de PDF con PDFKit
+          - Proxy de imágenes NDVI/SMAP de NASA GIBS (GeoJSON analítico pendiente)
 
    PostgreSQL                                                      → Railway
 ```
 
-**Criterio:** el frontend **nunca** habla con la base de datos ni con APIs externas directamente; todo pasa por el backend. Así el frontend se enfoca solo en la interfaz y el backend concentra los datos y la lógica.
+**Criterio:** el frontend no habla con la base de datos ni con las APIs climáticas o GIBS directamente; los datos pasan por el backend. Las teselas de OpenStreetMap del mapa base se cargan en el navegador con atribución. El backend concentra datos y lógica agrícola.
 
 ### Estructura del repositorio (monorepo)
 ```
@@ -127,25 +133,27 @@ rotaandes/
 ├── PROYECTO.md
 ├── docs/
 │   ├── DECISIONES.md
-│   └── DEMO.md
+│   ├── ESTADO_ACTUAL.md
+│   └── RECORRIDO_DEMOSTRACION.md
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/        (Landing, Login, Registro, Onboarding, Dashboard, Terreno, Tecnico, Glosario, AcercaDe)
+│   │   ├── pages/        (Inicio, Acceso, EspacioPersonal, Perfil, Terrenos, EditarTerreno, DetalleTerreno, PanelTecnico, Glosario, Fuentes)
 │   │   ├── components/
 │   │   ├── lib/api.ts    (cliente de la API con el token JWT)
-│   │   ├── mocks/        (respuestas de ejemplo con el formato de la sección 8)
+│   │   ├── tests/        (fixtures controlados; no son datos de producción)
 │   │   └── types/        (tipos compartidos con el contrato de la API)
 │   └── .env.example      (VITE_API_URL)
 └── backend/
     ├── prisma/
     │   ├── schema.prisma
-    │   └── seed.ts       (cultivos, plantillas, usuarios demo)
+    │   ├── seed.ts       (29 cultivos; sin usuarios demo)
+    │   └── seedRotaciones.ts (ocho plantillas)
     ├── src/
     │   ├── index.ts
-    │   ├── routes/       (auth, perfil, terrenos, siembras, clima, calendario, rotaciones, capas, reportes, tecnico)
-    │   ├── services/     (nasaPower, openMeteo, calendario, motorRotacion, escenarios, pdf)
+    │   ├── routes/       (salud, auth, perfil, cultivos, terrenos, siembras, clima, pronostico, calendario, rotaciones, capas, reportes, tecnico, tendencia)
+    │   ├── services/     (nasaPower, openMeteo, calendario, motorRotacion, reportes, pdfTerreno y otros servicios por módulo)
     │   ├── middleware/   (auth, rol, errores)
-    │   └── data/         (respaldo de clima y capas GeoJSON de NDVI/SMAP)
+    │   └── data/         (catálogo, perfiles agronómicos y respaldos verificados de climatología/tendencias)
     └── .env.example      (DATABASE_URL, JWT_SECRET, CORS_ORIGIN, PORT)
 ```
 
@@ -278,11 +286,9 @@ GET https://api.open-meteo.com/v1/elevation?latitude=-0.93&longitude=-78.62
 ```
 
 ### 6.3 MODIS NDVI y SMAP (capas satelitales)
-- Fuente: **NASA AppEEARS** (https://appeears.earthdatacloud.nasa.gov/), con cuenta gratuita de Earthdata.
-- Productos sugeridos: **MOD13Q1** (NDVI a 250 m, cada 16 días) y **SPL3SMP_E** (humedad del suelo SMAP a 9 km).
-- Proceso (el sábado): descargar **una vez** el recorte de Cotopaxi de 2023–2024, promediar por mes, convertir a una grilla GeoJSON simplificada y guardarla en `backend/src/data/capas/`.
-- El backend sirve esas capas; el frontend las pinta en Leaflet con una leyenda de colores.
-- Mientras tanto, el frontend trabaja con un GeoJSON de ejemplo con el mismo formato.
+- **Implementado:** imágenes raster oficiales de NASA GIBS, consultadas por el backend y mostradas en Leaflet con leyenda y procedencia. El selector ofrece composiciones/días de 2023–2024; no calcula un promedio mensual. Metadatos y validación: `backend/src/data/catalogoCapas.ts`.
+- Productos de referencia: **MOD13Q1** (NDVI, 250 m, composición de 16 días) y **SPL3SMP_E** (humedad superficial, malla de 9 km). La imagen visual usa el alias `best` de GIBS; no se extraen mediciones del color ni por parcela.
+- **Pendiente del plan original:** descarga AppEEARS, máscaras QA, procesamiento y agregación mensual a GeoJSON. No se sirve un GeoJSON simulado para completar ese alcance: `/api/capas/:tipo` devuelve 503 explícito. Ver `docs/INFORME_CAPAS_SATELITALES.md` como registro de esa decisión.
 
 ---
 
@@ -356,9 +362,9 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 
 ## 8. API del backend (contrato entre frontend y backend)
 
-- Base: `/api`. Todas las rutas usan `Authorization: Bearer <jwt>`, salvo `/api/health`, `/api/auth/*` y `/api/cultivos`.
-- Errores: `{ "error": "mensaje" }` con el código HTTP correcto (400, 401, 403, 404, 500).
-- **El backend publica este contrato funcionando el viernes en la noche.** Hasta entonces, el frontend usa los mocks de `frontend/src/mocks/` con exactamente este formato.
+- Base: `/api`. Todas las rutas usan `Authorization: Bearer <jwt>`, salvo `GET /api/health`, `POST /api/auth/registro`, `POST /api/auth/login` y `GET /api/cultivos`. **`GET /api/auth/yo` está protegido.**
+- Errores: `{ "error": "mensaje" }` con el código HTTP correspondiente; además de 400, 401, 403, 404 y 500, se usan 413 para límites de cuerpo, 429 para cuotas y 503 para proveedor/capacidad no disponible cuando corresponde.
+- Contrato implementado: las descripciones siguientes son resumidas; los tipos completos están en `frontend/src/types/api.ts`, los validadores en `frontend/src/lib/api.ts` y las rutas en `backend/src/routes/`. Los fixtures de prueba no sustituyen el backend público.
 
 | Método | Ruta | Descripción |
 |---|---|---|
@@ -379,8 +385,10 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 | GET | `/api/terrenos/:id/calendario?lluvia_pct=&temp_delta=` | `{ celdas: [{ cultivo_id, mes, estado, resumen, motivo }], cultivos: [{ id, nombre, nombre_cientifico, categoria, categoria_nombre, es_hortaliza, ciclo_dias_min, ciclo_dias_max, ciclo_meses_evaluados, ciclo_corto, establecimiento, cosecha, fuentes, … }], categorias, version }` |
 | GET | `/api/terrenos/:id/rotaciones?lluvia_pct=&temp_delta=` | `{ estrategias: [actual, sugerida1, sugerida2], cambios_vs_base? }` |
 | GET | `/api/terrenos/:id/reporte.pdf` | PDF del terreno |
-| GET | `/api/capas/:tipo?mes=` | `tipo` = `ndvi` \| `humedad_suelo` → GeoJSON + leyenda |
-| GET | `/api/tecnico/terrenos?parroquia=&cultivo=` | Solo rol `tecnico`: todos los terrenos con su última siembra y su alerta |
+| GET | `/api/capas/:tipo?mes=` | `tipo` = `ndvi` \| `humedad_suelo`; con consulta válida devuelve 503: GeoJSON analítico pendiente |
+| GET | `/api/capas-visuales/:tipo?anio=&mes=&fecha=` | Metadatos y leyenda de imagen GIBS. Año 2023/2024, mes 1–12 y fecha opcional disponible del producto |
+| GET | `/api/capas-visuales/:tipo/imagen?anio=&mes=&fecha=` | PNG oficial consultado por el backend; mismos parámetros |
+| GET | `/api/tecnico/terrenos?parroquia=&cultivo=&pagina=` | Solo rol `tecnico`: terrenos paginados (50 por página), última siembra y alerta. Filtro de cultivo en todo el historial |
 
 ---
 
@@ -388,10 +396,10 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 
 1. **Landing (pública):** qué es, qué problema resuelve, datos NASA usados y botón "Registrarme".
 2. **Registro / Login.**
-3. **Onboarding de prioridades:** 3 deslizadores con íconos (agua, suelo, ingresos).
+3. **Perfil y prioridades:** tres deslizadores (agua, suelo, ingresos) en `/perfil`, accesible desde «Mi perfil»; no hay una ruta de onboarding separada.
 4. **Dashboard:** mapa con mis terrenos, alertas de helada de los próximos días y accesos rápidos.
 5. **Nuevo / editar terreno:** clic en el mapa → altitud automática → formulario.
-6. **Detalle del terreno**, con pestañas:
+6. **Detalle del terreno**, con secciones desplegables:
    - **Clima:** barras de lluvia por mes, líneas de temperatura mínima y máxima, meses con helada resaltados, pronóstico de 7 días y nota de resolución.
    - **Tendencia:** gráfica 2005–2024.
    - **Mapa satelital:** capas NDVI / humedad del suelo con selector de mes y leyenda.
@@ -463,7 +471,9 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 | oca-haba-cebada | oca → haba → cebada (páramo) |
 | quinua-chocho-cebada | quinua → chocho → cebada |
 
-### Usuarios demo (seed)
+### Usuarios demo (propuesta inicial, no ejecutada por la semilla actual)
+La semilla vigente **no crea usuarios, terrenos ni siembras**: carga 29 cultivos y, mediante `db:seed:rotaciones`, ocho plantillas. Los ejemplos siguientes pertenecen a la propuesta original; no son credenciales ni cuentas disponibles por defecto. Los ZIP de demostración históricos son externos y deben revisarse según su fecha y commit.
+
 - Agricultor: `demo@rotaandes.app`, con el terreno "Lote Pujilí" (3.150 m) y el historial papa 2024, papa 2025.
 - Técnico: `tecnico@rotaandes.app`.
 - Unos 8 terrenos de ejemplo repartidos por Latacunga, Pujilí, Saquisilí, Salcedo y el páramo, para que el panel de técnico no se vea vacío.
@@ -472,7 +482,7 @@ La respuesta incluye las diferencias frente al escenario base, por ejemplo: *"Co
 
 ## 11. Forma de trabajo
 
-- **Contrato primero:** la sección 8 manda. El frontend puede avanzar con los mocks de `frontend/src/mocks/` mientras el backend no esté listo, y luego cambiar a la API real. Si el contrato cambia, se actualiza este archivo en el mismo commit.
+- **Contrato primero:** la sección 8 manda. Los fixtures de pruebas conservan las claves de la API real. Si el contrato cambia, se actualiza este archivo en el mismo commit.
 - **Puntos de control:** sábado a las 13:00, sábado a las 21:00 y domingo a las 13:00. En cada uno se comparte el link desplegado y una lista de qué está listo y qué falta.
 - **Git:** un repositorio, `main` siempre desplegable, ramas `feat/<nombre>` y PRs pequeños. Commits en español y en modo imperativo.
 
@@ -496,10 +506,11 @@ Si algo se complica, se avisa de inmediato para reorganizar.
 
 - **Railway:**
   - Servicio **PostgreSQL**.
-  - Servicio **backend** desde `backend/`, con build `npm ci && npx prisma generate && npm run build` y start `npx prisma migrate deploy && node dist/index.js`.
+  - Servicio **backend** desde la raíz del monorepo: instalación `npm ci --include=dev`, build `npm run build --workspace backend`, predeploy funcional `npm run produccion:preparar --workspace backend` y start `npm run start --workspace backend`. Configuración en `.railway/railway.ts`. El predeploy aplica migraciones y carga/verifica catálogo; no ejecutarlo para auditar documentación.
   - Variables: `DATABASE_URL` (referencia al Postgres de Railway), `JWT_SECRET`, `CORS_ORIGIN=<url de vercel>`, `PORT`.
-- **Vercel:** root `frontend/`, variable `VITE_API_URL=<url de railway>`. Agregar un `vercel.json` con rewrite a `index.html` para que funcionen las rutas de React Router.
-- **Costos:** Vercel y Railway ya están pagados. Revisar en el panel de Railway el consumo del mes. Si después de la presentación se quiere dejar en plan gratuito, la base de datos se puede migrar a otro Postgres gratis (por ejemplo, Neon o Supabase) cambiando solo `DATABASE_URL`.
+- **Vercel:** raíz del monorepo, `npm ci --include=dev`, `npm run build:publicacion --workspace frontend`, salida `frontend/dist`, variable `VITE_API_URL=<origen HTTPS de Railway, sin /api>`. `vercel.json` ya contiene la reescritura SPA.
+- **Publicación documental:** Git no está conectado a Vercel ni al servicio backend de Railway para despliegue automático; `vercel.json` deshabilita los despliegues Git. Los cambios documentales se revisan y publican en GitHub sin desplegar ni ejecutar predeploy.
+- **Costos y continuidad:** no se certifican saldo, facturación ni alojamiento permanente en esta auditoría. Los importes y el Trial descritos en informes previos son históricos. Revisar la cuenta del proveedor antes de decisiones de presupuesto; ninguna actualización documental autoriza contratar recursos ni migrar datos.
 - **Nunca** subir `.env` al repositorio.
 
 ---

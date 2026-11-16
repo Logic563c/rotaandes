@@ -1,6 +1,6 @@
 # Guía para defender RotaAndes ante el jurado
 
-Revisión prevista: sábado 14 de noviembre de 2026, ante el jurado, que incluye al coronel. Esta guía prepara la explicación de **qué hace RotaAndes, cómo se desarrolló y por qué sus resultados son confiables dentro de sus límites**.
+Guía actualizada el **15 de noviembre de 2026**, después de la revisión prevista originalmente para el sábado 14. No acredita que esa presentación se haya realizado. Prepara la explicación de **qué hace RotaAndes, cómo se desarrolló y cuáles son los límites de sus resultados**. Versiones de producción y pruebas verificables: [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md).
 
 Documentos de apoyo:
 
@@ -21,14 +21,15 @@ Documentos de apoyo:
 2. **Contrato primero:** se definieron el modelo de datos y la API en `PROYECTO.md` antes de programar. El frontend y el backend se construyeron contra ese contrato.
 3. **Por módulos:** cada módulo se implementó, se probó y se documentó antes del siguiente: autenticación, terrenos, clima, pronóstico, calendario, rotaciones, escenarios, capas, tendencias, panel técnico, PDF, gráficas y delimitación.
 4. **Reglas explicables en lugar de inteligencia artificial opaca:** cada celda del calendario y cada puntaje trae su motivo en texto, de modo que un técnico puede auditarlo.
-5. **Calidad verificada:** cerca de 800 pruebas automáticas (unitarias, con base de datos real aislada y en navegador real en computadora y celular) se ejecutan antes de cada entrega.
+5. **Calidad verificada:** en esta auditoría aprobaron **704 unitarias (479 backend + 225 frontend)** y la compilación. El último `check` completo respaldado por registros es de `bf3ff2b`: **908 pruebas**, incluidas 163 PostgreSQL y 50 de navegador. No se atribuye ese total a v4 ni se afirma una nueva ejecución completa. Los resultados y sus revisiones están separados en [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md).
 6. **Robustez:** si NASA no responde, la aplicación usa la caché o un respaldo verificado de la misma celda de la cuadrícula. Nunca inventa valores.
 
-**Arquitectura en una frase:** el navegador (React) solo habla con nuestra API (Node y Express). La API guarda los datos en PostgreSQL, consulta NASA y Open-Meteo, calcula y genera el PDF. Está publicada en Vercel y Railway.
+**Arquitectura en una frase:** React consulta los datos agrícolas y climáticos mediante nuestra API (Node y Express), que usa PostgreSQL, NASA y Open-Meteo, calcula y genera el PDF. El mapa base carga teselas de OpenStreetMap con atribución. La aplicación está publicada en Vercel y Railway.
 
 ## Antes de la presentación
 
-- [ ] Confirmar que la versión publicada incluye la delimitación de parcelas. Para eso la migración `20261112000100_delimitacion_terreno` debe estar aplicada en producción, con un respaldo verificado previo y autorización expresa. Si no se publica, demostrar con la versión local.
+- [x] Publicación con delimitación y catálogo ampliado comprobada por consultas de solo lectura el 15-11-2026: tres migraciones aplicadas, 29 cultivos y motor v4. Esto no requiere volver a publicar ni migrar para la demostración.
+- [ ] Comprobar disponibilidad de las URL el día de la presentación y revisar las versiones indicadas en el estado actual.
 - [ ] Preparar una cuenta de demostración con un terreno de ejemplo, que no sea de una persona real.
 - [ ] Abrir de antemano el detalle del terreno y la climatología, para que los datos queden en caché.
 - [ ] Tener a mano un celular para mostrar el dibujo táctil.
@@ -70,6 +71,8 @@ Documentos de apoyo:
 
 1. "¿Qué puedo sembrar?" muestra el resumen del mes actual.
 2. En la matriz, tocar una celda para leer su motivo (lluvia frente a la que necesita el cultivo, helada, ventana de siembra).
+3. Mostrar **29 cultivos × 12 meses = 348 casillas**, búsqueda y filtros. Explicar los cuatro estados: recomendado, posible con precaución, no recomendado y no determinado. El gris expresa información faltante o conflicto de fuentes; una exclusión independiente tiene prioridad.
+4. Explicar v4: el riego declarado no confirma agua ilimitada. Con lluvia bajo el mínimo del ciclo o del mes se informa dependencia del riego. No se calculan caudales ni turnos; sin parámetro o lluvia se declara la limitación sin inventar una dependencia. En berro falta confirmar agua permanente. La época referencial se informa sin imponer por sí sola un estado.
 
 ### 6. Comparar rotaciones
 
@@ -93,6 +96,7 @@ Documentos de apoyo:
 - **NASA POWER** (climatología y tendencias): datos del reanálisis MERRA-2 en celdas de 0,5° × 0,625° (unos 50 km) y radiación solar en celdas de 1°. Se consultan mediante la API oficial, se guardan en caché 30 días y, si NASA no responde, se usa un respaldo verificado de la misma celda.
 - **MODIS NDVI y SMAP** (capas satelitales): imágenes regionales servidas por NASA GIBS.
 - **Open-Meteo** no es de la NASA. Se usa para el pronóstico porque NASA POWER no ofrece pronósticos.
+- **Recomendaciones:** NASA POWER proporciona el clima; RotaAndes aplica reglas propias con fuentes agronómicas INIAP/FAO y otras referencias identificadas. NASA no recomienda directamente qué sembrar ni avala los resultados.
 
 ### 10. Limitaciones técnicas y científicas
 
@@ -155,11 +159,11 @@ Solo las líneas de temperatura ajustan su escala a los valores para que se lean
 **¿Las fotos y animaciones tienen derechos de uso?**
 Sí:
 
-- el fondo animado y el paisaje son ilustraciones propias hechas con CSS y SVG;
-- las dos fotos son de Wikimedia Commons con licencia CC BY-SA 4.0, verificada con la API de Commons;
+- la portada y el paisaje fotográfico interior son estáticos; las antiguas animaciones y el botón de pausa pertenecen a fases anteriores;
+- las fotografías son de Wikimedia Commons con licencias CC BY 2.0 y CC BY-SA 4.0, según cada imagen;
 - cada foto muestra a su autor y su licencia en pantalla, y los detalles están en `frontend/public/imagenes/CREDITOS.md`.
 
-Además, la animación puede pausarse y se desactiva si el equipo pide reducir el movimiento.
+Se conserva el ajuste de movimiento reducido para las transiciones restantes. Las licencias y las pruebas de contraste no equivalen a una certificación WCAG completa.
 
 **¿Cómo se protegen los datos de los agricultores?**
 - Las contraseñas se guardan con bcrypt y nunca se envían de vuelta.
@@ -173,4 +177,6 @@ Además, la animación puede pausarse y se desactiva si el equipo pide reducir e
 - Un ZIP con el esquema de la base de datos, las migraciones y datos ficticios restaurables.
 - Los manuales de usuario y técnico.
 - Esta guía, el recorrido de demostración y los informes de cada fase con sus capturas.
+
+Los ZIP y capturas de las fases anteriores son artefactos externos/locales, no archivos descargables del repositorio público. Un ZIP histórico puede contener diez cultivos y dos migraciones; no presentarlo como un paquete actualizado a v4 sin regenerarlo y verificarlo en otra tarea autorizada. Esta auditoría actualiza documentación, sin regenerar esos paquetes.
 

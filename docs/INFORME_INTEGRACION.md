@@ -1,5 +1,7 @@
 # Integración: calendario agronómico y comprensión de gráficas (15-11-2026)
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Versión candidata para revisión del cliente. Sin push, sin merge a `release/publicacion` y sin despliegues; producción no se consultó ni se modificó.
 
 ## Ramas y commits

@@ -1,5 +1,7 @@
 # Informe de autenticación y perfiles de RotaAndes
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fase implementada y verificada el 7 de noviembre de 2026 en `feat/base-datos-autenticacion`, sobre `ddff93a5554a1d45baeee9a31fdfc2bfbb275c1e`. El cierre usa el mensaje `Implementar autenticacion y perfiles de RotaAndes`. El hash se comunica en la entrega y puede consultarse con `git log -1 --oneline`.
 
 ## Resultado y contrato

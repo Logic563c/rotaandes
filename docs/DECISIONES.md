@@ -1,5 +1,7 @@
 # Decisiones técnicas de RotaAndes
 
+> Registro cronológico: cada decisión describe su fecha y alcance; las decisiones posteriores pueden sustituir las anteriores. El estado operativo vigente y sus evidencias se consultan en [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md).
+
 ## Auditoría final: estabilización NASA POWER (9 de noviembre de 2026)
 
 - **Base y alcance:** rama `fix/estabilizacion-final` desde `d589f6364e3f6b6c9bbfa0114e388f90e952cbb1`. Sin cambios en `PROYECTO.md`, `AGENTS.md`, esquema, migraciones, catálogos, dependencias ni credenciales. Diagnóstico completo en `docs/DIAGNOSTICO_NASA_Y_RECUPERACION.md`.
@@ -327,3 +329,12 @@ Los CHECK y la nulabilidad de los arreglos deben conservarse al revisar futuras 
 - **Regla v4, autorizada por el cliente:** declarar riego no equivale a agua ilimitada. Con riego se compara la lluvia NASA con la misma necesidad con fuente que se usa en secano: mínimo FAO (1986, Tabla 14) del ciclo o mínimo mensual del catálogo §10. Si no se alcanza → precaución «depende del riego», sin calcular caudales ni volúmenes. Sin parámetro con fuente o sin dato de lluvia, el riego cumple el criterio ordinario, como antes; no se inventa una dependencia.
 - **Época:** sigue siendo informativa porque la ventana §10 no está validada localmente. Se muestra en el resumen de las casillas recomendadas fuera de la ventana y en «Qué puedes hacer»; no se convierte en prohibición ni en precaución automática.
 - Sin cambios de esquema, catálogo, ciclos, rutas ni claves JSON; solo cambia `version`. Pruebas con la respuesta NASA real archivada en `backend/tests/calendarioRiego.test.ts`.
+
+## Auditoría documental de la versión estable (15-11-2026)
+
+- Se separan los manuales e instrucciones vigentes de los informes históricos, sin reemplazar sus fechas, cifras, pruebas o versiones. Se añade `ESTADO_ACTUAL.md` con el inventario documental y las evidencias de solo lectura.
+- GitHub público está en `4a2055e`; Railway ejecuta el motor v4 de esa revisión. Vercel conserva el frontend compatible `bf3ff2b`. No se presenta una sola revisión como si identificara los tres componentes.
+- Se documentan 29 cultivos, doce meses, 348 casillas, tres migraciones y los cuatro estados con sus claves JSON originales. El riego declarado conserva sus limitaciones y la regla v4 de dependencia. NASA aporta clima, no recomendaciones agrícolas directas.
+- La batería nueva se limita a compilación, lint, tipos y unitarias; no se ejecuta `check`, `test:db`, E2E, semillas ni migraciones, por la restricción de no modificar PostgreSQL. Las 908 pruebas del registro de `bf3ff2b` no se atribuyen a v4.
+- No se modifica código funcional, dependencias, migraciones, configuración, datos ni despliegues. Los cambios quedan para revisión; el commit y el envío documental a `release/publicacion` requieren la confirmación solicitada por el usuario.
+- Los respaldos, ZIP, capturas y logs locales se identifican como artefactos externos al repositorio; no se ofrecen sus rutas ignoradas como enlaces descargables en GitHub. Los límites del script de restauración existente se explican sin modificarlo.

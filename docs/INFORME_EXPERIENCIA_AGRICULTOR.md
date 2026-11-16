@@ -1,5 +1,7 @@
 # Experiencia del agricultor, portada y páginas informativas
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 9 de noviembre de 2026, Ecuador continental. Rama local `feat/experiencia-agricultor`, creada desde `23995cc0d364d2ee3d03f068c84ac4e0f0cf18d4`, con Git inicialmente limpio.
 
 Esta fase mejora la comprensión y la navegación del producto existente. No añade reglas agrícolas, altera contratos, cambia permisos ni reconstruye módulos. Conserva el informe PDF completo y la versión pública. No constituye la auditoría final del producto.

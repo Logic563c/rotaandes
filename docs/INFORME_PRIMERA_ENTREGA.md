@@ -1,5 +1,7 @@
 # Auditoría integral de la primera entrega de RotaAndes
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: **8 de noviembre de 2026**, Ecuador continental (UTC−5). Rama: `feat/base-datos-autenticacion`. Base de la auditoría: `8ac808f612f8df85bdf69d8b65ec4b5178f23b0c`.
 
 **Resultado:** el núcleo de la sección 3, Fase 1, está comprobado para una demostración local, con las limitaciones indicadas aquí. Se corrigieron cuatro defectos reproducidos y se amplió la verificación integrada. La ejecución final de `npm.cmd run check` terminó con código **0** y **404 pruebas aprobadas**. No constituye aprobación del producto completo, validación agronómica ni certificación de seguridad. No se realizó ni se verificó un despliegue público funcional.
@@ -229,11 +231,11 @@ Cada recorrido integral genera `01-portada.png`, `02-registro.png`, `03-acceso.p
 
 Accesos locales destacados:
 
-- [Terreno desde mapa, escritorio; consulta real](../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-escritorio/07-crear-terreno.png).
-- [Climatología real, escritorio](../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-escritorio/09-clima.png).
-- [Pronóstico real, celular emulado](../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-celular/10-pronostico.png).
-- [Calendario calculado con NASA real, celular emulado](../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-celular/11-calendario.png).
-- [Motivo de haba con datos reales, celular emulado](../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-celular/explicacion-haba.png).
+- Terreno desde mapa, escritorio; consulta real (`../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-escritorio/07-crear-terreno.png`, artefacto local no versionado).
+- Climatología real, escritorio (`../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-escritorio/09-clima.png`, artefacto local no versionado).
+- Pronóstico real, celular emulado (`../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-celular/10-pronostico.png`, artefacto local no versionado).
+- Calendario calculado con NASA real, celular emulado (`../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-celular/11-calendario.png`, artefacto local no versionado).
+- Motivo de haba con datos reales, celular emulado (`../.tmp/evidencias-reales/primeraEntrega-primera-ent-892a0-ersistente-de-un-agricultor-celular/explicacion-haba.png`, artefacto local no versionado).
 
 Las capturas externas contienen meteorología real consultada, junto a una cuenta/terreno/historial sintéticos y temporales. Las controladas contienen clima/pronóstico de prueba. Ninguna constituye validación de una explotación agrícola real. Las trazas se deshabilitan para no registrar contraseñas ni Bearer; no se publican credenciales.
 
@@ -246,7 +248,7 @@ Se modifican o crean **17 archivos** de esta fase:
 | `backend/src/routes/terrenos.ts`, `backend/src/routes/siembras.ts` | Campos presentes y protección de valores dependientes ante escrituras intercaladas. |
 | `backend/src/services/nasaPower.ts`, `backend/tests/nasaPower.test.ts` | Compatibilidad de precisión observada y regresiones positivas/negativas/de borde. |
 | `backend/tests/base-datos/concurrencia.integration.test.ts` | Cinco casos de integridad de actualizaciones parciales. |
-| `backend/tests/auditoriaCalendario.test.ts` | Matriz esperada independiente de las 120 celdas. |
+| `backend/tests/auditoriaCalendario.test.ts` (conservada hoy como [auditoriaCalendarioV1.test.ts](../backend/tests/auditoriaCalendarioV1.test.ts)) | Matriz esperada independiente de las 120 celdas. |
 | `frontend/src/components/MapaTerrenos.tsx`, `frontend/src/pages/Inicio.tsx` | Ciclo de vida del mapa y texto de portada. |
 | `tests/navegador/primeraEntrega.spec.ts` | Recorrido integral, inspección SQL, consola/red y capturas. |
 | `playwright.config.ts`, `playwright.integral.config.ts`, `package.json`, `tsconfig.herramientas.json` | Separación de suites y script integral, sin ampliar cuotas ni instalar dependencias. |

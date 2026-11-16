@@ -1,5 +1,7 @@
 # Diagnóstico NASA POWER y recuperación — 9 de noviembre de 2026
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Rama `fix/estabilizacion-final`, creada desde `d589f6364e3f6b6c9bbfa0114e388f90e952cbb1`. Todas las comprobaciones se hicieron con solicitudes HTTP reales, sin mocks, salvo donde se indica «prueba automatizada».
 
 ## 1. Síntomas observados

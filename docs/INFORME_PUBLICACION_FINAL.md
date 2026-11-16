@@ -1,5 +1,7 @@
 # Informe de publicación: gráficas, delimitación y entrega (12-11-2026)
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual. El último backend estable comprobado es `4a2055e` / `calendario_ciclo_v4`; esta entrega del 12-11-2026 no es el último despliegue.
+
 Publicación controlada, autorizada por el responsable del proyecto, de los commits `d5451f0`, `739031c` y `0f13434`. No se borró, recreó ni restauró la base de datos de producción.
 
 ## Resultado

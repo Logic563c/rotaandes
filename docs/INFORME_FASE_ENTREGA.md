@@ -1,5 +1,7 @@
 # Informe de la fase de entrega
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 12 de noviembre de 2026 · Rama: `feat/graficas-delimitacion`, sobre el commit `d5451f0` (gráficas y delimitación), que se conserva íntegro.
 
 **Producción:** no se ha publicado nada. No se hizo push, no se desplegó y no se aplicaron migraciones. El respaldo de producción lo realiza la persona responsable con el [procedimiento de respaldo](PROCEDIMIENTO_RESPALDO_PRODUCCION.md).

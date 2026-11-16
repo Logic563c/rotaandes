@@ -3,6 +3,7 @@
 ## Alcance y fuente de verdad
 
 - Estas instrucciones se aplican a todo el repositorio. Leer completo `PROYECTO.md` antes de trabajar.
+- Consultar `docs/ESTADO_ACTUAL.md` para distinguir la versión vigente de los informes históricos. Las restricciones de tareas de preparación se refieren al alcance de cada solicitud; no significan que los módulos ya implementados sigan pendientes. No reemplazar fechas, versiones ni resultados históricos por cifras actuales.
 - Respetar el alcance, el stack y la estructura de la sección 4: React + Vite + TypeScript + TailwindCSS; Node.js + Express + TypeScript + Prisma + PostgreSQL.
 - Conservar el modelo de datos de la sección 5 y el contrato de API de la sección 8. Las convenciones de nombres no autorizan a renombrar tablas, columnas, rutas, campos, valores de dominio ni identificadores existentes.
 - Si falta una definición técnica menor dentro del alcance solicitado, elegir la opción más simple y documentarla en `docs/DECISIONES.md` cuando la tarea permita modificar ese archivo. Esta regla no permite diseñar módulos pendientes de revisión. No resolver dudas cambiando silenciosamente el modelo o el contrato. Un cambio de contrato requiere actualizar también `PROYECTO.md` en el mismo commit, según sus reglas.
@@ -17,6 +18,7 @@
 - Preparar Prisma, crear el esquema, generar o ejecutar migraciones, cargar semillas, conectar proveedores externos y configurar o realizar despliegues únicamente si están incluidos en la tarea solicitada. Respetar siempre el modelo y el contrato existentes.
 - No inventar flujos, campos, endpoints, fórmulas, reglas agronómicas ni respuestas simuladas para completar módulos pendientes. Si una definición pendiente impide terminar la base solicitada, completar lo independiente y señalar la decisión concreta que falta antes de implementar lo que dependa de ella.
 - En tareas exclusivamente documentales, modificar solo los archivos autorizados. No crear la estructura de la aplicación, instalar dependencias ni ejecutar integraciones como consecuencia de escribir estas convenciones.
+- Una auditoría documental puede contrastar código, configuración y servicios mediante consultas de solo lectura. No ejecutar migraciones, semillas, restauraciones ni despliegues por cambios documentales. Identificar por separado el commit publicado en GitHub, el backend y el frontend, y distinguir pruebas nuevas de evidencias históricas.
 - Al terminar la base solicitada, entregar el resultado y sus verificaciones para revisión. Identificar lo que queda pendiente y finalizar la tarea sin iniciar automáticamente la siguiente fase o módulo.
 
 ## Reglas generales de nombres
@@ -43,7 +45,7 @@
 - Componentes, páginas y sus archivos: `PascalCase`, como `DetalleTerreno.tsx` y `CalendarioSiembra.tsx`. Tipos de propiedades: `DetalleTerrenoProps`.
 - Hooks propios: prefijo obligatorio `use` seguido de un nombre descriptivo en español, como `useTerrenos` o `usePronostico`. Archivos con el mismo nombre del hook.
 - Propiedades y estado internos: `camelCase`, como `terrenoSeleccionado` y `estaCargando`. Acciones recibidas por propiedades: `alGuardar`; manejadores locales: `manejarGuardado`. Conservar eventos nativos como `onClick` y `onSubmit`.
-- Centralizar el acceso al backend en `frontend/src/lib/api.ts` y usar TanStack Query según la arquitectura. El frontend consume únicamente la API del backend; no accede directamente a PostgreSQL ni a servicios externos.
+- Centralizar el acceso al backend en `frontend/src/lib/api.ts` y usar TanStack Query según la arquitectura. El frontend consume los datos agrícolas y climáticos mediante la API del backend; no accede directamente a PostgreSQL ni a proveedores climáticos o GIBS. Las teselas de OpenStreetMap del mapa base se cargan en el navegador con atribución, como en la implementación existente.
 - Mostrar estados de carga, vacío y error. Mantener textos sencillos en español, accesibilidad y diseño para celular. Identificar la fuente, las limitaciones y el aviso de herramienta de apoyo en las vistas correspondientes.
 
 ## CSS y TailwindCSS

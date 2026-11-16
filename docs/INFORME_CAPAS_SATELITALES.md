@@ -1,5 +1,7 @@
 # Visor MODIS y SMAP — Prompt 15
 
+> **Registro histórico de esta fase.** Se conservan sus fechas, versiones, cifras y resultados; las menciones a publicación pendiente o a repositorio privado describen ese momento. Para la versión vigente, las instrucciones actuales y las evidencias verificadas el 15-11-2026, consultar [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md). Los comandos de publicación, migración o reversión de este registro no son instrucciones para la auditoría documental actual.
+
 Fecha: 8 de noviembre de 2026. Rama `feat/capas-satelitales`, desde `f96ffe823a52d83cba3dcb6e3fb3692f4297983b`. Se revisaron documentos rectores e informes de primera entrega, rotaciones, despliegue y escenarios. Git estaba limpio. Se mantienen intactas `main`, `release/publicacion`, la etiqueta de primera entrega, PROYECTO.md, AGENTS.md, el modelo y las migraciones. Sin push, despliegue o acceso a la base de producción.
 
 ## Alcance entregado y autorización
@@ -111,7 +113,7 @@ Consulta de cierre de bases locales, READ ONLY: desarrollo conserva cero usuario
 
 Evidencias reales: `.tmp/evidencias-capas-reales/`, carpetas de escritorio/celular, con ndvi.png, humedad_suelo.png, evidencia-capas.json. Las capturas de indisponibilidad/sin píxeles de esas carpetas son casos controlados. La comprobación independiente deja PNG/JSON en `.tmp/evidencias-capas/`. `test-results/capas/` contiene el recorrido habitual controlado. Todas esas evidencias de ejecución están ignoradas por Git.
 
-Copias destacadas conservadas fuera de las carpetas que Playwright limpia: [NDVI escritorio](../.tmp/evidencias-capas/escritorio-ndvi.png), [SMAP escritorio](../.tmp/evidencias-capas/escritorio-humedad_suelo.png), [NDVI celular](../.tmp/evidencias-capas/celular-ndvi.png), [SMAP celular](../.tmp/evidencias-capas/celular-humedad_suelo.png). En las cuatro capturas se revisaron visualmente las imágenes reales, la cobertura parcial, marcadores, leyendas y advertencias. Los terrenos/cuentas de contexto son sintéticos y ya fueron eliminados; las imágenes exitosas proceden de GIBS real.
+Copias destacadas conservadas fuera de las carpetas que Playwright limpia: NDVI escritorio (`../.tmp/evidencias-capas/escritorio-ndvi.png`, artefacto local no versionado), SMAP escritorio (`../.tmp/evidencias-capas/escritorio-humedad_suelo.png`, artefacto local no versionado), NDVI celular (`../.tmp/evidencias-capas/celular-ndvi.png`, artefacto local no versionado), SMAP celular (`../.tmp/evidencias-capas/celular-humedad_suelo.png`, artefacto local no versionado). En las cuatro capturas se revisaron visualmente las imágenes reales, la cobertura parcial, marcadores, leyendas y advertencias. Los terrenos/cuentas de contexto son sintéticos y ya fueron eliminados; las imágenes exitosas proceden de GIBS real.
 
 Código: `backend/src/data/catalogoCapas.ts`, `services/capasSatelitales.ts`, `routes/capas.ts`, integración en aplicacion.ts y script verificarCapasSatelitales.ts. Frontend: VisorCapas.tsx, ampliación opcional de MapaTerrenos.tsx, cliente/tipos e integración en Terrenos/DetalleTerreno. Pruebas unitarias, SQL y E2E, fixtures públicas con procedencia/paletas, nueva configuración Playwright y scripts. Documentación: README, DECISIONES y este informe; CSP/lockfile registran los cambios necesarios.
 
