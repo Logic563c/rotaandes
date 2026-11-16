@@ -36,7 +36,7 @@ describe('Calendario HTTP con catálogo PostgreSQL y clima controlado, rollback 
     const antes = await tx.terreno.findUniqueOrThrow({ where: { id: terreno.id } });
     const resultado = await request(app).get(`/api/terrenos/${terreno.id}/calendario`).auth(token, { type: 'bearer' }).expect(200);
     expect(resultado.body.celdas).toHaveLength(348); expect(resultado.body.cultivos).toHaveLength(29); expect(resultado.body.escenario).toEqual({ lluvia_pct: 0, temp_delta: 0 });
-    expect(resultado.body.version).toBe('calendario_ciclo_v3'); expect(resultado.body.categorias.map((categoria: { id: string }) => categoria.id)).toContain('hoja');
+    expect(resultado.body.version).toBe('calendario_ciclo_v4'); expect(resultado.body.categorias.map((categoria: { id: string }) => categoria.id)).toContain('hoja');
     // Lluvia del ciclo de la papa (enero-junio) calculada aparte con el mismo servicio NASA, sin usar el motor del calendario.
     const lluviaCiclo = construirMensual(crearBasePrueba(), 3000).filter((mes) => mes.mes <= 6).reduce((suma, mes) => suma + (mes.lluvia_mm ?? 0), 0);
     const papa = resultado.body.celdas.find((celda: { cultivo_id: string; mes: number }) => celda.cultivo_id === 'papa' && celda.mes === 1);

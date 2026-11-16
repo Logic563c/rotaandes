@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { calcularRiesgoHelada } from './nasaPower.js';
 import { CATEGORIAS_CULTIVO, CICLO_CORTO_MAX_DIAS, DIAS_POR_MES, FUENTES_AGRONOMICAS, IDS_CULTIVOS_NUEVOS, IDS_CULTIVOS_ORIGINALES, obtenerPerfil } from '../data/perfilesAgronomicos.js';
-import type { ClaveFuente, PerfilAgronomico } from '../data/perfilesAgronomicos.js';
+import type { ClaveFuente, Intervalo, PerfilAgronomico } from '../data/perfilesAgronomicos.js';
 
 // Calendario de siembra v3 (PROYECTO.md §7.2). Evalúa todo el ciclo del cultivo, no solo el mes de siembra, con
 // criterios separados y explicados: época, altitud, temperatura media, heladas y agua. Precedencia del estado:
@@ -13,7 +13,7 @@ export const MESES_CALENDARIO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', '
 export const GRADIENTE_TEMPERATURA_MEDIA_C_POR_KM = 6.9;
 /** Gradiente de temperatura mínima observado en los Andes ecuatorianos (Córdova et al., 2016). */
 export const GRADIENTE_TEMPERATURA_MINIMA_C_POR_KM = 5.5;
-export const VERSION_CALENDARIO = 'calendario_ciclo_v3';
+export const VERSION_CALENDARIO = 'calendario_ciclo_v4';
 export class ErrorCalendario extends Error { constructor() { super('No se puede calcular el calendario con los datos disponibles. Revisa el catálogo y la información climática.'); } }
 const numero = z.number().finite();
 export const esquemaEscenarioCalendario = z.strictObject({ lluviaPct: numero.min(-30).max(30), tempDelta: numero.min(-2).max(2) });
@@ -71,6 +71,8 @@ const ACCIONES: Record<string, string> = {
   'lluvia justa para el ciclo': 'prepara riego de apoyo por si el año es seco',
   'meses secos en el ciclo': 'prepara riego de apoyo para los meses secos',
   'necesita agua permanente': 'asegura agua limpia y constante durante todo el ciclo',
+  'depende del riego en el ciclo': 'confirma que tu riego tenga agua suficiente y turnos durante todo el ciclo, o elige un mes de siembra con más lluvia',
+  'depende del riego en meses secos': 'confirma que tu riego tenga agua en los meses secos del ciclo, o elige un mes de siembra con más lluvia',
 };
 const ETIQUETA_CRITERIO: Record<Criterio, string> = { epoca: 'Época', altitud: 'Altitud', temperatura: 'Temperatura', helada: 'Heladas', agua: 'Agua' };
 
@@ -221,16 +223,35 @@ function evaluarAgua(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo
     factores.unshift({ criterio: 'agua', efecto: 'indeterminado', breve: 'no se ha confirmado agua permanente', texto: 'Necesita agua corriente o suelo saturado durante todo el ciclo (EcoCrop). Declarar riego no confirma esa disponibilidad ni la calidad del agua; no declarar riego tampoco descarta un manantial o suelo saturado. Falta confirmar esa condición: no se determina la siembra con el dato actual.' });
     return factores;
   }
+  const lluvia = lluviaDelCiclo(ciclo, dias, contexto.meses);
+  const necesidad = perfil.necesidad_agua_ciclo_mm;
+  const baseNecesidad = (total: number, valor: Intervalo) => `Lluvia promedio del ciclo (${ciclo.length} meses, NASA): ${mostrarNumero(total, 0)} mm. Necesidad de agua del cultivo según FAO (1986, Tabla 14): ${valor.min}-${valor.max} mm por ciclo; sensibilidad a la sequía ${perfil.sensibilidad_sequia ?? 'sin dato'}.`;
+  const baseMensual = (minimo: number) => `Lluvia mensual NASA en el ciclo frente al mínimo referencial del catálogo (${minimo} mm/mes):`;
   if (riego === true) {
-    factores.unshift({ criterio: 'agua', efecto: 'favorable', breve: 'con riego', texto: `El terreno declara riego: cubre el criterio de agua${perfil.riego_en_manejo_iniap ? ', como recomienda INIAP (2011) durante todo el cultivo de hortalizas' : ''}. No se calcula caudal ni volumen: verifique que alcance.` });
+    // Declarar riego no informa caudal, turnos ni disponibilidad en los meses secos. Solo se compara la lluvia con una
+    // necesidad documentada; si no la cubre, el cultivo depende del riego (precaución). Sin parámetro con fuente o sin
+    // dato de lluvia no se atribuye esa dependencia: se mantiene el criterio ordinario del riego declarado.
+    const conRiego = `El terreno declara riego${perfil.riego_en_manejo_iniap ? ', como recomienda INIAP (2011) durante todo el cultivo de hortalizas' : ''}.`;
+    const limite = 'RotaAndes no conoce el caudal, los turnos ni la disponibilidad real del riego y no los calcula.';
+    const favorable = (detalle: string) => factores.unshift({ criterio: 'agua', efecto: 'favorable', breve: 'con riego', texto: `${conRiego} ${detalle} ${limite} Verifique que alcance.` });
+    if (lluvia === null) favorable('Falta la lluvia NASA de algún mes del ciclo: no se puede comparar con la necesidad del cultivo.');
+    else if (necesidad) {
+      if (lluvia < necesidad.min) factores.unshift({ criterio: 'agua', efecto: 'precaucion', breve: 'depende del riego en el ciclo',
+        texto: `${baseNecesidad(lluvia, necesidad)} ${conRiego} La lluvia no alcanza ni el mínimo: el cultivo depende del riego para cubrir el resto. ${limite}` });
+      else favorable(`${baseNecesidad(lluvia, necesidad)} La lluvia cubre al menos el mínimo${lluvia >= necesidad.max ? ' y el máximo' : '; el riego completa la diferencia'}.`);
+    } else if (cultivo.lluviaMinMensualMm !== null) {
+      const minimo = cultivo.lluviaMinMensualMm;
+      const faltan = ciclo.filter((mes) => (contexto.meses.get(mes)?.lluvia_mm ?? 0) < minimo);
+      if (faltan.length) factores.unshift({ criterio: 'agua', efecto: 'precaucion', breve: 'depende del riego en meses secos',
+        texto: `${baseMensual(minimo)} no lo alcanza en ${faltan.map(nombreMes).join(', ')}. ${conRiego} En esos meses el cultivo depende del riego. ${limite}` });
+      else favorable(`${baseMensual(minimo)} alcanza el mínimo todos los meses.`);
+    } else favorable('No hay una necesidad de agua con fuente para compararla con la lluvia del ciclo.');
     return factores;
   }
-  const lluvia = lluviaDelCiclo(ciclo, dias, contexto.meses);
   if (lluvia === null) { factores.unshift({ criterio: 'agua', efecto: 'indeterminado', breve: 'lluvia NASA sin dato', texto: 'Falta la lluvia NASA de algún mes del ciclo y el terreno no declara riego.' }); return factores; }
   const sinRiego = riego === false ? 'el terreno declara que no tiene riego' : 'no se conoce si el terreno tiene riego';
-  const necesidad = perfil.necesidad_agua_ciclo_mm;
   if (necesidad) {
-    const base = `Lluvia promedio del ciclo (${ciclo.length} meses, NASA): ${mostrarNumero(lluvia, 0)} mm. Necesidad de agua del cultivo según FAO (1986, Tabla 14): ${necesidad.min}-${necesidad.max} mm por ciclo; sensibilidad a la sequía ${perfil.sensibilidad_sequia ?? 'sin dato'}.`;
+    const base = baseNecesidad(lluvia, necesidad);
     if (lluvia >= necesidad.max) factores.unshift({ criterio: 'agua', efecto: 'favorable', breve: 'lluvia suficiente', texto: `${base} La lluvia promedio cubre la necesidad máxima (${sinRiego}); en años secos puede faltar.` });
     else if (lluvia >= necesidad.min) factores.unshift({ criterio: 'agua', efecto: 'precaucion', breve: 'lluvia justa para el ciclo', texto: `${base} Cubre el mínimo, no el máximo, y ${sinRiego}: posible falta de agua.` });
     else factores.unshift(riego === false ? { criterio: 'agua', efecto: 'excluye', breve: 'lluvia insuficiente sin riego', texto: `${base} No alcanza el mínimo y ${sinRiego}.` }
@@ -240,7 +261,7 @@ function evaluarAgua(cultivo: CultivoCalendario, perfil: PerfilAgronomico, ciclo
   if (cultivo.lluviaMinMensualMm !== null) {
     const minimo = cultivo.lluviaMinMensualMm;
     const faltan = ciclo.filter((mes) => (contexto.meses.get(mes)?.lluvia_mm ?? 0) < minimo);
-    const base = `Lluvia mensual NASA en el ciclo frente al mínimo referencial del catálogo (${minimo} mm/mes):`;
+    const base = baseMensual(minimo);
     if (!faltan.length) factores.unshift({ criterio: 'agua', efecto: 'favorable', breve: 'lluvia suficiente', texto: `${base} alcanza el mínimo todos los meses (${sinRiego}).` });
     else factores.unshift(riego === false ? { criterio: 'agua', efecto: 'precaucion', breve: 'meses secos en el ciclo', texto: `${base} no lo alcanza en ${faltan.map(nombreMes).join(', ')} y ${sinRiego}.` }
       : { criterio: 'agua', efecto: 'indeterminado', breve: 'no se sabe si el terreno tiene riego', texto: `${base} no lo alcanza en ${faltan.map(nombreMes).join(', ')} y ${sinRiego}.` });
@@ -263,7 +284,9 @@ function resumir(estado: EstadoCalendario, factores: Factor[], nombre: string, m
   if (estado === 'no_recomendado') return `No se recomienda sembrar ${nombre} en ${nombreMes(mes)}: ${de('excluye')}.`;
   if (estado === 'no_determinado') return `No se puede determinar para ${nombre} en ${nombreMes(mes)}: ${de('indeterminado')}.`;
   if (estado === 'posible_con_cuidado') return `${nombre} puede sembrarse en ${nombreMes(mes)} con precaución: ${de('precaucion')}.`;
-  return `Las condiciones evaluadas favorecen sembrar ${nombre} en ${nombreMes(mes)}; confirme la variedad y el manejo local.`;
+  // La época referencial no cambia el estado (no está validada localmente), pero no se oculta en el resumen.
+  const fueraDeEpoca = factores.some((factor) => factor.criterio === 'epoca' && factor.breve === 'fuera de la época referencial');
+  return `Las condiciones evaluadas favorecen sembrar ${nombre} en ${nombreMes(mes)}; confirme la variedad y el manejo local.${fueraDeEpoca ? ' Este mes está fuera de la época referencial del catálogo, no validada localmente: confírmela con un técnico.' : ''}`;
 }
 
 export function calcularCalendario(entrada: unknown): CeldaCalendario[] {
@@ -283,8 +306,10 @@ export function calcularCalendario(entrada: unknown): CeldaCalendario[] {
       const estado = decidir(factores);
       const cicloTexto = esOriginal(cultivo.id) ? `${cultivo.cicloMeses} meses según el catálogo del proyecto (FAO/EcoCrop: ${perfil.ciclo_dias.min}-${perfil.ciclo_dias.max} días en otros climas)`
         : `${perfil.ciclo_dias.min}-${perfil.ciclo_dias.max} días (${citar(perfil.fuente_ciclo)}); se evalúan ${cultivo.cicloMeses} meses porque en clima frío el ciclo se alarga`;
-      const acciones = estado === 'recomendado' ? [] : estado === 'no_recomendado' ? ['revisa otros meses u otros cultivos con resultado recomendado o posible']
-        : [...new Set(factores.filter((factor) => factor.efecto === (estado === 'no_determinado' ? 'indeterminado' : 'precaucion')).flatMap((factor) => ACCIONES[factor.breve] ?? []))];
+      const fueraDeEpoca = factores.some((factor) => factor.criterio === 'epoca' && factor.breve === 'fuera de la época referencial');
+      const accionEpoca = fueraDeEpoca ? [ACCIONES['fuera de la época referencial'] ?? ''] : [];
+      const acciones = estado === 'recomendado' ? accionEpoca : estado === 'no_recomendado' ? ['revisa otros meses u otros cultivos con resultado recomendado o posible']
+        : [...new Set([...factores.filter((factor) => factor.efecto === (estado === 'no_determinado' ? 'indeterminado' : 'precaucion')).flatMap((factor) => ACCIONES[factor.breve] ?? []), ...accionEpoca])];
       const lineas = [resumir(estado, factores, perfil.nombre, mes),
         ...factores.map((factor) => `• ${ETIQUETA_CRITERIO[factor.criterio]}: ${factor.texto}`),
         ...(acciones.length ? [`• Qué puedes hacer: ${acciones.map((accion, indice) => indice === 0 ? accion.charAt(0).toUpperCase() + accion.slice(1) : accion).join('; ')}.`] : []),

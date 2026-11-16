@@ -12,7 +12,7 @@ import type { Locator, Page } from '@playwright/test';
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const ETIQUETAS = { recomendado: 'Recomendado', posible_con_cuidado: 'Posible con precaución', no_recomendado: 'No recomendado', no_determinado: 'No determinado' };
 const esquemaResultado = z.object({
-  version: z.literal('calendario_ciclo_v3'),
+  version: z.literal('calendario_ciclo_v4'),
   celdas: z.array(z.object({ cultivo_id: z.string(), mes: z.number(), estado: z.enum(['recomendado', 'posible_con_cuidado', 'no_recomendado', 'no_determinado']), resumen: z.string() })),
   cultivos: z.array(z.object({ id: z.string(), nombre: z.string(), categoria_nombre: z.string(), ciclo_corto: z.boolean() })),
 });
